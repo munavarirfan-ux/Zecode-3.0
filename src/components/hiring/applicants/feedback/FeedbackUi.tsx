@@ -177,10 +177,14 @@ export function QuickSignalTags({
   options,
   selected,
   onChange,
+  variant = "default",
+  isLight = true,
 }: {
   options: string[];
   selected: string[];
   onChange: (next: string[]) => void;
+  variant?: "default" | "editorial";
+  isLight?: boolean;
 }) {
   const toggle = (tag: string) => {
     if (selected.includes(tag)) onChange(selected.filter((t) => t !== tag));
@@ -197,11 +201,22 @@ export function QuickSignalTags({
             type="button"
             aria-pressed={active}
             className={cn(
-              "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+              "rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/25",
-              active
-                ? "border-accent/30 bg-accent/[0.08] text-accent"
-                : "border-[rgba(15,23,42,0.08)] bg-white text-[#52525B] hover:border-[rgba(15,23,42,0.14)] hover:bg-[#FAFAFA]",
+              variant === "editorial"
+                ? active
+                  ? isLight
+                    ? "bg-[#E4E4E7] text-[#18181B]"
+                    : "bg-white/15 text-white"
+                  : isLight
+                    ? "text-[#71717A] hover:bg-[rgba(15,23,42,0.05)] hover:text-[#3F3F46]"
+                    : "text-[#A1A1AA] hover:bg-white/[0.06] hover:text-[#E4E4E7]"
+                : cn(
+                    "border",
+                    active
+                      ? "border-accent/30 bg-accent/[0.08] text-accent"
+                      : "border-[rgba(15,23,42,0.08)] bg-white text-[#52525B] hover:border-[rgba(15,23,42,0.14)] hover:bg-[#FAFAFA]",
+                  ),
             )}
             onClick={() => toggle(tag)}
           >

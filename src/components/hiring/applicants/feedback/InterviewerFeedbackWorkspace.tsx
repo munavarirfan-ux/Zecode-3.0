@@ -6,9 +6,10 @@ import {
   createNoteEntry,
   type InterviewerFeedbackData,
 } from "@/lib/hiring/interviewFeedback";
-import { SkillEvaluationAccordion } from "./SkillEvaluationAccordion";
-import { CodeChallengeView } from "./CodeChallengeView";
-import { RecordingView } from "./RecordingView";
+import {
+  InterviewFeedbackForm,
+  interviewTabToSection,
+} from "./InterviewFeedbackForm";
 import { NotesTimeline } from "./NotesTimeline";
 
 const NESTED_TABS = [
@@ -64,34 +65,26 @@ export function InterviewerFeedbackWorkspace({
   activeTab,
   onActiveTabChange,
   readOnly,
+  interviewId,
 }: {
   data: InterviewerFeedbackData;
   onChange: (next: InterviewerFeedbackData) => void;
   activeTab?: NestedTabId;
   onActiveTabChange?: (tab: NestedTabId) => void;
   readOnly?: boolean;
+  interviewId?: string;
 }) {
   const [internalTab, setInternalTab] = useState<NestedTabId>("feedback");
   const nestedTab = activeTab ?? internalTab;
   const setNestedTab = onActiveTabChange ?? setInternalTab;
+
+  const section = interviewTabToSection(nestedTab);
 
   return (
     <div className="min-w-0 flex-1">
       <div className="mb-4">
         <EvaluationTabs value={nestedTab} onChange={setNestedTab} />
       </div>
-
-      {nestedTab === "feedback" ? (
-        <SkillEvaluationAccordion
-          skills={data.skills}
-          onChange={(skills) => onChange({ ...data, skills })}
-          readOnly={readOnly}
-        />
-      ) : null}
-
-      {nestedTab === "code" ? <CodeChallengeView data={data.codeChallenge} /> : null}
-
-      {nestedTab === "recording" ? <RecordingView recording={data.recording} /> : null}
 
       {nestedTab === "notes" ? (
         <NotesTimeline
@@ -115,6 +108,17 @@ export function InterviewerFeedbackWorkspace({
               ],
             })
           }
+        />
+      ) : section ? (
+        <InterviewFeedbackForm
+          data={data}
+          onChange={onChange}
+          readOnly={readOnly}
+          interviewId={interviewId}
+          layout="section"
+          activeSection={section}
+          sections={[section]}
+          showAddField={nestedTab === "feedback"}
         />
       ) : null}
     </div>

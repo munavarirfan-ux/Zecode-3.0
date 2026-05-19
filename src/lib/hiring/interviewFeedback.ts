@@ -117,6 +117,8 @@ export type InterviewerFeedbackData = {
     highlights: RecordingHighlight[];
   };
   notes: FeedbackNoteEntry[];
+  /** Post-interview summary written on the feedback form */
+  additionalInterviewNotes: string;
 };
 
 export type RecruiterFeedbackData = {
@@ -171,6 +173,14 @@ export const SKILL_QUICK_SIGNALS: Record<string, string[]> = {
 
 function uid(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createDefaultSkillSet(
+  partialByTitle?: Partial<Record<string, Partial<SkillFeedbackEntry>>>,
+): SkillFeedbackEntry[] {
+  return DEFAULT_SKILL_TITLES.map((title) =>
+    createSkillEntry(title, partialByTitle?.[title]),
+  );
 }
 
 export function createSkillEntry(title: string, partial?: Partial<SkillFeedbackEntry>): SkillFeedbackEntry {
@@ -299,6 +309,7 @@ Requirements:
           { id: uid("hl"), label: "Leadership example — squad initiative", time: "15:02", tone: "positive" },
         ],
       },
+      additionalInterviewNotes: "",
       notes: [
         createNoteEntry({
           author: "Marcus Chen",
@@ -393,6 +404,7 @@ function migrateBundle(bundle: InterviewFeedbackBundle): InterviewFeedbackBundle
         aiSummary: bundle.interviewer.recording.aiSummary ?? "",
         highlights: bundle.interviewer.recording.highlights ?? [],
       },
+      additionalInterviewNotes: bundle.interviewer.additionalInterviewNotes ?? "",
     },
     recruiter: {
       ...bundle.recruiter,
@@ -537,6 +549,43 @@ export function deriveRatingInsights(avg: number, recommendation: HireRecommenda
                   : "Pending";
 
   return { confidenceScore, percentile, label };
+}
+
+export type InterviewerFeedbackValidation = {
+  valid: boolean;
+  errors: string[];
+};
+
+export function validateInterviewerFeedbackSubmit(
+  data: InterviewerFeedbackData,
+): InterviewerFeedbackValidation {
+  const errors: string[] = [];
+  if (!data.recommendation) {
+    errors.push("Select a hiring recommendation.");
+  }
+  const ratedSkills = data.skills.filter((s) => s.rating > 0);
+  if (ratedSkills.length === 0) {
+    errors.push("Rate at least one skill area.");
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+export function hireRecommendationToInterviewResult(
+  recommendation: HireRecommendation | null,
+): "Strong Hire" | "Hire" | "Hold" | "No Hire" | undefined {
+  switch (recommendation) {
+    case "strong_hire":
+      return "Strong Hire";
+    case "hire":
+      return "Hire";
+    case "lean_hire":
+      return "Hold";
+    case "no_hire":
+    case "strong_no_hire":
+      return "No Hire";
+    default:
+      return undefined;
+  }
 }
 
 export function computeFeedbackCompletion(data: InterviewerFeedbackData): number {

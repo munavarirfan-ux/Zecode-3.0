@@ -1,7 +1,7 @@
 "use client";
 
 import { MicOff } from "lucide-react";
-import { zemeetVideoTile } from "@/components/zemeet/zemeetTokens";
+import { useZeMeetTokens } from "@/components/zemeet/zemeetTokens";
 import { cn } from "@/lib/utils";
 
 export type VideoTileParticipant = {
@@ -25,22 +25,30 @@ export function ZeMeetVideoTile({
   compact?: boolean;
   speaking?: boolean;
 }) {
+  const t = useZeMeetTokens();
+
   return (
     <div
       className={cn(
-        zemeetVideoTile,
+        t.videoTile,
         large && "min-h-[220px] lg:min-h-0 lg:h-full",
         compact && "min-h-0 h-[88px]",
         !large && !compact && "min-h-[120px]",
         speaking && "ring-2 ring-[rgb(var(--accent-rgb)/0.45)]",
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1e2636] to-[#12171f]" />
+      <div
+        className={cn(
+          "absolute inset-0 bg-gradient-to-br",
+          t.isLight ? "from-[#D8DEE8] to-[#ECEFF3]" : "from-[#1e2636] to-[#12171f]",
+        )}
+      />
       {participant.isVideoOn ? (
         <div className="absolute inset-0 flex items-center justify-center">
           <span
             className={cn(
-              "font-semibold text-white/25",
+              "font-semibold",
+              t.isLight ? "text-[#18181B]/20" : "text-white/25",
               large && "text-[5rem]",
               compact && "text-[1.75rem]",
               !large && !compact && "text-[2.5rem]",
@@ -50,8 +58,18 @@ export function ZeMeetVideoTile({
           </span>
         </div>
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#0d1118]">
-          <span className={cn("text-white/40", compact ? "text-[10px]" : "text-[13px]")}>
+        <div
+          className={cn(
+            "absolute inset-0 flex items-center justify-center",
+            t.isLight ? "bg-[#E4E9F0]" : "bg-[#0d1118]",
+          )}
+        >
+          <span
+            className={cn(
+              compact ? "text-[10px]" : "text-[13px]",
+              t.isLight ? "text-[#71717A]" : "text-white/40",
+            )}
+          >
             Camera off
           </span>
         </div>
@@ -63,11 +81,19 @@ export function ZeMeetVideoTile({
         )}
       >
         <div className="min-w-0">
-          <p className={cn("truncate font-semibold text-white", compact ? "text-[10px]" : "text-[13px]")}>
+          <p
+            className={cn(
+              "truncate font-semibold",
+              t.isLight ? "text-[#18181B]" : "text-white",
+              compact ? "text-[10px]" : "text-[13px]",
+            )}
+          >
             {participant.name}
           </p>
           {!compact && participant.title ? (
-            <p className="text-[11px] text-white/50">{participant.title}</p>
+            <p className={cn("text-[11px]", t.isLight ? "text-[#71717A]" : "text-white/50")}>
+              {participant.title}
+            </p>
           ) : null}
         </div>
         {participant.isMuted ? (

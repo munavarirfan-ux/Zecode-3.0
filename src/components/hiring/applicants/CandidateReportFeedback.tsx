@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import {
   isInterviewerFeedbackReadOnly,
 } from "@/lib/hiring/feedbackPermissions";
 import {
-  createSkillEntry,
   getInterviewFeedback,
   openInterviewFeedback,
   persistInterviewFeedback,
@@ -80,17 +78,8 @@ export function CandidateReportFeedback({
     setBundle((b) => persistInterviewFeedback(candidate.id, { ...b, recruiter }));
   };
 
-  const handleAddSkill = () => {
-    if (interviewerReadOnly) return;
-    setEvaluationTab("feedback");
-    setBundle((b) => ({
-      ...b,
-      interviewer: {
-        ...b.interviewer,
-        skills: [...b.interviewer.skills, createSkillEntry("Additional skill", { custom: true })],
-      },
-    }));
-  };
+  const activeInterview =
+    candidate.interviews.find((i) => i.status === "Completed") ?? candidate.interviews[0];
 
   const handleSubmit = () => {
     if (!canSubmit || interviewerReadOnly) return;
@@ -153,18 +142,6 @@ export function CandidateReportFeedback({
     if (canSubmit) {
       return (
         <>
-          {evaluationTab === "feedback" && !interviewerReadOnly ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 gap-1 rounded-[9px] px-3"
-              onClick={handleAddSkill}
-            >
-              <Plus className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-              Add More
-            </Button>
-          ) : null}
           <Button
             type="button"
             size="sm"
@@ -222,6 +199,7 @@ export function CandidateReportFeedback({
                   activeTab={evaluationTab}
                   onActiveTabChange={setEvaluationTab}
                   readOnly={interviewerReadOnly}
+                  interviewId={activeInterview?.id}
                 />
               </main>
             </div>

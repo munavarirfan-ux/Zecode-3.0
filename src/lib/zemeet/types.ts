@@ -87,8 +87,6 @@ export type ZeMeetDeviceSettings = {
   microphoneId: string;
   speakerId: string;
   blurBackground: boolean;
-  virtualBackground: "none" | "office" | "gradient" | "brand";
-  noiseCancellation: boolean;
   videoEnabled: boolean;
   audioEnabled: boolean;
 };
@@ -105,6 +103,8 @@ export type ZeMeetNoteEntry = {
   createdAt: string;
   /** Offset ms from session start */
   timestampMs?: number;
+  /** Optional pinned label shown on sticky notes */
+  label?: string;
 };
 
 export type ZeMeetChatMessage = {
@@ -115,18 +115,83 @@ export type ZeMeetChatMessage = {
   at: string;
 };
 
+export type ZeMeetCodeChallengeTestCase = {
+  id: string;
+  label: string;
+  input?: string;
+  expectedOutput?: string;
+  passed?: boolean;
+};
+
+export type ZeMeetCodeChallengeFile = {
+  id: string;
+  name: string;
+  language: string;
+  content: string;
+};
+
+export type ZeMeetCodeChallengeFinalStatus =
+  | "pending"
+  | "active"
+  | "completed"
+  | "declined"
+  | "rejected";
+
+export type ZeMeetQuestionPoolItem = {
+  id: string;
+  title: string;
+  problemStatement: string;
+  requirements: string[];
+  userStories: string[];
+  examples: { input: string; output: string }[];
+  constraints: string[];
+  testCaseInstructions: string;
+  testCases: ZeMeetCodeChallengeTestCase[];
+  language: string;
+  starterCode: string;
+};
+
 export type ZeMeetCodeChallenge = {
   status: ZeMeetCodeChallengeStatus;
   problemTitle: string;
   problemStatement: string;
+  requirements: string[];
+  userStories: string[];
+  examples: { input: string; output: string }[];
+  constraints: string[];
+  testCaseInstructions: string;
   language: string;
-  starterCode: string;
+  languages: string[];
+  files: ZeMeetCodeChallengeFile[];
+  activeFileId: string;
   candidateCode: string;
-  testCases: { id: string; label: string; passed?: boolean }[];
+  testCases: ZeMeetCodeChallengeTestCase[];
   consoleOutput: string;
   startedAt?: string;
+  endedAt?: string;
   durationSeconds?: number;
   interviewerNotes: string;
+  interviewerObservations: string;
+  candidateEditingEnabled: boolean;
+  finalStatus: ZeMeetCodeChallengeFinalStatus;
+  autosaveStatus: "idle" | "saving" | "saved";
+  challengeElapsedSeconds: number;
+  selectedQuestionId?: string;
+};
+
+export type ZeMeetCodeChallengeArtifact = {
+  questionTitle: string;
+  problemStatement: string;
+  candidateCode: string;
+  language: string;
+  testResults: ZeMeetCodeChallengeTestCase[];
+  consoleOutput: string;
+  durationSeconds: number;
+  startedAt?: string;
+  endedAt?: string;
+  interviewerNotes: string;
+  interviewerObservations: string;
+  finalStatus: ZeMeetCodeChallengeFinalStatus;
 };
 
 export type ZeMeetFeedbackDraft = {
@@ -143,7 +208,7 @@ export type ZeMeetSessionArtifact = {
   candidateId: string;
   interviewId: string;
   notes: ZeMeetNoteEntry[];
-  codeChallenge?: ZeMeetCodeChallenge;
+  codeChallenge?: ZeMeetCodeChallengeArtifact;
   feedback?: ZeMeetFeedbackDraft;
   recordingUrl?: string;
   endedAt: string;
@@ -154,9 +219,7 @@ export const DEFAULT_DEVICE_SETTINGS: ZeMeetDeviceSettings = {
   cameraId: "default",
   microphoneId: "default",
   speakerId: "default",
-  blurBackground: true,
-  virtualBackground: "gradient",
-  noiseCancellation: true,
+  blurBackground: false,
   videoEnabled: true,
   audioEnabled: true,
 };

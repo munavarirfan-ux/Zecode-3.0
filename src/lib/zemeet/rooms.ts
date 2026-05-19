@@ -9,10 +9,34 @@ export function buildZeMeetRoomId(candidateId: string, roundTitle: string): stri
   return `zm-${candidateId}-${slug || "interview"}`;
 }
 
-export function parseZeMeetRoomId(roomId: string): { candidateId: string; roundSlug: string } | null {
-  const match = /^zm-([^-]+)-(.+)$/.exec(roomId);
-  if (!match) return null;
-  return { candidateId: match[1], roundSlug: match[2] };
+/**
+ * Parse zm-{candidateId}-{roundSlug} where both ids may contain hyphens.
+ * When validateCandidateId is provided, picks the longest valid candidate prefix.
+ */
+export function parseZeMeetRoomId(
+  roomId: string,
+  validateCandidateId?: (id: string) => boolean,
+): { candidateId: string; roundSlug: string } | null {
+  if (!roomId.startsWith("zm-")) return null;
+  const parts = roomId.slice(3).split("-");
+  if (parts.length < 2) return null;
+
+  let best: { candidateId: string; roundSlug: string } | null = null;
+
+  for (let i = 1; i < parts.length; i++) {
+    const candidateId = parts.slice(0, i).join("-");
+    const roundSlug = parts.slice(i).join("-");
+    if (!candidateId || !roundSlug) continue;
+
+    if (!validateCandidateId) {
+      return { candidateId, roundSlug };
+    }
+    if (validateCandidateId(candidateId)) {
+      best = { candidateId, roundSlug };
+    }
+  }
+
+  return best;
 }
 
 export function zeMeetPath(roomId: string): string {

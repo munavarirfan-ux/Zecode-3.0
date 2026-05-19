@@ -17,7 +17,9 @@ export function resolveZeMeetSession(
   roomId: string,
   viewerRole: ZeMeetSession["viewerRole"] = "interviewer",
 ): ZeMeetSession | null {
-  const parsed = parseZeMeetRoomId(roomId);
+  const parsed = parseZeMeetRoomId(roomId, (id) =>
+    HIRING_CANDIDATES.some((c) => c.id === id),
+  );
   if (!parsed) return getDemoZeMeetSession(roomId, viewerRole);
 
   const candidate = HIRING_CANDIDATES.find((c) => c.id === parsed.candidateId);
@@ -128,6 +130,7 @@ function getDemoZeMeetSession(
         skills: ["Figma", "Design systems", "User research"],
         portfolioUrl: "https://emma.design",
         linkedin: "linkedin.com/in/emmaschneider",
+        resumeUrl: "/resumes/emma-schneider.pdf",
         resumeStatus: "Reviewed",
       },
     },

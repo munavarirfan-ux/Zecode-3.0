@@ -20,10 +20,8 @@ import {
   getFeedbackCounts,
   groupCandidateInterviews,
 } from "@/lib/hiring/candidateInterviews";
-import {
-  canRequestFeedback,
-  getPreviewActorLabel,
-} from "@/lib/hiring/feedbackPermissions";
+import { canRequestFeedback, getPreviewActorLabel } from "@/lib/hiring/feedbackPermissions";
+import type { CandidateInterviewFlowActions } from "./useCandidateInterviewScheduling";
 import {
   getInterviewFeedback,
   submitFeedbackRequest,
@@ -83,16 +81,22 @@ function UpcomingInterviewCard({
   interview,
   bundle,
   canRequest,
+  canSchedule,
   feedbackRequestedLabel,
   onRequestFeedback,
   onOpen,
+  onReschedule,
+  onCancel,
 }: {
   interview: CandidateInterview;
   bundle: InterviewFeedbackBundle;
   canRequest: boolean;
+  canSchedule: boolean;
   feedbackRequestedLabel: string | null;
   onRequestFeedback: () => void;
   onOpen: () => void;
+  onReschedule: () => void;
+  onCancel: () => void;
 }) {
   return (
     <article
@@ -143,17 +147,30 @@ function UpcomingInterviewCard({
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Button type="button" size="sm" className="h-8 rounded-[9px] px-3 text-[12px]" onClick={onOpen}>
-          Open
+          {interview.meetUrl ? "Join meeting" : "View schedule"}
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="h-8 rounded-[9px] px-3 text-[12px]"
-          onClick={() => toast.message("Reschedule flow coming soon")}
-        >
-          Reschedule
-        </Button>
+        {canSchedule ? (
+          <>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-[9px] px-3 text-[12px]"
+              onClick={onReschedule}
+            >
+              Reschedule
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-[9px] px-3 text-[12px] text-red-600 hover:text-red-700 dark:text-red-400"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : null}
         {canRequest && bundle.status !== "submitted" ? (
           <Button
             type="button"
@@ -293,7 +310,13 @@ function CompletedInterviewCard({
   );
 }
 
-function InterviewsEmptyState({ onSchedule }: { onSchedule: () => void }) {
+function InterviewsEmptyState({
+  canSchedule,
+  onSchedule,
+}: {
+  canSchedule: boolean;
+  onSchedule: () => void;
+}) {
   return (
     <div
       className={cn(
@@ -306,12 +329,16 @@ function InterviewsEmptyState({ onSchedule }: { onSchedule: () => void }) {
       </div>
       <p className="text-[15px] font-semibold text-[#18181B] dark:text-text">No interviews scheduled yet</p>
       <p className="mt-1 max-w-sm text-[13px] text-[#71717A] dark:text-text-muted">
-        Schedule the first conversation to start tracking this candidate&apos;s interview journey.
+        {canSchedule
+          ? "Schedule the first conversation to start tracking this candidate's interview journey."
+          : "No interviews have been scheduled for this candidate yet."}
       </p>
-      <Button type="button" size="sm" className="mt-5 h-9 gap-1.5 rounded-[9px] px-4" onClick={onSchedule}>
-        <CalendarPlus className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-        Schedule first interview
-      </Button>
+      {canSchedule ? (
+        <Button type="button" size="sm" className="mt-5 h-9 gap-1.5 rounded-[9px] px-4" onClick={onSchedule}>
+          <CalendarPlus className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+          Schedule first interview
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -320,13 +347,16 @@ export function CandidateInterviewsTab({
   candidate,
   job,
   onOpenFeedback,
+  interviewFlows,
 }: {
   candidate: HiringCandidate;
   job: HiringJob;
   onOpenFeedback?: () => void;
+  interviewFlows: CandidateInterviewFlowActions;
 }) {
   const { selectedRole } = useRole();
   const canRequest = canRequestFeedback(selectedRole);
+  const { canSchedule, openSchedule, openReschedule, openCancel, openViewSchedule } = interviewFlows;
   const actorName = getPreviewActorLabel(selectedRole);
 
   const [bundle, setBundle] = useState(() => getInterviewFeedback(candidate));
@@ -366,7 +396,7 @@ export function CandidateInterviewsTab({
 
   if (interviews.length === 0) {
     return (
-      <InterviewsEmptyState onSchedule={() => toast.message("Interview scheduling coming soon")} />
+      <InterviewsEmptyState canSchedule={canSchedule} onSchedule={() => openSchedule()} />
     );
   }
 
@@ -378,7 +408,21 @@ export function CandidateInterviewsTab({
             <h3 className="text-[13px] font-semibold tracking-[-0.02em] text-[#18181B] dark:text-text">
               Upcoming interviews
             </h3>
-            <span className="text-[11px] font-medium text-[#A1A1AA]">{upcoming.length} scheduled</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-medium text-[#A1A1AA]">{upcoming.length} scheduled</span>
+              {canSchedule ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 rounded-[8px] px-2.5 text-[11px]"
+                  onClick={() => openSchedule()}
+                >
+                  <CalendarPlus className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
+                  Schedule
+                </Button>
+              ) : null}
+            </div>
           </div>
           <div className="space-y-3">
             {upcoming.map((interview) => (
@@ -387,12 +431,34 @@ export function CandidateInterviewsTab({
                 interview={interview}
                 bundle={bundle}
                 canRequest={canRequest}
+                canSchedule={canSchedule}
                 feedbackRequestedLabel={feedbackRequestedLabel}
                 onRequestFeedback={() => setRequestOpen(true)}
-                onOpen={() => onOpenFeedback?.()}
+                onOpen={() => openViewSchedule(interview.round, interview.meetUrl)}
+                onReschedule={() => openReschedule(interview.round)}
+                onCancel={() => openCancel(interview.round)}
               />
             ))}
           </div>
+        </section>
+      ) : canSchedule ? (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-[13px] font-semibold tracking-[-0.02em] text-[#18181B] dark:text-text">
+              Upcoming interviews
+            </h3>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 rounded-[8px] px-2.5 text-[11px]"
+              onClick={() => openSchedule()}
+            >
+              <CalendarPlus className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
+              Schedule interview
+            </Button>
+          </div>
+          <p className="text-[13px] text-[#71717A] dark:text-text-muted">No upcoming interviews scheduled.</p>
         </section>
       ) : null}
 

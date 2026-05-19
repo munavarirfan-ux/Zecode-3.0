@@ -1,69 +1,95 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ZeMeetFeedbackModal } from "@/components/zemeet/feedback/ZeMeetFeedbackModal";
+import { CodeChallengeEndConfirmDialog } from "@/components/zemeet/code/CodeChallengeEndConfirmDialog";
+import { CodeChallengeInviteModal } from "@/components/zemeet/code/CodeChallengeInviteModal";
+import { CodeChallengeSendConfirmDialog } from "@/components/zemeet/code/CodeChallengeSendConfirmDialog";
+import { ZeMeetEndInterviewDialog } from "@/components/zemeet/feedback/ZeMeetEndInterviewDialog";
+import { ZeMeetPostInterviewFeedback } from "@/components/zemeet/feedback/ZeMeetPostInterviewFeedback";
 import { ZeMeetLobby } from "@/components/zemeet/lobby/ZeMeetLobby";
 import { ZeMeetRoom } from "@/components/zemeet/room/ZeMeetRoom";
 import { ZeMeetProvider, useZeMeet } from "@/components/zemeet/ZeMeetProvider";
-import { zemeetGrain, zemeetShell } from "@/components/zemeet/zemeetTokens";
-import { syncZeMeetArtifactToCandidateReport } from "@/lib/zemeet/sync";
-import type { ZeMeetSession, ZeMeetSessionArtifact } from "@/lib/zemeet/types";
+import { useZeMeetTokens } from "@/components/zemeet/zemeetTokens";
+import type { ZeMeetSession } from "@/lib/zemeet/types";
 import { cn } from "@/lib/utils";
 
-function ZeMeetFlow() {
-  const { phase, setPhase, session, notes, codeChallenge, feedback, elapsedSeconds } = useZeMeet();
+function ZeMeetEndedScreen() {
+  const { session } = useZeMeet();
+  const t = useZeMeetTokens();
 
-  const handleLeave = useCallback(() => {
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center px-4 text-center">
+      <p className={t.label}>ZeMeet</p>
+      <h1 className={cn(t.heading, "mt-2 text-[1.5rem]")}>Session ended</h1>
+      <p className={cn(t.meta, "mt-2 max-w-sm text-[14px]")}>
+        Interview artifacts have been synced to the candidate report in Ze[code] Hiring Intelligence.
+      </p>
+      <a
+        href={`/hiring/jobs/${session.context.jobId}`}
+        className={cn(
+          "mt-8 inline-flex h-11 items-center rounded-[12px] px-5 text-[14px] font-medium",
+          t.isLight
+            ? "bg-[rgba(15,23,42,0.06)] text-[#18181B] hover:bg-[rgba(15,23,42,0.1)]"
+            : "bg-white/10 text-white hover:bg-white/15",
+        )}
+      >
+        Back to job workspace
+      </a>
+    </div>
+  );
+}
+
+function ZeMeetFlow() {
+  const { phase, setPhase, session } = useZeMeet();
+  const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+
+  const isInterviewer =
+    session.viewerRole === "interviewer" || session.viewerRole === "observer";
+
+  const handleLeaveRequest = useCallback(() => {
     if (session.viewerRole === "candidate") {
       setPhase("ended");
       toast.success("You left the interview");
       return;
     }
-    setPhase("feedback");
+    setEndConfirmOpen(true);
   }, [session.viewerRole, setPhase]);
 
-  const handleFeedbackSubmit = useCallback(() => {
-    const artifact: ZeMeetSessionArtifact = {
-      roomId: session.context.roomId,
-      candidateId: session.context.candidateId,
-      interviewId: session.context.interviewId,
-      notes,
-      codeChallenge: codeChallenge.status !== "idle" ? codeChallenge : undefined,
-      feedback,
-      endedAt: new Date().toISOString(),
-      durationSeconds: elapsedSeconds,
-    };
-    syncZeMeetArtifactToCandidateReport(artifact);
-    setPhase("ended");
-    toast.success("Feedback saved to candidate report");
-  }, [session, notes, codeChallenge, feedback, elapsedSeconds, setPhase]);
+  const handleEndConfirm = useCallback(() => {
+    setEndConfirmOpen(false);
+    setPhase("feedback");
+  }, [setPhase]);
 
   if (phase === "ended") {
-    return (
-      <div className="flex min-h-dvh flex-col items-center justify-center px-4 text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/45">ZeMeet</p>
-        <h1 className="mt-2 text-[1.5rem] font-semibold text-white">Session ended</h1>
-        <p className="mt-2 max-w-sm text-[14px] text-white/55">
-          Interview artifacts have been synced to the candidate report in Ze[code] Hiring
-          Intelligence.
-        </p>
-        <a
-          href={`/hiring/jobs/${session.context.jobId}`}
-          className="mt-8 inline-flex h-11 items-center rounded-[12px] bg-white/10 px-5 text-[14px] font-medium text-white hover:bg-white/15"
-        >
-          Back to job workspace
-        </a>
-      </div>
-    );
+    return <ZeMeetEndedScreen />;
+  }
+
+  if (phase === "feedback" && isInterviewer) {
+    return <ZeMeetPostInterviewFeedback onComplete={() => setPhase("ended")} />;
   }
 
   return (
     <>
-      {phase === "lobby" ? <ZeMeetLobby /> : null}
-      {phase === "live" ? <ZeMeetRoom onLeave={handleLeave} /> : null}
-      <ZeMeetFeedbackModal onSubmit={handleFeedbackSubmit} />
+      {phase === "lobby" ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <ZeMeetLobby />
+        </div>
+      ) : null}
+      {phase === "live" ? (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <ZeMeetRoom onLeave={handleLeaveRequest} />
+        </div>
+      ) : null}
+      <CodeChallengeSendConfirmDialog />
+      <CodeChallengeEndConfirmDialog />
+      <CodeChallengeInviteModal />
+      <ZeMeetEndInterviewDialog
+        open={endConfirmOpen}
+        onOpenChange={setEndConfirmOpen}
+        onConfirm={handleEndConfirm}
+      />
     </>
   );
 }
@@ -80,15 +106,16 @@ export function ZeMeetExperience({ session }: { session: ZeMeetSession }) {
 }
 
 function ZeMeetExperienceInner({ skipLobby }: { skipLobby: boolean }) {
-  const { phase, startSession } = useZeMeet();
+  const { phase, startSession, theme } = useZeMeet();
+  const t = useZeMeetTokens();
 
   useEffect(() => {
     if (skipLobby && phase === "lobby") startSession();
   }, [skipLobby, phase, startSession]);
 
   return (
-    <div className={cn(zemeetShell, "flex min-h-dvh flex-col")}>
-      <div className={zemeetGrain} aria-hidden />
+    <div className={cn(t.shell, "flex h-dvh flex-col overflow-hidden")} data-zemeet-theme={theme}>
+      <div className={t.grain} aria-hidden />
       <ZeMeetFlow />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Briefcase,
   Calendar,
@@ -71,6 +71,10 @@ import { AddTagsDialog } from "./AddTagsDialog";
 import { EditCandidateDialog } from "./EditCandidateDialog";
 import { MoveApplicantDialog } from "./MoveApplicantDialog";
 import { RejectApplicantDialog } from "./RejectApplicantDialog";
+import { useRole } from "@/context/RoleContext";
+import { canScheduleInterview } from "@/lib/hiring/feedbackPermissions";
+import { CandidateReportInterviewDialogs } from "./CandidateReportInterviewDialogs";
+import { useCandidateInterviewScheduling } from "./useCandidateInterviewScheduling";
 
 const reportMenuItem =
   "flex cursor-pointer items-center gap-2 rounded-[8px] px-2 py-1.5 text-[12px] font-medium outline-none focus:bg-[rgba(15,23,42,0.04)] data-[highlighted]:bg-[rgba(15,23,42,0.04)]";
@@ -143,6 +147,8 @@ function CandidateReportHero({
   onAddTags,
   onMoveToStage,
   onRejectApplicant,
+  canSchedule,
+  onScheduleInterview,
 }: {
   candidate: HiringCandidate;
   job: HiringJob;
@@ -154,6 +160,8 @@ function CandidateReportHero({
   onAddTags: () => void;
   onMoveToStage: (stage: HiringStageName, substage?: string) => void;
   onRejectApplicant: () => void;
+  canSchedule: boolean;
+  onScheduleInterview: () => void;
 }) {
   const stage = getCandidateStage(candidate);
   const source = normalizeSource(profile.application.source);
@@ -226,10 +234,12 @@ function CandidateReportHero({
               <MoveRight className="h-4 w-4" strokeWidth={1.5} />
               Move Applicant
             </Button>
-            <Button variant="outline" size="sm" className={heroActionBtn}>
-              <Calendar className="h-4 w-4" strokeWidth={1.5} />
-              Schedule
-            </Button>
+            {canSchedule ? (
+              <Button variant="outline" size="sm" className={heroActionBtn} onClick={onScheduleInterview}>
+                <Calendar className="h-4 w-4" strokeWidth={1.5} />
+                Schedule
+              </Button>
+            ) : null}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className={cn(heroActionBtn, "w-10 px-0")}>
@@ -326,6 +336,8 @@ export function CandidateReportDialog({
   const [activeTab, setActiveTab] = useState(initialTab);
   const [liveCandidate, setLiveCandidate] = useState<HiringCandidate | null>(candidate);
   const editReturnFocusRef = useRef<HTMLElement | null>(null);
+  const { selectedRole } = useRole();
+  const canSchedule = canScheduleInterview(selectedRole);
 
   useEffect(() => {
     setLiveCandidate(candidate);
@@ -337,12 +349,44 @@ export function CandidateReportDialog({
     [liveCandidate, job],
   );
 
-  if (!candidate || !liveCandidate || !profile) return null;
+  const handleCandidateUpdated = useCallback(
+    (updated: HiringCandidate) => {
+      setLiveCandidate(updated);
+      onCandidateUpdated?.(updated);
+    },
+    [onCandidateUpdated],
+  );
 
-  const handleCandidateUpdated = (updated: HiringCandidate) => {
-    setLiveCandidate(updated);
-    onCandidateUpdated?.(updated);
-  };
+  const {
+    scheduleTarget,
+    cancelTarget,
+    cancelling,
+    openSchedule,
+    openReschedule,
+    openViewSchedule,
+    openCancel,
+    confirmCancel,
+    handleScheduled,
+    closeSchedule,
+    closeCancel,
+  } = useCandidateInterviewScheduling({
+    candidate: liveCandidate,
+    job,
+    onCandidateUpdated: handleCandidateUpdated,
+  });
+
+  const interviewFlows = useMemo(
+    () => ({
+      canSchedule,
+      openSchedule,
+      openReschedule,
+      openCancel,
+      openViewSchedule,
+    }),
+    [canSchedule, openSchedule, openReschedule, openCancel, openViewSchedule],
+  );
+
+  if (!candidate || !liveCandidate || !profile) return null;
 
   const handleMoveToStage = (stage: HiringStageName, substage?: string) => {
     const result = moveCandidateToStage(liveCandidate.id, stage, { substage });
@@ -401,6 +445,11 @@ export function CandidateReportDialog({
                   onAddTags={() => setTagsOpen(true)}
                   onMoveToStage={handleMoveToStage}
                   onRejectApplicant={() => setRejectOpen(true)}
+                  canSchedule={canSchedule}
+                  onScheduleInterview={() => {
+                    setActiveTab("interviews");
+                    openSchedule();
+                  }}
                   />
                 </div>
 
@@ -459,6 +508,7 @@ export function CandidateReportDialog({
                       candidate={liveCandidate}
                       job={job}
                       onOpenFeedback={() => setActiveTab("feedback")}
+                      interviewFlows={interviewFlows}
                     />
                   </TabsContent>
 
@@ -508,6 +558,21 @@ export function CandidateReportDialog({
           handleCandidateUpdated(updated);
           onOpenChange(false);
         }}
+      />
+
+      <CandidateReportInterviewDialogs
+        candidate={liveCandidate}
+        scheduleTarget={scheduleTarget}
+        cancelTarget={cancelTarget}
+        cancelling={cancelling}
+        onScheduleOpenChange={(open) => {
+          if (!open) closeSchedule();
+        }}
+        onCancelOpenChange={(open) => {
+          if (!open) closeCancel();
+        }}
+        onScheduled={handleScheduled}
+        onConfirmCancel={confirmCancel}
       />
     </>
   );

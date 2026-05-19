@@ -4,12 +4,32 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
+import {
+  challengeFromPoolItem,
+  createDefaultCodeChallenge,
+  QUESTION_POOL,
+} from "@/lib/zemeet/codeChallenge";
+import {
+  challengeSyncStorageKey,
+  clearCodeChallengeNotify,
+  CODE_CHALLENGE_SYNC_EVENT,
+  publishCodeChallengeSync,
+  readCodeChallengeSync,
+  type CodeChallengeSyncPayload,
+} from "@/lib/zemeet/challengeSync";
+import { codeChallengeArtifactFromState, storeCodeChallengeArtifact } from "@/lib/zemeet/sync";
+import {
+  loadZeMeetTheme,
+  saveZeMeetTheme,
+  type ZeMeetTheme,
+} from "@/lib/zemeet/theme";
 import {
   DEFAULT_DEVICE_SETTINGS,
   DEFAULT_PERMISSIONS,
@@ -24,40 +44,7 @@ import {
   type ZeMeetSession,
 } from "@/lib/zemeet/types";
 
-const DEFAULT_CODE: ZeMeetCodeChallenge = {
-  status: "idle",
-  problemTitle: "Design a rate limiter",
-  problemStatement:
-    "Implement a token-bucket rate limiter API. Support `allow(key)` returning boolean and document tradeoffs.",
-  language: "TypeScript",
-  starterCode: `export function createRateLimiter(maxTokens: number, refillPerSec: number) {
-  // your implementation
-}`,
-  candidateCode: `export function createRateLimiter(maxTokens: number, refillPerSec: number) {
-  let tokens = maxTokens;
-  let last = Date.now();
-  return {
-    allow(_key: string) {
-      const now = Date.now();
-      const elapsed = (now - last) / 1000;
-      tokens = Math.min(maxTokens, tokens + elapsed * refillPerSec);
-      last = now;
-      if (tokens >= 1) {
-        tokens -= 1;
-        return true;
-      }
-      return false;
-    },
-  };
-}`,
-  testCases: [
-    { id: "t1", label: "allows burst within limit", passed: true },
-    { id: "t2", label: "refills over time", passed: undefined },
-    { id: "t3", label: "rejects when empty", passed: undefined },
-  ],
-  consoleOutput: "> Running tests…\n✓ allows burst within limit\n⧗ refills over time (pending)",
-  interviewerNotes: "",
-};
+export type CodeChallengeWorkspacePanel = "workspace" | "questions";
 
 type ZeMeetContextValue = {
   session: ZeMeetSession;
@@ -70,20 +57,35 @@ type ZeMeetContextValue = {
   elapsedSeconds: number;
   isRecording: boolean;
   setRecording: (v: boolean) => void;
-  sidebarTab: "participants" | "chat" | "notes" | null;
-  setSidebarTab: (t: "participants" | "chat" | "notes" | null) => void;
+  sidebarTab: "participants" | "chat" | "notes" | "instructions" | null;
+  setSidebarTab: (t: "participants" | "chat" | "notes" | "instructions" | null) => void;
+  theme: ZeMeetTheme;
+  setTheme: (theme: ZeMeetTheme) => void;
   notes: ZeMeetNoteEntry[];
   addNote: (body: string) => void;
   chat: ZeMeetChatMessage[];
   sendChat: (body: string) => void;
   codeChallenge: ZeMeetCodeChallenge;
-  toggleCodeChallenge: () => void;
-  inviteCodeChallenge: () => void;
+  sendCodeChallengeOpen: boolean;
+  setSendCodeChallengeOpen: (open: boolean) => void;
+  endCodeChallengeOpen: boolean;
+  setEndCodeChallengeOpen: (open: boolean) => void;
+  workspacePanel: CodeChallengeWorkspacePanel;
+  setWorkspacePanel: (panel: CodeChallengeWorkspacePanel) => void;
+  openSendCodeChallengeConfirm: () => void;
+  sendCodeChallengeRequest: () => void;
   acceptCodeChallenge: () => void;
   declineCodeChallenge: () => void;
+  confirmEndCodeChallenge: () => void;
   updateCandidateCode: (code: string) => void;
+  updateCodeChallenge: (patch: Partial<ZeMeetCodeChallenge>) => void;
+  selectPoolQuestion: (questionId: string) => void;
+  setActiveFile: (fileId: string) => void;
+  updateActiveFileContent: (content: string) => void;
   runCodeTests: () => void;
-  closeCodeChallenge: () => void;
+  submitCodeChallenge: () => void;
+  toggleCandidateEditing: () => void;
+  questionPool: typeof QUESTION_POOL;
   interviewerIntelPanel: ZeMeetInterviewerIntelPanel;
   toggleInterviewerIntel: (panel: "resume" | "linkedin") => void;
   feedback: ZeMeetFeedbackDraft;
@@ -117,19 +119,58 @@ export function ZeMeetProvider({
   children: ReactNode;
 }) {
   const [phase, setPhase] = useState<ZeMeetPhase>("lobby");
+  const [theme, setThemeState] = useState<ZeMeetTheme>(() => loadZeMeetTheme());
   const [devices, setDevices] = useState(DEFAULT_DEVICE_SETTINGS);
   const [permissions, setPermissions] = useState(DEFAULT_PERMISSIONS);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isRecording, setRecording] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<"participants" | "chat" | "notes" | null>(null);
+  const [sidebarTab, setSidebarTab] = useState<
+    "participants" | "chat" | "notes" | "instructions" | null
+  >(null);
+
+  const setTheme = useCallback((next: ZeMeetTheme) => {
+    setThemeState(next);
+    saveZeMeetTheme(next);
+  }, []);
   const [notes, setNotes] = useState<ZeMeetNoteEntry[]>([]);
   const [chat, setChat] = useState<ZeMeetChatMessage[]>([]);
-  const [codeChallenge, setCodeChallenge] = useState<ZeMeetCodeChallenge>(DEFAULT_CODE);
+  const [codeChallenge, setCodeChallenge] = useState<ZeMeetCodeChallenge>(() =>
+    createDefaultCodeChallenge(),
+  );
+  const [sendCodeChallengeOpen, setSendCodeChallengeOpen] = useState(false);
+  const [endCodeChallengeOpen, setEndCodeChallengeOpen] = useState(false);
+  const [workspacePanel, setWorkspacePanel] = useState<CodeChallengeWorkspacePanel>("workspace");
   const [interviewerIntelPanel, setInterviewerIntelPanel] =
     useState<ZeMeetInterviewerIntelPanel>("none");
   const [feedback, setFeedback] = useState<ZeMeetFeedbackDraft>(emptyFeedback);
   const sessionStartedAt = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const challengeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autosaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastChallengeSyncAt = useRef(0);
+  const roomId = session.context.roomId;
+
+  const syncChallenge = useCallback(
+    (next: ZeMeetCodeChallenge, notifyInterviewer?: string) => {
+      publishCodeChallengeSync(roomId, {
+        challenge: next,
+        updatedAt: Date.now(),
+        notifyInterviewer,
+      });
+    },
+    [roomId],
+  );
+
+  const applyChallenge = useCallback(
+    (updater: (c: ZeMeetCodeChallenge) => ZeMeetCodeChallenge, notify?: string) => {
+      setCodeChallenge((c) => {
+        const next = updater(c);
+        syncChallenge(next, notify);
+        return next;
+      });
+    },
+    [syncChallenge],
+  );
 
   const startSession = useCallback(() => {
     sessionStartedAt.current = Date.now();
@@ -177,86 +218,222 @@ export function ZeMeetProvider({
     [session],
   );
 
-  const inviteCodeChallenge = useCallback(() => {
-    setCodeChallenge((c) => ({ ...c, status: "invite_pending" }));
-  }, []);
+  const applySyncPayload = useCallback(
+    (payload: CodeChallengeSyncPayload) => {
+      if (payload.updatedAt > lastChallengeSyncAt.current) {
+        lastChallengeSyncAt.current = payload.updatedAt;
+      }
+      setCodeChallenge(payload.challenge);
+      if (
+        payload.notifyInterviewer &&
+        (session.viewerRole === "interviewer" || session.viewerRole === "observer")
+      ) {
+        toast.error(payload.notifyInterviewer);
+        clearCodeChallengeNotify(roomId);
+      }
+    },
+    [roomId, session.viewerRole],
+  );
+
+  useEffect(() => {
+    const initial = readCodeChallengeSync(roomId);
+    if (initial?.challenge) applySyncPayload(initial);
+
+    function onStorage(e: StorageEvent) {
+      if (e.key !== challengeSyncStorageKey(roomId) || !e.newValue) return;
+      try {
+        applySyncPayload(JSON.parse(e.newValue) as CodeChallengeSyncPayload);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    function onCustom(e: Event) {
+      const detail = (e as CustomEvent<CodeChallengeSyncPayload & { roomId: string }>).detail;
+      if (!detail || detail.roomId !== roomId) return;
+      applySyncPayload(detail);
+    }
+
+    const poll = setInterval(() => {
+      const sync = readCodeChallengeSync(roomId);
+      if (!sync?.challenge) return;
+      if (sync.updatedAt <= lastChallengeSyncAt.current) {
+        if (sync.notifyInterviewer) applySyncPayload(sync);
+        return;
+      }
+      applySyncPayload(sync);
+    }, 800);
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(CODE_CHALLENGE_SYNC_EVENT, onCustom);
+    return () => {
+      clearInterval(poll);
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(CODE_CHALLENGE_SYNC_EVENT, onCustom);
+    };
+  }, [roomId, applySyncPayload]);
+
+  useEffect(() => {
+    if (codeChallenge.status !== "active") {
+      if (challengeTimerRef.current) clearInterval(challengeTimerRef.current);
+      return;
+    }
+    challengeTimerRef.current = setInterval(() => {
+      setCodeChallenge((c) => ({ ...c, challengeElapsedSeconds: c.challengeElapsedSeconds + 1 }));
+    }, 1000);
+    return () => {
+      if (challengeTimerRef.current) clearInterval(challengeTimerRef.current);
+    };
+  }, [codeChallenge.status]);
+
+  const openSendCodeChallengeConfirm = useCallback(() => {
+    if (session.viewerRole !== "interviewer" && session.viewerRole !== "observer") return;
+    if (codeChallenge.status === "active") {
+      setEndCodeChallengeOpen(true);
+      return;
+    }
+    setSendCodeChallengeOpen(true);
+  }, [session.viewerRole, codeChallenge.status]);
+
+  const sendCodeChallengeRequest = useCallback(() => {
+    setSendCodeChallengeOpen(false);
+    applyChallenge((c) => ({
+      ...c,
+      status: "invite_pending",
+      finalStatus: "pending",
+    }));
+    sendChat("Your interviewer sent a live coding challenge request.");
+    toast.success("Code challenge request sent");
+  }, [applyChallenge, sendChat]);
 
   const acceptCodeChallenge = useCallback(() => {
-    setCodeChallenge((c) => ({
+    if (phase === "lobby") {
+      startSession();
+    }
+    const startedAt = new Date().toISOString();
+    applyChallenge((c) => ({
       ...c,
       status: "active",
-      startedAt: c.startedAt ?? new Date().toISOString(),
+      finalStatus: "active",
+      startedAt: c.startedAt ?? startedAt,
+      challengeElapsedSeconds: c.challengeElapsedSeconds || 0,
     }));
-  }, []);
+    toast.success("Code challenge started");
+  }, [applyChallenge, phase, startSession]);
 
   const declineCodeChallenge = useCallback(() => {
-    setCodeChallenge((c) => ({ ...c, status: "declined" }));
-  }, []);
+    applyChallenge(
+      (c) => ({
+        ...c,
+        status: "declined",
+        finalStatus: "rejected",
+        endedAt: new Date().toISOString(),
+      }),
+      "Candidate rejected the code challenge request.",
+    );
+    toast.message("Challenge declined");
+  }, [applyChallenge]);
 
-  const closeCodeChallenge = useCallback(() => {
+  const confirmEndCodeChallenge = useCallback(() => {
+    setEndCodeChallengeOpen(false);
     setInterviewerIntelPanel("none");
-    setCodeChallenge((c) => ({
-      ...c,
-      status: "completed",
-      durationSeconds: c.durationSeconds ?? 600,
-    }));
-  }, []);
+    setWorkspacePanel("workspace");
+    const endedAt = new Date().toISOString();
+    applyChallenge((c) => {
+      const next = {
+        ...c,
+        status: "completed" as const,
+        finalStatus: "completed" as const,
+        endedAt,
+        durationSeconds: c.challengeElapsedSeconds || c.durationSeconds || 0,
+      };
+      storeCodeChallengeArtifact(
+        session.context.interviewId,
+        codeChallengeArtifactFromState(next),
+      );
+      return next;
+    });
+    toast.success("Code challenge ended", {
+      description: "Returned to interview room · challenge saved to candidate report",
+    });
+  }, [applyChallenge, session.context.interviewId]);
 
   const toggleInterviewerIntel = useCallback((panel: "resume" | "linkedin") => {
     setInterviewerIntelPanel((current) => (current === panel ? "none" : panel));
   }, []);
 
-  const toggleCodeChallenge = useCallback(() => {
-    const isCandidate = session.viewerRole === "candidate";
-    const { status } = codeChallenge;
-
-    if (status === "active") {
-      closeCodeChallenge();
-      toast.message("Code challenge closed");
-      return;
-    }
-
-    if (isCandidate) {
-      if (status === "invite_pending") {
-        acceptCodeChallenge();
-        toast.success("Code challenge started");
-      }
-      return;
-    }
-
-    // Interviewer / observer — open coding workspace immediately
-    if (status === "idle" || status === "declined") {
-      acceptCodeChallenge();
-      toast.success("Code challenge opened", {
-        description: "Candidate receives accept / decline in their session · you observe live",
+  const updateCandidateCode = useCallback(
+    (code: string) => {
+      applyChallenge((c) => {
+        const files = c.files.map((f) =>
+          f.id === c.activeFileId ? { ...f, content: code } : f,
+        );
+        return { ...c, candidateCode: code, files, autosaveStatus: "saving" };
       });
-      sendChat("Code challenge invitation sent — candidate can accept from their view.");
-      return;
-    }
+      if (autosaveRef.current) clearTimeout(autosaveRef.current);
+      autosaveRef.current = setTimeout(() => {
+        applyChallenge((c) => ({ ...c, autosaveStatus: "saved" }));
+      }, 600);
+    },
+    [applyChallenge],
+  );
 
-    if (status === "invite_pending" || status === "completed") {
-      acceptCodeChallenge();
-      toast.success("Code challenge opened");
-    }
-  }, [
-    session.viewerRole,
-    codeChallenge.status,
-    acceptCodeChallenge,
-    closeCodeChallenge,
-    sendChat,
-  ]);
+  const updateCodeChallenge = useCallback(
+    (patch: Partial<ZeMeetCodeChallenge>) => {
+      applyChallenge((c) => ({ ...c, ...patch }));
+    },
+    [applyChallenge],
+  );
 
-  const updateCandidateCode = useCallback((code: string) => {
-    setCodeChallenge((c) => ({ ...c, candidateCode: code }));
-  }, []);
+  const selectPoolQuestion = useCallback(
+    (questionId: string) => {
+      const item = QUESTION_POOL.find((q) => q.id === questionId);
+      if (!item) return;
+      applyChallenge((c) => ({ ...c, ...challengeFromPoolItem(item) }));
+    },
+    [applyChallenge],
+  );
+
+  const setActiveFile = useCallback(
+    (fileId: string) => {
+      applyChallenge((c) => {
+        const file = c.files.find((f) => f.id === fileId);
+        return file
+          ? { ...c, activeFileId: fileId, candidateCode: file.content, language: file.language }
+          : c;
+      });
+    },
+    [applyChallenge],
+  );
+
+  const updateActiveFileContent = useCallback(
+    (content: string) => {
+      updateCandidateCode(content);
+    },
+    [updateCandidateCode],
+  );
 
   const runCodeTests = useCallback(() => {
-    setCodeChallenge((c) => ({
+    applyChallenge((c) => ({
       ...c,
-      consoleOutput: `${c.consoleOutput}\n✓ refills over time\n✓ rejects when empty\n\nAll tests passed.`,
+      consoleOutput: `> Running ${c.testCases.length} tests…\n✓ ${c.testCases[0]?.label ?? "test 1"}\n✓ refills over time\n✓ rejects when empty\n\n3/3 passed · ${new Date().toLocaleTimeString()}`,
       testCases: c.testCases.map((t) => ({ ...t, passed: true })),
     }));
-  }, []);
+    toast.success("All tests passed");
+  }, [applyChallenge]);
+
+  const submitCodeChallenge = useCallback(() => {
+    if (session.viewerRole !== "candidate") return;
+    runCodeTests();
+    toast.success("Solution submitted to interviewer");
+  }, [session.viewerRole, runCodeTests]);
+
+  const toggleCandidateEditing = useCallback(() => {
+    applyChallenge((c) => ({
+      ...c,
+      candidateEditingEnabled: !c.candidateEditingEnabled,
+    }));
+  }, [applyChallenge]);
 
   const value = useMemo(
     () => ({
@@ -272,18 +449,33 @@ export function ZeMeetProvider({
       setRecording,
       sidebarTab,
       setSidebarTab,
+      theme,
+      setTheme,
       notes,
       addNote,
       chat,
       sendChat,
       codeChallenge,
-      toggleCodeChallenge,
-      inviteCodeChallenge,
+      sendCodeChallengeOpen,
+      setSendCodeChallengeOpen,
+      endCodeChallengeOpen,
+      setEndCodeChallengeOpen,
+      workspacePanel,
+      setWorkspacePanel,
+      openSendCodeChallengeConfirm,
+      sendCodeChallengeRequest,
       acceptCodeChallenge,
       declineCodeChallenge,
+      confirmEndCodeChallenge,
       updateCandidateCode,
+      updateCodeChallenge,
+      selectPoolQuestion,
+      setActiveFile,
+      updateActiveFileContent,
       runCodeTests,
-      closeCodeChallenge,
+      submitCodeChallenge,
+      toggleCandidateEditing,
+      questionPool: QUESTION_POOL,
       interviewerIntelPanel,
       toggleInterviewerIntel,
       feedback,
@@ -299,22 +491,31 @@ export function ZeMeetProvider({
       elapsedSeconds,
       isRecording,
       sidebarTab,
+      theme,
       notes,
       addNote,
       chat,
       sendChat,
       codeChallenge,
-      toggleCodeChallenge,
-      inviteCodeChallenge,
+      sendCodeChallengeOpen,
+      endCodeChallengeOpen,
+      workspacePanel,
+      openSendCodeChallengeConfirm,
+      sendCodeChallengeRequest,
       acceptCodeChallenge,
       declineCodeChallenge,
+      confirmEndCodeChallenge,
       updateCandidateCode,
+      updateCodeChallenge,
+      selectPoolQuestion,
+      setActiveFile,
+      updateActiveFileContent,
       runCodeTests,
-      closeCodeChallenge,
+      submitCodeChallenge,
+      toggleCandidateEditing,
       interviewerIntelPanel,
       toggleInterviewerIntel,
       feedback,
-      setFeedback,
       startSession,
     ],
   );

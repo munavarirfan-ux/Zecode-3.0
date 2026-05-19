@@ -11,6 +11,11 @@ export function canRequestFeedback(role: PreviewRole): boolean {
   return role === "superAdmin" || role === "admin";
 }
 
+/** Admin and Super Admin can schedule interviews from the candidate report. */
+export function canScheduleInterview(role: PreviewRole): boolean {
+  return role === "superAdmin" || role === "admin";
+}
+
 /** Recruiter feedback editable by Admin, Super Admin, and Curator (recruiter owner persona). */
 export function canEditRecruiterFeedback(role: PreviewRole): boolean {
   return role === "superAdmin" || role === "admin" || role === "curator";
