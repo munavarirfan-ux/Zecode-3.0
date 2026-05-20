@@ -376,21 +376,14 @@ function StepEducation({
           key={entry.id}
           entry={entry}
           error={visibleErrors[`education-${entry.id}`]}
+          titleEditable={!entry.required}
           onChange={(next) => {
             const education = [...profile.education];
             education[index] = next;
             onPatch({ education });
           }}
-          onSetHighest={() => {
-            onPatch({
-              education: profile.education.map((e) => ({
-                ...e,
-                isHighest: e.id === entry.id,
-              })),
-            });
-          }}
           onRemove={() => onPatch({ education: profile.education.filter((e) => e.id !== entry.id) })}
-          canRemove={!entry.required && profile.education.length > 1}
+          canRemove={!entry.required}
         />
       ))}
       <Button
@@ -399,12 +392,12 @@ function StepEducation({
         className="h-11 min-h-[44px] gap-1.5"
         onClick={() =>
           onPatch({
-            education: [...profile.education, createEducationEntry("Qualification")],
+            education: [...profile.education, createEducationEntry("", { required: false })],
           })
         }
       >
         <Plus className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-        Add education
+        Add qualification
       </Button>
     </div>
   );
@@ -423,6 +416,7 @@ function StepExperience({
         <EmployerBlock
           key={emp.id}
           employer={emp}
+          index={index}
           onChange={(next) => {
             const employers = [...profile.employers];
             employers[index] = next;

@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Briefcase } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { getAllJobs, getHiringOverviewStats } from "@/lib/hiring/mockData";
+import { getHiringOverviewStats } from "@/lib/hiring/mockData";
+import { getJobsForRole } from "@/lib/hiring/jobsForWorkspace";
 import {
   applyJobsFilters,
   countJobsByStatusTab,
@@ -14,20 +12,42 @@ import {
   type JobsSortKey,
   type JobsStatusTab,
 } from "@/lib/hiring/jobDirectoryFilters";
+import { useRole } from "@/context/RoleContext";
+import { isFreshNewUserWorkspace } from "@/lib/onboarding/workspaceMode";
+import { useWorkspaceRefresh } from "@/lib/onboarding/useWorkspaceRefresh";
 import { AddJobDialog } from "./AddJobDialog";
 import { JobsOperationalHero } from "./JobsOperationalHero";
 import { EMPTY_JOBS_FILTERS, type JobsFilterState } from "./JobsFiltersPopover";
+import { JOBS_UPDATED_EVENT } from "@/lib/hiring/persistedJobs";
 import {
   JobDirectoryGridView,
   JobDirectoryListView,
   JOBS_PAGE_SIZE,
 } from "./jobs/JobDirectoryViews";
 import { JobsDirectoryToolbar } from "./jobs/JobsDirectoryToolbar";
-import { hiringCanvas, hiringCard, hiringTransition } from "./hiringTokens";
+import { hiringCanvas } from "./hiringTokens";
+import { PremiumEmptyState } from "@/components/onboarding/PremiumEmptyState";
+import { NewUserModuleEmptyState } from "@/components/onboarding/NewUserModuleEmptyState";
+import { SmartGuidanceBanner } from "@/components/onboarding/SmartGuidanceBanner";
+import { EMPTY_STATE_PRESETS } from "@/lib/onboarding/emptyStatePresets";
+
+const EMPTY_STATS = {
+  activeJobs: 0,
+  candidatesInPipeline: 0,
+  interviewsToday: 0,
+  offersPending: 0,
+  candidatesThisWeek: 0,
+  insights: {
+    candidates: "Add a job to begin",
+    interviews: "No interviews yet",
+    offers: "No offers yet",
+  },
+};
 
 export function JobsDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { selectedRole } = useRole();
   const addJobButtonRef = useRef<HTMLButtonElement>(null);
   const emptyAddJobButtonRef = useRef<HTMLButtonElement>(null);
   const [addJobOpen, setAddJobOpen] = useState(false);
@@ -38,8 +58,17 @@ export function JobsDashboard() {
   const [view, setView] = useState<"list" | "grid">("grid");
   const [page, setPage] = useState(1);
   const [jobsRefresh, setJobsRefresh] = useState(0);
+  const workspaceRefresh = useWorkspaceRefresh();
 
-  const allJobs = useMemo(() => getAllJobs(), [jobsRefresh]);
+  const freshNewUser = useMemo(
+    () => isFreshNewUserWorkspace(selectedRole),
+    [selectedRole, workspaceRefresh],
+  );
+
+  const allJobs = useMemo(
+    () => getJobsForRole(selectedRole),
+    [selectedRole, jobsRefresh, workspaceRefresh],
+  );
   const statusCounts = useMemo(() => countJobsByStatusTab(allJobs), [allJobs]);
 
   useEffect(() => {
@@ -47,6 +76,12 @@ export function JobsDashboard() {
       setAddJobOpen(true);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const handler = () => setJobsRefresh((n) => n + 1);
+    window.addEventListener(JOBS_UPDATED_EVENT, handler);
+    return () => window.removeEventListener(JOBS_UPDATED_EVENT, handler);
+  }, []);
 
   useEffect(() => {
     setPage(1);
@@ -76,7 +111,27 @@ export function JobsDashboard() {
     return filtered.slice(start, start + JOBS_PAGE_SIZE);
   }, [filtered, page]);
 
-  const overviewStats = useMemo(() => getHiringOverviewStats(filtered), [filtered]);
+  const activeJobs = useMemo(
+    () => allJobs.filter((j) => j.status !== "Deleted"),
+    [allJobs],
+  );
+
+  /** New User sees tabs/filters only after their first real (non-deleted) job exists. */
+  const newUserHasPostedJob = activeJobs.length > 0;
+
+  const overviewStats = useMemo(
+    () => (activeJobs.length > 0 ? getHiringOverviewStats(filtered) : EMPTY_STATS),
+    [activeJobs.length, filtered],
+  );
+
+  const showNewUserHeroEmpty = freshNewUser && !newUserHasPostedJob;
+  const showNewUserPipelineEmpty = freshNewUser && !newUserHasPostedJob;
+  const showJobsToolbar = !freshNewUser || newUserHasPostedJob;
+
+  const openCreateJob = () => {
+    setAddJobReturnSource("empty");
+    setAddJobOpen(true);
+  };
 
   return (
     <div className={hiringCanvas}>
@@ -85,6 +140,10 @@ export function JobsDashboard() {
         aria-hidden
       />
       <div className="relative mx-auto max-w-shell space-y-5 pb-12">
+        {showNewUserPipelineEmpty ? (
+          <NewUserModuleEmptyState module="jobs" onPrimaryAction={openCreateJob} />
+        ) : (
+        <>
         <JobsOperationalHero
           stats={overviewStats}
           onAddJob={() => {
@@ -94,17 +153,21 @@ export function JobsDashboard() {
           addJobButtonRef={addJobButtonRef}
         />
 
-        <JobsDirectoryToolbar
-          statusTab={statusTab}
-          onStatusTabChange={setStatusTab}
-          statusCounts={statusCounts}
-          filters={filters}
-          onFiltersChange={setFilters}
-          sort={sort}
-          onSortChange={setSort}
-          view={view}
-          onViewChange={setView}
-        />
+        <SmartGuidanceBanner className="mb-1" />
+
+        {showJobsToolbar ? (
+          <JobsDirectoryToolbar
+            statusTab={statusTab}
+            onStatusTabChange={setStatusTab}
+            statusCounts={statusCounts}
+            filters={filters}
+            onFiltersChange={setFilters}
+            sort={sort}
+            onSortChange={setSort}
+            view={view}
+            onViewChange={setView}
+          />
+        ) : null}
 
         <section>
           {filtered.length > 0 ? (
@@ -125,35 +188,22 @@ export function JobsDashboard() {
                 onPageChange={setPage}
               />
             )
+          ) : activeJobs.length === 0 ? (
+            <PremiumEmptyState
+              {...EMPTY_STATE_PRESETS.jobs}
+              ctaLabel="+ Create Job"
+              onCtaClick={openCreateJob}
+            />
           ) : (
-            <div
-              className={cn(
-                hiringCard,
-                "flex flex-col items-center justify-center border-dashed px-6 py-16 text-center",
-              )}
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)]">
-                <Briefcase className="h-5 w-5 text-muted/50" strokeWidth={1.5} />
-              </div>
-              <p className="mt-3 text-sm font-semibold tracking-tight text-text">No jobs match</p>
-              <p className="mt-1 max-w-sm text-[12px] text-text-secondary/65">
-                Try another status tab or adjust filters.
-              </p>
-              <Button
-                ref={emptyAddJobButtonRef}
-                type="button"
-                size="sm"
-                className={cn("mt-5 rounded-[11px]", hiringTransition)}
-                onClick={() => {
-                  setAddJobReturnSource("empty");
-                  setAddJobOpen(true);
-                }}
-              >
-                Add New Job
-              </Button>
-            </div>
+            <PremiumEmptyState
+              {...EMPTY_STATE_PRESETS.jobsFiltered}
+              ctaLabel="Add New Job"
+              onCtaClick={openCreateJob}
+            />
           )}
         </section>
+        </>
+        )}
       </div>
 
       <AddJobDialog

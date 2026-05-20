@@ -11,18 +11,9 @@ import {
   saveInterviewRounds,
   type InterviewRound,
 } from "@/lib/hiring/interviewRounds";
-import {
-  buildInterviewListRows,
-  EMPTY_INTERVIEW_LIST_FILTERS,
-  filterInterviewListRows,
-  getInterviewListFilterOptions,
-} from "@/lib/hiring/interviewListData";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
 import { InterviewKanban } from "./interview-kanban/InterviewKanban";
 import { InterviewRoundsFlow } from "./InterviewRoundsFlow";
-import { DirectoryViewSwitcher } from "./directories/DirectoryViewSwitcher";
-import { InterviewCandidatesListView } from "./interview-kanban/InterviewCandidatesListView";
-import { InterviewListFiltersBar } from "./interview-kanban/InterviewListFiltersBar";
 
 export function InterviewKanbanBoard({
   job,
@@ -43,8 +34,6 @@ export function InterviewKanbanBoard({
 }) {
   const { selectedRole } = useRole();
   const canManage = canManageInterviewRounds(selectedRole);
-  const [view, setView] = useState<"kanban" | "list">("kanban");
-  const [listFilters, setListFilters] = useState(EMPTY_INTERVIEW_LIST_FILTERS);
   const [rounds, setRounds] = useState<InterviewRound[]>(() => getInterviewRounds(jobId));
 
   useEffect(() => {
@@ -89,32 +78,11 @@ export function InterviewKanbanBoard({
     [rounds, candidates, columnResolver],
   );
 
-  const listRows = useMemo(
-    () => buildInterviewListRows(job, candidates, rounds),
-    [job, candidates, rounds],
-  );
-  const filteredListRows = useMemo(
-    () => filterInterviewListRows(listRows, listFilters),
-    [listRows, listFilters],
-  );
-  const listFilterOptions = useMemo(() => getInterviewListFilterOptions(listRows), [listRows]);
-
   const handleSchedule = onScheduleCandidate ?? onCardClick;
   const handleFeedback = onRequestFeedback ?? onCardClick;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <DirectoryViewSwitcher
-          value={view}
-          onChange={setView}
-          options={[
-            { value: "kanban", label: "Kanban View", icon: "kanban" },
-            { value: "list", label: "List View", icon: "list" },
-          ]}
-        />
-      </div>
-
       {canManage ? (
         <InterviewRoundsFlow
           rounds={roundPills}
@@ -130,30 +98,13 @@ export function InterviewKanbanBoard({
         </p>
       )}
 
-      {view === "kanban" ? (
-        <InterviewKanban
-          rounds={rounds}
-          candidates={candidates}
-          onCardClick={onCardClick}
-          onCandidateMoved={onCandidateMoved}
-        />
-      ) : (
-        <>
-          <InterviewListFiltersBar
-            filters={listFilters}
-            onChange={setListFilters}
-            roundOptions={listFilterOptions.rounds}
-            interviewerOptions={listFilterOptions.interviewers}
-          />
-          <InterviewCandidatesListView
-            rows={filteredListRows}
-            job={job}
-            onOpenReport={(c) => onCardClick?.(c)}
-            onSchedule={(c) => handleSchedule?.(c)}
-            onRequestFeedback={(c) => handleFeedback?.(c)}
-          />
-        </>
-      )}
+      <InterviewKanban
+        rounds={rounds}
+        candidates={candidates}
+        onCardClick={onCardClick}
+        onCandidateMoved={onCandidateMoved}
+        onRequestFeedback={(c) => handleFeedback?.(c)}
+      />
     </div>
   );
 }

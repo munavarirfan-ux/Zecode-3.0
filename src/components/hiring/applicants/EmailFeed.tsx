@@ -5,6 +5,8 @@ import { ChevronDown, Mail, X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
+  dialogCloseButtonPositionClass,
+  dialogCloseButtonSm,
   DialogDescription,
   DialogOverlay,
   DialogPanel,
@@ -48,13 +50,10 @@ function EmailViewDialog({
                   {email.subject}
                 </DialogTitle>
                 <DialogClose
-                  className={cn(
-                    "absolute right-4 top-4 rounded-[8px] p-1",
-                    "text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B] dark:hover:bg-white/[0.06]",
-                  )}
+                  className={cn(dialogCloseButtonPositionClass, dialogCloseButtonSm)}
                   aria-label="Close email"
                 >
-                  <X className="h-4 w-4" strokeWidth={1.5} />
+                  <X className="h-4 w-4" strokeWidth={2} />
                 </DialogClose>
               </div>
               <DialogDescription className="sr-only">Full email message</DialogDescription>

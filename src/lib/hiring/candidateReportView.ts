@@ -64,13 +64,11 @@ export function computeTotalExperience(employers: EmployerEntry[]): string {
 }
 
 export function currentRoleLabel(employers: EmployerEntry[]): string {
-  const current = employers.find((e) => e.current && (e.designation || e.company));
-  if (current) {
-    return [current.designation, current.company].filter(Boolean).join(" at ") || "—";
-  }
-  const first = employers.find((e) => e.designation || e.company);
+  const current = employers.find((e) => e.current && e.summary.trim());
+  if (current) return current.summary.trim().split("\n")[0] ?? "—";
+  const first = employers.find((e) => e.summary.trim());
   if (!first) return "—";
-  return [first.designation, first.company].filter(Boolean).join(" at ");
+  return first.summary.trim().split("\n")[0] ?? "—";
 }
 
 export function profileSummary(profile: CandidateEditProfile, candidate: HiringCandidate, roleTitle: string): string {
@@ -90,19 +88,11 @@ export function profileSummary(profile: CandidateEditProfile, candidate: HiringC
 }
 
 export function hasEducationData(entry: EducationEntry): boolean {
-  return Boolean(
-    entry.institution.trim() || entry.place.trim() || entry.yearOfPassing.trim() || entry.grade.trim(),
-  );
+  return Boolean(entry.details.trim());
 }
 
 export function hasEmployerData(employer: EmployerEntry): boolean {
-  return Boolean(
-    employer.designation.trim() ||
-      employer.company.trim() ||
-      employer.fromDate.trim() ||
-      employer.toDate.trim() ||
-      employer.summary.trim(),
-  );
+  return Boolean(employer.summary.trim());
 }
 
 export function resumeFileName(profile: CandidateEditProfile, candidate: HiringCandidate): string {

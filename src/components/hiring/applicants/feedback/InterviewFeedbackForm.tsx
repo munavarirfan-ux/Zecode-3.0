@@ -9,26 +9,21 @@ import {
 } from "@/lib/hiring/interviewFeedback";
 import { SkillEvaluationAccordion } from "./SkillEvaluationAccordion";
 import { CodeChallengeView } from "./CodeChallengeView";
-import { RecordingView } from "./RecordingView";
-import { SidebarCard } from "./FeedbackUi";
 
 export type InterviewFeedbackSection =
   | "skills"
   | "codeChallenge"
-  | "recording"
   | "additionalNotes";
 
 const SECTION_LABELS: Record<InterviewFeedbackSection, string> = {
   skills: "Skill feedback",
   codeChallenge: "Code challenge feedback",
-  recording: "Interview recording",
   additionalNotes: "Additional interview notes",
 };
 
 const TAB_TO_SECTION: Record<string, InterviewFeedbackSection> = {
   feedback: "skills",
   code: "codeChallenge",
-  recording: "recording",
   notes: "additionalNotes",
 };
 
@@ -43,7 +38,7 @@ export function InterviewFeedbackForm({
   interviewId,
   layout = "stacked",
   activeSection,
-  sections = ["skills", "codeChallenge", "recording", "additionalNotes"],
+  sections = ["skills", "codeChallenge", "additionalNotes"],
   showAddField = true,
   className,
 }: {
@@ -115,29 +110,6 @@ export function InterviewFeedbackForm({
             {SECTION_LABELS.codeChallenge}
           </h3>
           <CodeChallengeView data={data.codeChallenge} interviewId={interviewId} />
-        </section>
-      ) : null}
-
-      {visible("recording") ? (
-        <section aria-labelledby="feedback-recording-heading">
-          <h3
-            id="feedback-recording-heading"
-            className="mb-3 text-[14px] font-semibold tracking-[-0.02em] text-[#18181B] dark:text-text"
-          >
-            {SECTION_LABELS.recording}
-          </h3>
-          <RecordingView recording={data.recording} />
-          {data.recording.transcript ? (
-            <SidebarCard title="Transcript reference" className="mt-3">
-              <p className="text-[13px] leading-relaxed text-[#52525B]">{data.recording.transcript}</p>
-              {data.recording.aiSummary ? (
-                <p className="mt-3 text-[12px] text-[#71717A]">
-                  <span className="font-semibold text-[#52525B]">AI summary: </span>
-                  {data.recording.aiSummary}
-                </p>
-              ) : null}
-            </SidebarCard>
-          ) : null}
         </section>
       ) : null}
 

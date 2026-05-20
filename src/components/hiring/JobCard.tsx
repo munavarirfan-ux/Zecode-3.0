@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Archive,
   ArrowUpRight,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { HiringJob, JobStatus } from "@/lib/hiring/types";
+import { markJobDeleted } from "@/lib/hiring/persistedJobs";
 import { hiringCard, hiringTransition } from "./hiringTokens";
 import { StatusBadge } from "./StatusBadge";
 
@@ -178,6 +180,11 @@ export function JobCard({ job }: { job: HiringJob }) {
     void navigator.clipboard.writeText(url);
   };
 
+  const deleteJob = () => {
+    markJobDeleted(job.id);
+    toast.success("Job moved to Deleted", { description: job.title });
+  };
+
   const handleCardClick = (e: React.MouseEvent<HTMLElement>) => {
     if (isJobCardAction(e.target)) return;
     openWorkspace();
@@ -304,7 +311,7 @@ export function JobCard({ job }: { job: HiringJob }) {
                 <JobCardMenuSeparator />
                 <JobCardMenuSection label="Danger">
                   <JobCardMenuItem icon={Archive} label="Archive Job" destructive />
-                  <JobCardMenuItem icon={Trash2} label="Delete Job" destructive />
+                  <JobCardMenuItem icon={Trash2} label="Delete Job" destructive onSelect={deleteJob} />
                 </JobCardMenuSection>
               </DropdownMenuContent>
             </DropdownMenu>

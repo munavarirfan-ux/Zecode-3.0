@@ -7,8 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
-  dialogCloseButtonClass,
+  dialogCloseButtonLg,
   DialogDescription,
   DialogOverlay,
   DialogPanel,
@@ -16,16 +15,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ROUTES } from "@/config/routes";
-import { createHiringJob } from "@/lib/hiring/createHiringJob";
+import { createHiringJob, createHiringJobDraft } from "@/lib/hiring/createHiringJob";
 import { createDefaultHiringStages, type JobHiringStageConfig } from "@/lib/hiring/jobHiringStages";
 import { CUSTOM_FIELD_DEFS, DEPARTMENTS, LOCATIONS } from "@/lib/hiring/mockData";
-import { JOB_FORM_STEPS, isJobFormStepValid } from "@/lib/hiring/jobFormSteps";
+import { JOB_FORM_STEPS, hasJobWizardProgress, isJobFormStepValid } from "@/lib/hiring/jobFormSteps";
 import type { CustomFieldDef } from "@/lib/hiring/types";
 import { cn } from "@/lib/utils";
 import { dashboardCanvas } from "@/components/dashboard/dashboardTokens";
 import { JobFormStepContent, type JobAdditionalDetails, type JobBasicDetails } from "./JobFormStepContent";
 import { JobFormStepCard, JobFormWizardHeader } from "./JobFormStepper";
 import { JobHiringStagesStep } from "./JobHiringStagesStep";
+import { WizardUnsavedCloseAlert } from "./WizardUnsavedCloseAlert";
 
 const footerBtnBase =
   "inline-flex h-11 min-h-[44px] items-center justify-center rounded-[11px] px-5 text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
@@ -78,6 +78,8 @@ export function NewJobFormDialog({
   const [hiringStages, setHiringStages] = useState<JobHiringStageConfig[]>(() =>
     createDefaultHiringStages(),
   );
+  const [unsavedAlertOpen, setUnsavedAlertOpen] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -104,6 +106,42 @@ export function NewJobFormDialog({
 
   const titleError = showTitleError && !basic.title.trim() ? "Job title is required" : undefined;
   const currentStepKey = JOB_FORM_STEPS[stepIndex]?.key;
+  const hasProgress = useMemo(
+    () => hasJobWizardProgress(stepIndex, basic, additional),
+    [stepIndex, basic, additional],
+  );
+
+  function requestClose() {
+    if (!hasProgress) {
+      onOpenChange(false);
+      return;
+    }
+    setUnsavedAlertOpen(true);
+  }
+
+  function handleDialogOpenChange(next: boolean) {
+    if (next) {
+      onOpenChange(true);
+      return;
+    }
+    if (publishing) return;
+    requestClose();
+  }
+
+  async function saveDraftAndClose() {
+    setSavingDraft(true);
+    try {
+      await new Promise((r) => setTimeout(r, 320));
+      createHiringJobDraft({ basic, additional, hiringStages });
+      toast.success("Job saved as draft");
+      setUnsavedAlertOpen(false);
+      onOpenChange(false);
+    } catch {
+      toast.error("Could not save draft");
+    } finally {
+      setSavingDraft(false);
+    }
+  }
 
   async function publishJob() {
     if (!isJobFormStepValid(stepIndex, basic, hiringStages)) return;
@@ -147,12 +185,8 @@ export function NewJobFormDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!publishing) onOpenChange(next);
-      }}
-    >
+    <>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogPortal>
         <DialogOverlay className="z-[230] bg-[rgba(15,23,42,0.4)] backdrop-blur-[4px]" />
         <div
@@ -176,22 +210,32 @@ export function NewJobFormDialog({
                 returnFocusRef.current.focus();
               }
             }}
+            onInteractOutside={(e) => {
+              if (hasProgress) {
+                e.preventDefault();
+                setUnsavedAlertOpen(true);
+              }
+            }}
+            onEscapeKeyDown={(e) => {
+              if (hasProgress) {
+                e.preventDefault();
+                setUnsavedAlertOpen(true);
+              }
+            }}
           >
             <DialogTitle className="sr-only">Add New Job</DialogTitle>
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={publishing}
-                className={cn(
-                  "absolute right-3 top-3 z-20 h-11 w-11 min-h-[44px] min-w-[44px] rounded-[10px] focus-visible:ring-offset-2 sm:right-5 sm:top-5",
-                  dialogCloseButtonClass,
-                )}
-                aria-label="Close add job modal"
-              >
-                <X className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-              </Button>
-            </DialogClose>
+            <button
+              type="button"
+              disabled={publishing}
+              className={cn(
+                "absolute right-3 top-3 z-20 sm:right-5 sm:top-5",
+                dialogCloseButtonLg,
+              )}
+              aria-label="Close add job modal"
+              onClick={requestClose}
+            >
+              <X className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </button>
 
             <DialogDescription className="sr-only">
               Add New Job — configure basic details, additional details, custom fields, and hiring
@@ -285,7 +329,7 @@ export function NewJobFormDialog({
                           footerBtnBase,
                           "border-[rgba(15,23,42,0.1)] bg-white dark:bg-surface",
                         )}
-                        onClick={() => onOpenChange(false)}
+                        onClick={requestClose}
                       >
                         Cancel
                       </Button>
@@ -310,5 +354,14 @@ export function NewJobFormDialog({
         </div>
       </DialogPortal>
     </Dialog>
+
+    <WizardUnsavedCloseAlert
+      open={unsavedAlertOpen}
+      onOpenChange={setUnsavedAlertOpen}
+      entityLabel="job"
+      onSaveDraft={saveDraftAndClose}
+      savingDraft={savingDraft}
+    />
+    </>
   );
 }

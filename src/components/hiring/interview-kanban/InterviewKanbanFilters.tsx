@@ -27,6 +27,7 @@ export function InterviewKanbanFilters({
   interviewers,
   interviewTypes,
   resultCount,
+  statusCounts,
 }: {
   statusFilter: InterviewOperationalStatus | "All";
   onStatusFilterChange: (v: InterviewOperationalStatus | "All") => void;
@@ -35,6 +36,7 @@ export function InterviewKanbanFilters({
   interviewers: string[];
   interviewTypes: string[];
   resultCount: number;
+  statusCounts: Record<InterviewOperationalStatus | "All", number>;
 }) {
   const hasAdvanced =
     advanced.interviewer ||
@@ -61,12 +63,16 @@ export function InterviewKanbanFilters({
       </div>
 
       <div
-        className="flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={cn(
+          "flex gap-1 overflow-x-auto px-0.5 pb-0.5",
+          "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        )}
         role="tablist"
         aria-label="Interview status filters"
       >
         {INTERVIEW_STATUS_FILTERS.map((f) => {
           const active = statusFilter === f;
+          const count = statusCounts[f] ?? 0;
           return (
             <button
               key={f}
@@ -81,43 +87,57 @@ export function InterviewKanbanFilters({
                   : "border-[rgba(15,23,42,0.08)] bg-white/80 text-[#71717A] hover:border-[rgba(15,23,42,0.12)] hover:bg-white dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-muted",
               )}
             >
-              {f}
+              <span className="inline-flex items-center gap-1.5">
+                <span>{f}</span>
+                <span className={cn("tabular-nums text-[10px] font-semibold", active ? "text-forest/90" : "text-muted/80")}>
+                  {count}
+                </span>
+              </span>
             </button>
           );
         })}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <FilterDropdown
-          label="Interviewer"
-          value={advanced.interviewer || "All"}
-          options={["All", ...interviewers]}
-          onChange={(v) => onAdvancedChange({ ...advanced, interviewer: v === "All" ? "" : v })}
-        />
-        <FilterDropdown
-          label="Type"
-          value={advanced.interviewType || "All"}
-          options={["All", ...interviewTypes]}
-          onChange={(v) => onAdvancedChange({ ...advanced, interviewType: v === "All" ? "" : v })}
-        />
-        <FilterDropdown
-          label="Date"
-          value={advanced.date || "All"}
-          options={["All", "upcoming", "completed"]}
-          labels={{ upcoming: "Upcoming", completed: "Completed" }}
-          onChange={(v) => onAdvancedChange({ ...advanced, date: v === "All" ? "" : v })}
-        />
-        <FilterDropdown
-          label="Feedback"
-          value={advanced.feedbackStatus || "All"}
-          options={["All", "awaiting", "submitted", "overdue"]}
-          labels={{
-            awaiting: "Awaiting",
-            submitted: "Submitted",
-            overdue: "Overdue",
-          }}
-          onChange={(v) => onAdvancedChange({ ...advanced, feedbackStatus: v === "All" ? "" : v })}
-        />
+      <div className="px-0.5">
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-2.5 rounded-[14px] border border-[rgba(15,23,42,0.06)]",
+            "bg-[rgba(15,23,42,0.02)] p-1.5",
+            "dark:border-white/[0.06] dark:bg-white/[0.03]",
+          )}
+          aria-label="Advanced interview filters"
+        >
+          <FilterDropdown
+            label="Interviewer"
+            value={advanced.interviewer || "All"}
+            options={["All", ...interviewers]}
+            onChange={(v) => onAdvancedChange({ ...advanced, interviewer: v === "All" ? "" : v })}
+          />
+          <FilterDropdown
+            label="Type"
+            value={advanced.interviewType || "All"}
+            options={["All", ...interviewTypes]}
+            onChange={(v) => onAdvancedChange({ ...advanced, interviewType: v === "All" ? "" : v })}
+          />
+          <FilterDropdown
+            label="Date"
+            value={advanced.date || "All"}
+            options={["All", "upcoming", "completed"]}
+            labels={{ upcoming: "Upcoming", completed: "Completed" }}
+            onChange={(v) => onAdvancedChange({ ...advanced, date: v === "All" ? "" : v })}
+          />
+          <FilterDropdown
+            label="Feedback"
+            value={advanced.feedbackStatus || "All"}
+            options={["All", "awaiting", "submitted", "overdue"]}
+            labels={{
+              awaiting: "Awaiting",
+              submitted: "Submitted",
+              overdue: "Overdue",
+            }}
+            onChange={(v) => onAdvancedChange({ ...advanced, feedbackStatus: v === "All" ? "" : v })}
+          />
+        </div>
       </div>
     </div>
   );

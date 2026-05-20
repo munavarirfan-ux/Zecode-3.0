@@ -39,11 +39,9 @@ export function validateCandidateFormStep(
     case 3:
       profile.education.forEach((entry) => {
         if (!entry.required) return;
-        const incomplete =
-          !entry.institution.trim() || !entry.yearOfPassing.trim() || !entry.grade.trim();
-        if (incomplete) {
-          errors[`education-${entry.id}`] =
-            `Complete institution, year of passing, and grade for ${entry.degree} (required)`;
+        if (!entry.details.trim()) {
+          const label = entry.degree.trim() || "this qualification";
+          errors[`education-${entry.id}`] = `Add details for ${label} (required)`;
         }
       });
       break;

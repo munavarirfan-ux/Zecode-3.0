@@ -15,10 +15,19 @@ export const dashboardCanvasDecorator: Decorator = (Story) => (
   </div>
 );
 
+const mockSessionUser = {
+  id: "storybook-user",
+  name: "Elena Hoffmann",
+  email: "elena@zecode.io",
+  role: "admin",
+  organizationId: "org-storybook",
+  organizationName: "NovaTech",
+};
+
 export const sessionDecorator: Decorator = (Story) => (
   <SessionProvider
     session={{
-      user: { name: "Elena Hoffmann", email: "elena@zecode.io" },
+      user: mockSessionUser,
       expires: "2099-01-01",
     }}
   >
@@ -65,20 +74,22 @@ export function zeMeetDecorator(options?: {
       ? "min-h-dvh bg-[rgb(var(--app-bg-rgb))] text-[#18181B]"
       : "min-h-dvh bg-[#0B0F14] text-white";
 
-  return (Story) => (
-    <SessionProvider
-      session={{
-        user: { name: "Elena Hoffmann", email: "elena@zecode.io" },
-        expires: "2099-01-01",
-      }}
-    >
-      <ZeMeetProvider session={session}>
-        <ZeMeetPhaseInit phase={phase} startLive={options?.startLive}>
-          <div className={shellClass}>
-            <Story />
-          </div>
-        </ZeMeetPhaseInit>
-      </ZeMeetProvider>
-    </SessionProvider>
-  );
+  return function ZeMeetStoryDecorator(Story) {
+    return (
+      <SessionProvider
+        session={{
+          user: mockSessionUser,
+          expires: "2099-01-01",
+        }}
+      >
+        <ZeMeetProvider session={session}>
+          <ZeMeetPhaseInit phase={phase} startLive={options?.startLive}>
+            <div className={shellClass}>
+              <Story />
+            </div>
+          </ZeMeetPhaseInit>
+        </ZeMeetProvider>
+      </SessionProvider>
+    );
+  };
 }

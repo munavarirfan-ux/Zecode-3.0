@@ -6,6 +6,7 @@ import {
   Calendar,
   Check,
   ClipboardList,
+  Clock,
   FileCheck,
   Inbox,
   Layers,
@@ -13,9 +14,16 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import type { PreviewRole } from "@/config/previewRole";
 import { getDashboardHeroBlock } from "@/config/dashboardHeroByRole";
+import {
+  buildInterviewerAssignedInterviews,
+  computeInterviewTimeSpentMinutesThisWeek,
+  countInterviewsTimeSpentThisWeek,
+  formatInterviewDuration,
+} from "@/lib/hiring/interviewerInterviews";
 import type { DashboardHeroKpi } from "@/config/dashboardHeroByRole";
 import {
   hiringHeroGlassKpi,
@@ -40,6 +48,7 @@ const HERO_KPI_ICONS: Record<string, LucideIcon> = {
   upcoming: Mic2,
   done: Check,
   ongoing: ClipboardList,
+  timeSpent: Clock,
   pending: Inbox,
   flagged: Briefcase,
   created: Layers,
@@ -127,13 +136,35 @@ export function GreetingHero({
   name: string;
   organizationName?: string | null;
 }) {
+  const { data: session } = useSession();
   const [line, setLine] = useState("Good afternoon");
 
   useEffect(() => {
     setLine(greetingLine(new Date().getHours()));
   }, []);
 
-  const hero = useMemo(() => getDashboardHeroBlock(role, organizationName), [role, organizationName]);
+  const hero = useMemo(() => {
+    const base = getDashboardHeroBlock(role, organizationName);
+    if (role !== "evaluator") return base;
+
+    const rows = buildInterviewerAssignedInterviews(role, session?.user?.name);
+    const minutes = computeInterviewTimeSpentMinutesThisWeek(rows);
+    const sessionCount = countInterviewsTimeSpentThisWeek(rows);
+
+    return {
+      ...base,
+      kpis: base.kpis.map((kpi) =>
+        kpi.id === "timeSpent"
+          ? {
+              ...kpi,
+              value: formatInterviewDuration(minutes),
+              trend: sessionCount === 1 ? "1 session" : `${sessionCount} sessions`,
+              trendUp: minutes > 0,
+            }
+          : kpi,
+      ),
+    };
+  }, [role, organizationName, session?.user?.name]);
 
   const isWideExecutive = hero.layout === "workspace";
   const kpiGridClass =

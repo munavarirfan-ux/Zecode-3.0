@@ -1,5 +1,7 @@
 /** Product and workspace branding */
-export const APP_NAME = "Ze[code]";
+export const APP_NAME = "Ze[hub]";
+export const MODULE_HIRE = "ze[hire]";
+export const MODULE_CODE = "ze[code]";
 export const APP_TAGLINE = "Hiring operations platform";
 export const COMPANY_NAME = "Zessta Software Services";
 

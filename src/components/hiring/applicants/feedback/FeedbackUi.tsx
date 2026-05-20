@@ -173,6 +173,85 @@ export function StarRating({
   );
 }
 
+export function StrengthPills({
+  items,
+  onChange,
+  readOnly,
+  placeholder = "Add strength…",
+}: {
+  items: string[];
+  onChange: (items: string[]) => void;
+  readOnly?: boolean;
+  placeholder?: string;
+}) {
+  const [draft, setDraft] = useState("");
+
+  const add = () => {
+    const value = draft.trim();
+    if (!value || items.includes(value)) return;
+    onChange([...items, value]);
+    setDraft("");
+  };
+
+  const pillClass = (active: boolean) =>
+    cn(
+      "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
+      active
+        ? "border border-accent/30 bg-accent/[0.08] text-accent"
+        : "border border-[rgba(15,23,42,0.08)] bg-white text-[#52525B]",
+    );
+
+  return (
+    <div>
+      <p className="mb-1.5 text-[11px] font-medium text-[#71717A]">Strengths</p>
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Strengths">
+        {items.map((tag) =>
+          readOnly ? (
+            <span key={tag} className={pillClass(true)}>
+              {tag}
+            </span>
+          ) : (
+            <button
+              key={tag}
+              type="button"
+              aria-label={`Remove ${tag}`}
+              className={cn(
+                pillClass(true),
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/25",
+              )}
+              onClick={() => onChange(items.filter((t) => t !== tag))}
+            >
+              {tag}
+              <X className="h-3 w-3 shrink-0 opacity-70" strokeWidth={2} aria-hidden />
+            </button>
+          ),
+        )}
+        {!readOnly ? (
+          <input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={placeholder}
+            className={cn(
+              "min-w-[120px] flex-1 rounded-full border border-dashed border-[rgba(15,23,42,0.12)] bg-transparent px-2.5 py-1 text-[11px] text-[#18181B] placeholder:text-[#A1A1AA]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/25",
+            )}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add();
+              }
+            }}
+            onBlur={() => {
+              if (draft.trim()) add();
+            }}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function QuickSignalTags({
   options,
   selected,

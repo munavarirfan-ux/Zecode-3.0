@@ -7,7 +7,6 @@ import {
   addedByLabel,
   computeTotalExperience,
   currentRoleLabel,
-  formatEmployerDates,
   hasEducationData,
   hasEmployerData,
   profileSummary,
@@ -122,19 +121,13 @@ function EducationCard({ entry }: { entry: EducationEntry }) {
           </span>
         ) : null}
       </div>
-      <ul className="mt-2 space-y-1.5">
-        {[
-          ["Institution", entry.institution],
-          ["Place", entry.place],
-          ["Year", entry.yearOfPassing],
-          ["Grade / CGPA", entry.grade],
-        ].map(([label, val]) => (
-          <li key={label} className="flex justify-between gap-3 text-[12px]">
-            <span className="text-[#A1A1AA]">{label}</span>
-            <span className="font-medium text-[#52525B] dark:text-text-muted">{val || "—"}</span>
-          </li>
-        ))}
-      </ul>
+      {entry.details.trim() ? (
+        <p className="mt-2 whitespace-pre-wrap text-[12px] leading-relaxed text-[#52525B] dark:text-text-muted">
+          {entry.details}
+        </p>
+      ) : (
+        <p className="mt-2 text-[12px] text-[#A1A1AA]">—</p>
+      )}
     </div>
   );
 }
@@ -147,25 +140,13 @@ function EmployerCard({ employer, isLast }: { employer: EmployerEntry; isLast?: 
         !isLast && "border-b border-[rgba(15,23,42,0.05)] dark:border-white/[0.05]",
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <p className="text-[13px] font-semibold text-[#18181B] dark:text-text">
-            {employer.designation || "Role"}
-          </p>
-          <p className="mt-0.5 text-[12px] font-medium text-[#71717A]">{employer.company || "—"}</p>
-        </div>
-        {employer.current ? (
-          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
-            Current
-          </span>
-        ) : null}
-      </div>
-      <p className="mt-1.5 text-[11px] tabular-nums text-[#A1A1AA]">{formatEmployerDates(employer)}</p>
       {employer.summary.trim() ? (
-        <p className="mt-2 text-[12px] leading-relaxed text-[#52525B] dark:text-text-muted">
+        <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-[#52525B] dark:text-text-muted">
           {employer.summary}
         </p>
-      ) : null}
+      ) : (
+        <p className="text-[12px] text-[#A1A1AA]">—</p>
+      )}
     </div>
   );
 }
@@ -200,13 +181,16 @@ export function CandidateReportOverview({
   candidate,
   job,
   profile,
+  variant = "default",
   onCandidateUpdated: _onCandidateUpdated,
 }: {
   candidate: HiringCandidate;
   job: HiringJob;
   profile: CandidateEditProfile;
+  variant?: "default" | "interviewer";
   onCandidateUpdated: (candidate: HiringCandidate) => void;
 }) {
+  const isInterviewer = variant === "interviewer";
   const education = profile.education.filter(hasEducationData);
   const employers = profile.employers.filter(hasEmployerData);
   const socialLinks = profile.socialLinks.filter((l) => l.label.trim() || l.url.trim());
@@ -245,28 +229,30 @@ export function CandidateReportOverview({
           </OverviewCard>
         </BentoCell>
 
-        <BentoCell span={dashboardBentoSpan.side}>
-          <OverviewCard title="Application details" variant="utility" bodyClassName="space-y-0">
-            <DetailRow label="Stage" value={getCandidateStage(candidate)} />
-            <DetailRow label="Sub-stage" value={profile.application.substage || candidate.currentSubstage} />
-            <DetailRow label="Source" value={normalizeSource(profile.application.source)} />
-            <DetailRow label="Source category" value={profile.application.sourceCategory} />
-            <DetailRow label="Added by" value={addedByLabel(candidate.addedBy)} />
-            <DetailRow label="Added date" value={candidate.appliedAt} />
-            {tags.length > 0 ? (
-              <div className="border-t border-[rgba(15,23,42,0.05)] pt-2.5 dark:border-white/[0.05]">
-                <p className={sectionLabel}>Tags</p>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {tags.map((tag) => (
-                    <TagChip key={tag}>{tag}</TagChip>
-                  ))}
+        {!isInterviewer ? (
+          <BentoCell span={dashboardBentoSpan.side}>
+            <OverviewCard title="Application details" variant="utility" bodyClassName="space-y-0">
+              <DetailRow label="Stage" value={getCandidateStage(candidate)} />
+              <DetailRow label="Sub-stage" value={profile.application.substage || candidate.currentSubstage} />
+              <DetailRow label="Source" value={normalizeSource(profile.application.source)} />
+              <DetailRow label="Source category" value={profile.application.sourceCategory} />
+              <DetailRow label="Added by" value={addedByLabel(candidate.addedBy)} />
+              <DetailRow label="Added date" value={candidate.appliedAt} />
+              {tags.length > 0 ? (
+                <div className="border-t border-[rgba(15,23,42,0.05)] pt-2.5 dark:border-white/[0.05]">
+                  <p className={sectionLabel}>Tags</p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {tags.map((tag) => (
+                      <TagChip key={tag}>{tag}</TagChip>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <DetailRow label="Tags" value="—" />
-            )}
-          </OverviewCard>
-        </BentoCell>
+              ) : (
+                <DetailRow label="Tags" value="—" />
+              )}
+            </OverviewCard>
+          </BentoCell>
+        ) : null}
 
         <BentoCell span={cn(dashboardBentoSpan.half, "lg:row-span-2")}>
           <OverviewCard title="Experience" variant="secondary">

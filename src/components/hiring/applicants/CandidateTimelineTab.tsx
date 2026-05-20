@@ -93,6 +93,16 @@ const KIND_CONFIG: Record<
     accent: "border-l-indigo-500",
     tint: "bg-indigo-50/50 dark:bg-indigo-500/[0.08]",
   },
+  transfer_request: {
+    icon: UserRound,
+    accent: "border-l-orange-500",
+    tint: "bg-orange-50/50 dark:bg-orange-500/[0.08]",
+  },
+  transfer_resolved: {
+    icon: CheckCircle2,
+    accent: "border-l-teal-500",
+    tint: "bg-teal-50/50 dark:bg-teal-500/[0.08]",
+  },
   offer_sent: {
     icon: Sparkles,
     accent: "border-l-fuchsia-500",

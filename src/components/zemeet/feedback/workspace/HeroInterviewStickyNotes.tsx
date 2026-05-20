@@ -18,21 +18,25 @@ const MAX_VISIBLE = 4;
 export function HeroInterviewStickyNotes({
   notes,
   onInsert,
+  readOnly = false,
+  positionClassName,
 }: {
   notes: ZeMeetNoteEntry[];
   onInsert?: (note: ZeMeetNoteEntry) => void;
+  /** Read-only stack for candidate report hero (no insert interaction) */
+  readOnly?: boolean;
+  positionClassName?: string;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const visible = notes.slice(0, MAX_VISIBLE);
   const overflow = notes.length - visible.length;
   const stackHeight = 56 + Math.max(0, visible.length - 1) * 36;
 
+  const position = positionClassName ?? "absolute bottom-3 right-3 z-20 sm:bottom-4 sm:right-5 lg:right-7";
+
   if (notes.length === 0) {
     return (
-      <div
-        className="pointer-events-none absolute bottom-4 right-4 z-20 sm:bottom-5 sm:right-6 lg:right-8"
-        aria-hidden
-      >
+      <div className={cn("pointer-events-none", position, readOnly && "opacity-90")} aria-label="Interview notes">
         <div
           className={cn(heroStickyNote(false), "w-[148px] rotate-[2deg] opacity-40")}
           style={{ boxShadow: "4px 6px 18px rgba(15,23,42,0.12)" }}
@@ -45,41 +49,26 @@ export function HeroInterviewStickyNotes({
   }
 
   return (
-    <div
-      className="absolute bottom-3 right-3 z-20 sm:bottom-4 sm:right-5 lg:right-7"
-      aria-label="Interview notes from session"
-    >
+    <div className={position} aria-label="Interview notes from session">
       <div className="relative w-[200px]" style={{ height: stackHeight }}>
         {visible.map((note, index) => {
           const offset = STICKY_OFFSETS[index % STICKY_OFFSETS.length];
-          const selected = selectedId === note.id;
+          const selected = !readOnly && selectedId === note.id;
+          const noteClass = cn(
+            heroStickyNote(selected),
+            "absolute bottom-0 right-0 w-[168px]",
+            "origin-bottom-right transition-[transform,box-shadow] duration-200",
+          );
+          const noteStyle = {
+            transform: `rotate(${offset.rotate}deg) translate(${offset.x}px, ${offset.y}px)`,
+            zIndex: 10 + index,
+            boxShadow: selected
+              ? "6px 10px 28px rgba(15,23,42,0.18), 0 0 0 2px rgba(217,119,6,0.35)"
+              : "4px 8px 22px rgba(15,23,42,0.14), 2px 2px 0 rgba(15,23,42,0.04)",
+          } as const;
 
-          return (
-            <button
-              key={note.id}
-              type="button"
-              onClick={() => {
-                if (onInsert && selected) {
-                  onInsert(note);
-                  setSelectedId(null);
-                } else {
-                  setSelectedId(note.id);
-                }
-              }}
-              className={cn(
-                heroStickyNote(selected),
-                "absolute bottom-0 right-0 w-[168px]",
-                "origin-bottom-right transition-[transform,box-shadow] duration-200",
-              )}
-              style={{
-                transform: `rotate(${offset.rotate}deg) translate(${offset.x}px, ${offset.y}px)`,
-                zIndex: 10 + index,
-                boxShadow: selected
-                  ? "6px 10px 28px rgba(15,23,42,0.18), 0 0 0 2px rgba(217,119,6,0.35)"
-                  : "4px 8px 22px rgba(15,23,42,0.14), 2px 2px 0 rgba(15,23,42,0.04)",
-              }}
-              aria-pressed={selected}
-            >
+          const noteContent = (
+            <>
               <span
                 className="absolute -top-2 left-1/2 h-3 w-8 -translate-x-1/2 rounded-sm bg-amber-200/90 shadow-sm"
                 aria-hidden
@@ -98,6 +87,34 @@ export function HeroInterviewStickyNotes({
                   Tap again to insert
                 </span>
               ) : null}
+            </>
+          );
+
+          if (readOnly) {
+            return (
+              <div key={note.id} className={noteClass} style={noteStyle}>
+                {noteContent}
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={note.id}
+              type="button"
+              onClick={() => {
+                if (onInsert && selected) {
+                  onInsert(note);
+                  setSelectedId(null);
+                } else {
+                  setSelectedId(note.id);
+                }
+              }}
+              className={noteClass}
+              style={noteStyle}
+              aria-pressed={selected}
+            >
+              {noteContent}
             </button>
           );
         })}

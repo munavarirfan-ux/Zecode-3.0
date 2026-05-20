@@ -11,13 +11,31 @@ const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
 const DialogClose = DialogPrimitive.Close;
 
-/** Radix-style destructive red for modal close icons */
-export const dialogCloseButtonClass =
-  "text-red-600 transition-colors duration-[180ms] ease-out hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300";
+/** App-wide modal dismiss — bright red surface, white icon, no border */
+export const dialogCloseButtonClass = cn(
+  "inline-flex shrink-0 items-center justify-center border-0 p-0",
+  "bg-[#EF4444] text-white",
+  "shadow-[0_4px_12px_rgba(0,0,0,0.2)]",
+  "transition-[color,background-color,box-shadow] duration-[180ms] ease-out",
+  "hover:bg-[#DC2626] hover:text-white",
+  "hover:shadow-[0_4px_14px_rgba(0,0,0,0.22),0_0_0_4px_rgba(239,68,68,0.22)]",
+  "active:bg-[#B91C1C] active:text-white",
+  "active:shadow-[0_2px_8px_rgba(0,0,0,0.24),0_0_0_4px_rgba(239,68,68,0.14)]",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EF4444] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+  "disabled:pointer-events-none disabled:opacity-50",
+);
 
-/** Close icon on dark / hero surfaces */
-export const dialogCloseButtonOnDarkClass =
-  "text-red-400 transition-colors duration-[180ms] ease-out hover:bg-red-500/15 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/30";
+export const dialogCloseButtonSm = cn(dialogCloseButtonClass, "h-9 w-9 rounded-[10px]");
+export const dialogCloseButtonMd = cn(dialogCloseButtonClass, "h-10 w-10 rounded-[10px]");
+export const dialogCloseButtonLg = cn(dialogCloseButtonClass, "h-11 w-11 rounded-[10px]");
+
+export const dialogCloseButtonPositionClass = "absolute right-4 top-4 z-10";
+
+/** @deprecated Use dialogCloseButtonSm */
+export const dialogCloseButtonOnDarkClass = dialogCloseButtonSm;
+
+/** @deprecated Use dialogCloseButtonLg */
+export const dialogCloseButtonReportHeroClass = dialogCloseButtonLg;
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
@@ -61,10 +79,10 @@ const DialogContent = React.forwardRef<
       >
         {children}
         <DialogPrimitive.Close
-          className={cn("absolute right-4 top-4 rounded-[8px] p-1", dialogCloseButtonClass)}
+          className={cn(dialogCloseButtonPositionClass, dialogCloseButtonSm)}
           aria-label="Close"
         >
-          <X className="h-4 w-4" strokeWidth={1.5} />
+          <X className="h-4 w-4" strokeWidth={2} />
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </div>
@@ -117,11 +135,27 @@ const DialogPanel = React.forwardRef<
 ));
 DialogPanel.displayName = "DialogPanel";
 
+const DialogCloseIcon = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Close>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Close
+    ref={ref}
+    className={cn(dialogCloseButtonSm, className)}
+    aria-label="Close"
+    {...props}
+  >
+    <X className="h-4 w-4" strokeWidth={2} />
+  </DialogPrimitive.Close>
+));
+DialogCloseIcon.displayName = "DialogCloseIcon";
+
 export {
   Dialog,
   DialogPortal,
   DialogOverlay,
   DialogClose,
+  DialogCloseIcon,
   DialogTrigger,
   DialogContent,
   DialogPanel,

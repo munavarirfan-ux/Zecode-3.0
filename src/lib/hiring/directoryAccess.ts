@@ -1,10 +1,12 @@
 import type { PreviewRole } from "@/config/previewRole";
+import { getEffectivePreviewRole } from "@/lib/onboarding/effectiveRole";
 import { getPreviewActorLabel } from "@/lib/hiring/feedbackPermissions";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
 import { getCandidateStage } from "@/lib/hiring/stages";
 
 export function isHiringAdminRole(role: PreviewRole): boolean {
-  return role === "superAdmin" || role === "admin";
+  const effective = getEffectivePreviewRole(role);
+  return effective === "superAdmin" || effective === "admin";
 }
 
 function actorFirstName(role: PreviewRole): string {
@@ -15,22 +17,16 @@ function actorFirstName(role: PreviewRole): string {
 export function candidateVisibleToRole(candidate: HiringCandidate, role: PreviewRole): boolean {
   if (isHiringAdminRole(role)) return true;
 
-  const actor = getPreviewActorLabel(role);
-  const first = actorFirstName(role);
+  const actor = getPreviewActorLabel(getEffectivePreviewRole(role));
+  const effective = getEffectivePreviewRole(role);
+  const first = actorFirstName(effective);
 
-  if (role === "interviewer") {
+  if (effective === "evaluator") {
     const onPanel = candidate.interviews.some((i) =>
       i.interviewers.some((n) => n.toLowerCase().includes(first) || n === actor),
     );
-    return onPanel || candidate.recruiterOwner === actor;
-  }
-
-  if (role === "evaluator") {
     const hasAssessment = candidate.emails.some((e) => e.type === "Assessment");
-    const onPanel = candidate.interviews.some((i) =>
-      i.interviewers.some((n) => n.toLowerCase().includes(first)),
-    );
-    return hasAssessment || onPanel;
+    return onPanel || candidate.recruiterOwner === actor || hasAssessment;
   }
 
   return false;

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 /** Dashboard surface system — layered depth for enterprise hierarchy */
 
 /** Page canvas */
@@ -35,12 +37,20 @@ export {
   hiringHeroShell as dashboardHeroShell,
 } from "@/components/hiring/hiringTokens";
 
-/** Nested workspace panels */
-export const dashboardPanel =
-  "min-w-0 rounded-[14px] border border-[rgba(15,23,42,0.04)] bg-[#FAFAFB] dark:border-white/[0.05] dark:bg-white/[0.02]";
+/** Primary border — intelligence workspace cards (all roles) */
+export const dashboardIntelligenceBorder =
+  "border border-[rgb(var(--accent-rgb)/0.28)] dark:border-[rgb(var(--accent-rgb)/0.32)]";
 
-export const dashboardPanelInteractive =
-  "min-w-0 rounded-[14px] border border-[rgba(15,23,42,0.05)] bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03]";
+/** Nested workspace panels */
+export const dashboardPanel = cn(
+  "min-w-0 rounded-[14px] bg-[#FAFAFB] dark:bg-white/[0.02]",
+  dashboardIntelligenceBorder,
+);
+
+export const dashboardPanelInteractive = cn(
+  "min-w-0 rounded-[14px] bg-white shadow-[0_1px_3px_rgb(var(--accent-rgb)/0.08)] dark:bg-white/[0.03]",
+  dashboardIntelligenceBorder,
+);
 
 export const dashboardInsightCard = dashboardPanelInteractive;
 

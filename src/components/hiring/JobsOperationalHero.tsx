@@ -2,14 +2,14 @@
 
 import { Briefcase, Calendar, FileCheck, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { HiringOverviewStats } from "@/lib/hiring/mockData";
 import { HeroMetricsCollapsible } from "./HeroMetricsCollapsible";
+import { HeroMetricsToggleButton } from "./HeroMetricsToggleButton";
 import { HiringHeroGlassKpiCard } from "./HiringHeroGlassKpiCard";
 import {
+  hiringHeroPrimaryBtnMd,
   hiringHeroRadialOverlay,
   hiringHeroShell,
-  hiringTransition,
 } from "./hiringTokens";
 import { HiringHeroTexture } from "./HiringHeroTexture";
 
@@ -17,10 +17,13 @@ export function JobsOperationalHero({
   stats,
   onAddJob,
   addJobButtonRef,
+  newUserEmpty,
 }: {
   stats: HiringOverviewStats;
   onAddJob: () => void;
   addJobButtonRef?: React.Ref<HTMLButtonElement>;
+  /** Fresh New User workspace — calmer hero before first job exists. */
+  newUserEmpty?: boolean;
 }) {
   const kpis = [
     {
@@ -73,39 +76,45 @@ export function JobsOperationalHero({
               Jobs
             </h1>
             <p className="max-w-lg text-[13px] leading-relaxed text-white/[0.68] sm:text-sm">
-              Operational view of active hiring workflows across your organization.
+              {newUserEmpty
+                ? "How to get started: create a job, publish it, then build your candidate pipeline."
+                : "Operational view of active hiring workflows across your organization."}
             </p>
           </header>
-          <Button
-            ref={addJobButtonRef}
-            type="button"
-            onClick={onAddJob}
-            className={cn(
-              "h-10 shrink-0 rounded-[12px] px-5 text-sm font-semibold text-white",
-              hiringTransition,
-              "bg-accent shadow-[0_2px_10px_rgb(var(--accent-rgb)/0.4)] hover:-translate-y-px hover:bg-accent-hover hover:shadow-[0_6px_24px_rgb(var(--accent-rgb)/0.42)]",
-            )}
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-            Add New Job
-          </Button>
+          {newUserEmpty ? (
+            <Button ref={addJobButtonRef} type="button" onClick={onAddJob} className={hiringHeroPrimaryBtnMd}>
+              <Plus className="h-4 w-4" strokeWidth={2.5} />
+              Create your first job
+            </Button>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <HeroMetricsToggleButton storageKey="jobs-operational-hero-metrics-collapsed" />
+              <Button ref={addJobButtonRef} type="button" onClick={onAddJob} className={hiringHeroPrimaryBtnMd}>
+                <Plus className="h-4 w-4" strokeWidth={2.5} />
+                Add New Job
+              </Button>
+            </div>
+          )}
         </div>
 
-        <HeroMetricsCollapsible
-          id="jobs-operational-hero-metrics"
-          withBorder={false}
-          gridClassName="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-4"
-        >
-          {kpis.map((kpi) => (
-            <HiringHeroGlassKpiCard
-              key={kpi.label}
-              value={kpi.value}
-              label={kpi.label}
-              subtitle={kpi.subtitle}
-              icon={kpi.icon}
-            />
-          ))}
-        </HeroMetricsCollapsible>
+        {!newUserEmpty ? (
+          <HeroMetricsCollapsible
+            id="jobs-operational-hero-metrics"
+            withBorder={false}
+            storageKey="jobs-operational-hero-metrics-collapsed"
+            gridClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {kpis.map((kpi) => (
+              <HiringHeroGlassKpiCard
+                key={kpi.label}
+                value={kpi.value}
+                label={kpi.label}
+                subtitle={kpi.subtitle}
+                icon={kpi.icon}
+              />
+            ))}
+          </HeroMetricsCollapsible>
+        ) : null}
       </div>
     </section>
   );

@@ -40,11 +40,11 @@ const FULL_TABS = [
 
 const INTERVIEW_MODE_TABS = [
   { id: "interviews", label: "Interviews" },
-  { id: "hired-offers", label: "Hired & offers" },
-  { id: "rejected", label: "Rejected" },
+  { id: "hired", label: "Hired" },
+  { id: "offers", label: "Offers" },
 ] as const;
 
-type TabId = (typeof FULL_TABS)[number]["id"];
+type TabId = (typeof FULL_TABS)[number]["id"] | (typeof INTERVIEW_MODE_TABS)[number]["id"];
 
 const OFFER_COLS = [
   { id: "offer-sent", title: "Offer sent" },
@@ -94,19 +94,33 @@ export function JobWorkspace({ job }: { job: HiringJob }) {
   );
 
   const screeningCandidates = useMemo(() => byStage("Screening"), [byStage]);
-  const interviewCandidates = useMemo(() => byStage("Interviews"), [byStage]);
-  const hiredCandidates = useMemo(() => byStage("Hired & Offers"), [byStage]);
+  // Interviews tab should include completed / feedback-pending / cancelled interviews even if
+  // the candidate has since moved to offers/rejected.
+  const interviewStageCandidates = useMemo(() => byStage("Interviews"), [byStage]);
+  const interviewCandidates = useMemo(
+    () =>
+      candidates.filter(
+        (c) => interviewStageCandidates.includes(c) || (c.interviews?.length ?? 0) > 0,
+      ),
+    [candidates, interviewStageCandidates],
+  );
+  const hiredOffersCandidates = useMemo(() => byStage("Hired & Offers"), [byStage]);
+  const offerCandidates = useMemo(
+    () => hiredOffersCandidates.filter((c) => hireOffersKanbanColumnId(c) === "offer-sent"),
+    [hiredOffersCandidates],
+  );
+  const hiredCandidates = useMemo(
+    () => hiredOffersCandidates.filter((c) => hireOffersKanbanColumnId(c) === "hired"),
+    [hiredOffersCandidates],
+  );
   const rejectedCandidates = useMemo(() => byStage("Rejected"), [byStage]);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     const candidateParam = searchParams.get("candidate");
     if (isInterviewMode) {
-      if (tabParam && INTERVIEW_MODE_TABS.some((t) => t.id === tabParam)) {
-        setTab(tabParam as TabId);
-      } else {
-        setTab("interviews");
-      }
+      if (tabParam && INTERVIEW_MODE_TABS.some((t) => t.id === tabParam)) setTab(tabParam as TabId);
+      else setTab("interviews");
     } else if (tabParam === "screening") {
       setTab("applicants-stats");
     } else if (tabParam === "offers") {
@@ -200,33 +214,62 @@ export function JobWorkspace({ job }: { job: HiringJob }) {
             />
           </TabsContent>
 
-          <TabsContent value="hired-offers" className="mt-5 focus-visible:ring-0 data-[state=inactive]:hidden">
-            <HiringKanban
-              columns={OFFER_COLS}
-              candidates={hiredCandidates}
-              pipelineStage="Hired & Offers"
-              columnResolver={hireOffersKanbanColumnId}
-              onCardClick={openKanbanReport}
-              onCandidateMoved={refreshCandidates}
-            />
-          </TabsContent>
+          {isInterviewMode ? (
+            <TabsContent value="offers" className="mt-5 focus-visible:ring-0 data-[state=inactive]:hidden">
+              <HiringKanban
+                columns={[{ id: "offer-sent", title: "Offer sent" }]}
+                candidates={offerCandidates}
+                pipelineStage="Hired & Offers"
+                columnResolver={hireOffersKanbanColumnId}
+                onCardClick={openKanbanReport}
+                onCandidateMoved={refreshCandidates}
+              />
+            </TabsContent>
+          ) : (
+            <TabsContent value="hired-offers" className="mt-5 focus-visible:ring-0 data-[state=inactive]:hidden">
+              <HiringKanban
+                columns={OFFER_COLS}
+                candidates={hiredOffersCandidates}
+                pipelineStage="Hired & Offers"
+                columnResolver={hireOffersKanbanColumnId}
+                onCardClick={openKanbanReport}
+                onCandidateMoved={refreshCandidates}
+              />
+            </TabsContent>
+          )}
 
-          <TabsContent value="rejected" className="mt-5 focus-visible:ring-0 data-[state=inactive]:hidden">
-            <HiringKanban
-              columns={REJECTED_COLS}
-              candidates={rejectedCandidates}
-              pipelineStage="Rejected"
-              onCardClick={openKanbanReport}
-              onCandidateMoved={refreshCandidates}
-              enableDragDrop={false}
-            />
-          </TabsContent>
+          {isInterviewMode ? (
+            <TabsContent value="hired" className="mt-5 focus-visible:ring-0 data-[state=inactive]:hidden">
+              <HiringKanban
+                columns={[{ id: "hired", title: "Hired" }]}
+                candidates={hiredCandidates}
+                pipelineStage="Hired & Offers"
+                columnResolver={hireOffersKanbanColumnId}
+                onCardClick={openKanbanReport}
+                onCandidateMoved={refreshCandidates}
+              />
+            </TabsContent>
+          ) : null}
+
+          {!isInterviewMode ? (
+            <TabsContent value="rejected" className="mt-5 focus-visible:ring-0 data-[state=inactive]:hidden">
+              <HiringKanban
+                columns={REJECTED_COLS}
+                candidates={rejectedCandidates}
+                pipelineStage="Rejected"
+                onCardClick={openKanbanReport}
+                onCandidateMoved={refreshCandidates}
+                enableDragDrop={false}
+              />
+            </TabsContent>
+          ) : null}
         </Tabs>
       </div>
 
       <CandidateReportDialog
         candidate={kanbanReportCandidate}
         job={job}
+        reportContext="job"
         open={kanbanReportOpen}
         onOpenChange={(open) => {
           setKanbanReportOpen(open);

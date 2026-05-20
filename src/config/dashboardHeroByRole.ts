@@ -1,6 +1,6 @@
 import type { PreviewRole } from "@/config/previewRole";
 
-export type DashboardHeroLayout = "design" | "workspace" | "interviewer" | "evaluator" | "curator";
+export type DashboardHeroLayout = "design" | "workspace" | "evaluator" | "curator";
 
 export type DashboardHeroKpi = {
   id: string;
@@ -51,33 +51,31 @@ export function getDashboardHeroBlock(role: PreviewRole, _organizationName: stri
     return designHeroBlock();
   }
 
-  if (role === "interviewer") {
-    return {
-      layout: "interviewer",
-      topLabel: "INTERVIEW OPERATIONS",
-      subheading: "Your interview lane — today's panels, feedback you owe, and what's next on your calendar.",
-      kpis: [
-        { id: "today", label: "Interviews today", value: "3", caption: "Scheduled with you", trend: "Next 45m", trendUp: true },
-        { id: "feedback", label: "Feedback due", value: "5", caption: "Write-ups outstanding", trend: "2 overdue", trendUp: false },
-        { id: "upcoming", label: "Upcoming", value: "11", caption: "This week", trend: "+4 vs last week", trendUp: true },
-        { id: "done", label: "Completed (30d)", value: "42", caption: "Panels finished", trend: "+6 month", trendUp: true },
-      ],
-      chips: ["Next panel in 45m", "2 candidates awaiting scorecard", "1 hold — needs reschedule"],
-    };
-  }
-
   if (role === "evaluator") {
     return {
       layout: "evaluator",
-      topLabel: "ASSESSMENT OPERATIONS",
-      subheading: "Your evaluation queue — reviews in flight, flags, and completions for today.",
+      topLabel: "EVALUATOR WORKSPACE",
+      subheading:
+        "Your interview panels and assessment queue — today's sessions, feedback you owe, and reviews in flight.",
       kpis: [
+        { id: "today", label: "Interviews today", value: "3", caption: "Scheduled with you", trend: "Next 45m", trendUp: true },
+        { id: "feedback", label: "Feedback due", value: "5", caption: "Write-ups outstanding", trend: "2 overdue", trendUp: false },
         { id: "ongoing", label: "Ongoing reviews", value: "28", caption: "Active assessments", trend: "12 due this week", trendUp: true },
-        { id: "pending", label: "Pending decisions", value: "16", caption: "Awaiting verdict", trend: "5 priority", trendUp: false },
-        { id: "flagged", label: "Flagged", value: "6", caption: "Integrity signals", trend: "Needs review", trendUp: false },
-        { id: "done", label: "Completed today", value: "07", caption: "Closed evaluations", trend: "+2 vs yesterday", trendUp: true },
+        {
+          id: "timeSpent",
+          label: "Time spent this week",
+          value: "8h 15m",
+          caption: "Interview time",
+          trend: "4 sessions",
+          trendUp: true,
+        },
       ],
-      chips: ["5 high-priority reviews due today", "2 bundles need second read", "Calibration window Thu 4pm"],
+      chips: [
+        "Next panel in 45m",
+        "2 candidates awaiting scorecard",
+        "5 high-priority reviews due today",
+        "Calibration window Thu 4pm",
+      ],
     };
   }
 
@@ -93,6 +91,25 @@ export function getDashboardHeroBlock(role: PreviewRole, _organizationName: stri
         { id: "archived", label: "Archived", value: "214", caption: "Retired from library", trend: "+18 quarter", trendUp: true },
       ],
       chips: ["12 drafts pending publish", "3 tracks need coverage", "Peer review queue: 8 items"],
+    };
+  }
+
+  if (role === "newUser") {
+    return {
+      layout: "workspace",
+      topLabel: "NEW USER",
+      subheading: "Welcome — complete your profile and wait for workspace access from your administrator.",
+      kpis: [
+        { id: "setup", label: "Setup progress", value: "40%", caption: "Onboarding checklist", trend: "3 steps left", trendUp: false },
+        { id: "access", label: "Modules unlocked", value: "1", caption: "Dashboard & settings", trend: "Role pending", trendUp: false },
+      ],
+      chips: ["Complete profile in Settings", "Review welcome guide", "Request access from admin"],
+      workspaceSummary: {
+        brandLine: "Ze[hub]",
+        region: "Global",
+        activeTeams: "—",
+        hiringHealth: "Setup in progress",
+      },
     };
   }
 

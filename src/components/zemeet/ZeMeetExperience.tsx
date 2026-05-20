@@ -24,7 +24,7 @@ function ZeMeetEndedScreen() {
       <p className={t.label}>ZeMeet</p>
       <h1 className={cn(t.heading, "mt-2 text-[1.5rem]")}>Session ended</h1>
       <p className={cn(t.meta, "mt-2 max-w-sm text-[14px]")}>
-        Interview artifacts have been synced to the candidate report in Ze[code] Hiring Intelligence.
+        Interview artifacts have been synced to the candidate report in ze[hire].
       </p>
       <a
         href={`/hiring/jobs/${session.context.jobId}`}

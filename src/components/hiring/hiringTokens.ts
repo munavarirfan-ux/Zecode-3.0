@@ -42,7 +42,7 @@ export const hiringHeroShell = cn(
   "text-[rgb(var(--hero-fg-rgb))]",
   hiringHeroGradient,
   "shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_24px_56px_-28px_rgb(var(--hero-shadow-rgb)/0.75)]",
-  "px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-9",
+  "px-8 py-8 sm:px-8 sm:py-8 lg:px-10 lg:py-9",
 );
 
 /**
@@ -72,7 +72,7 @@ export const hiringHeroTopoPatternStyle = {
 } as const;
 
 export const hiringHeroGlassKpi = cn(
-  "group/kpi relative flex min-h-[140px] flex-col overflow-hidden rounded-[18px] p-4 sm:p-5",
+  "group/kpi relative flex min-h-0 flex-col overflow-hidden rounded-[18px] p-[18px] sm:p-5",
   "border border-white/[0.22] bg-white/[0.12] backdrop-blur-[22px]",
   "shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_32px_-12px_rgba(0,0,0,0.25)]",
   "transition-all duration-[180ms] ease-out",
@@ -84,6 +84,31 @@ export const hiringHeroRadialOverlay = {
   backgroundImage:
     "radial-gradient(ellipse 80% 50% at 20% 100%, rgba(255,255,255,0.06) 0, transparent 50%), radial-gradient(ellipse 60% 40% at 90% 0%, rgba(255,255,255,0.09) 0, transparent 45%), linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 35%)",
 } as const;
+
+/** Primary CTA on gradient hero — white surface, brand accent text */
+export const hiringHeroPrimaryBtn = cn(
+  "border-0 font-semibold text-accent bg-white",
+  "shadow-[0_2px_12px_rgba(0,0,0,0.14)]",
+  hiringTransition,
+  "hover:bg-white/95 hover:text-accent-hover hover:shadow-[0_4px_18px_rgba(0,0,0,0.16)]",
+);
+
+export const hiringHeroPrimaryBtnSm = cn(
+  hiringHeroPrimaryBtn,
+  "h-9 gap-1.5 rounded-[11px] px-4 text-[13px]",
+);
+
+/** Secondary CTA on gradient hero — frosted glass, white text */
+export const hiringHeroSecondaryBtnSm = cn(
+  "h-9 gap-1.5 rounded-[11px] border-0 px-4 text-[13px] font-medium text-white",
+  hiringTransition,
+  "bg-white/[0.14] shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-white/[0.2]",
+);
+
+export const hiringHeroPrimaryBtnMd = cn(
+  hiringHeroPrimaryBtn,
+  "h-10 shrink-0 gap-1.5 rounded-[12px] px-5 text-sm hover:-translate-y-px",
+);
 
 /** Frosted overview modules — Linear / Ashby-inspired */
 export const overviewGlassCard = cn(
@@ -113,6 +138,8 @@ export const overviewMuted = "text-[12px] text-[#71717A] dark:text-muted/80";
 
 /** Kanban workspace tint — see `globals.css` `.kanban-board-shell` (theme accent CSS vars) */
 export const kanbanBoardShell = "kanban-board-shell";
+/** Kanban tint without forced min-height — use for headers */
+export const kanbanBoardTint = "kanban-board-tint";
 export const kanbanBoardGrain = "kanban-board-grain";
 export const kanbanBoardTrack = "kanban-board-track";
 export const kanbanColumnShell = "kanban-column-shell";

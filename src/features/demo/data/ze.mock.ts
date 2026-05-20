@@ -2,7 +2,7 @@ export type ZeInterviewStatus = "Invited" | "Upcoming" | "Ongoing" | "Completed"
 
 export const zeMock = {
   workspace: {
-    name: "Ze[code] — NovaTech",
+    name: "Ze[hub] — NovaTech",
     region: "EU/UK",
   },
   dashboard: {

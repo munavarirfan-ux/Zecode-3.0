@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
-  dialogCloseButtonClass,
+  dialogCloseButtonLg,
   DialogDescription,
   DialogOverlay,
   DialogPanel,
@@ -57,7 +57,7 @@ function focusFirstInvalidField(errors: ProfileFieldErrors) {
             : firstKey === "resume"
               ? "resume-upload-step"
               : firstKey?.startsWith("education-")
-                ? `${firstKey}-institution`
+                ? `${firstKey}-details`
                 : undefined;
   if (firstId) document.getElementById(firstId)?.focus();
 }
@@ -277,18 +277,14 @@ export function CandidateFormDialog({
             }}
           >
             <DialogTitle className="sr-only">{dialogTitle}</DialogTitle>
-          <DialogClose asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              className={cn(
-                "absolute right-3 top-3 z-20 h-11 w-11 min-h-[44px] min-w-[44px] rounded-[10px] focus-visible:ring-offset-2 sm:right-5 sm:top-5",
-                dialogCloseButtonClass,
-              )}
-              aria-label={`Close ${dialogTitle.toLowerCase()} modal`}
-            >
-              <X className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-            </Button>
+          <DialogClose
+            className={cn(
+              "absolute right-3 top-3 z-20 sm:right-5 sm:top-5",
+              dialogCloseButtonLg,
+            )}
+            aria-label={`Close ${dialogTitle.toLowerCase()} modal`}
+          >
+            <X className="h-4 w-4" strokeWidth={2} aria-hidden />
           </DialogClose>
 
           <DialogDescription className="sr-only">

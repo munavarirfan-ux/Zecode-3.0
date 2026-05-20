@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   Briefcase,
   Calendar,
@@ -28,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
-  dialogCloseButtonOnDarkClass,
+  dialogCloseButtonLg,
   DialogDescription,
   DialogOverlay,
   DialogPanel,
@@ -43,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
 import { EmailFeed } from "./EmailFeed";
@@ -61,9 +63,11 @@ import { CandidateTimelineTab } from "./CandidateTimelineTab";
 import { CandidateAssessmentReport } from "./CandidateAssessmentReport";
 import { DirectoryViewSwitcher } from "../directories/DirectoryViewSwitcher";
 import {
-  getCandidateReportAvailability,
+  getCandidateReportModes,
+  normalizeReportTab,
   SHELL_MODE_LABELS,
   shellModeToInitialTab,
+  type CandidateReportContext,
   type CandidateReportShellMode,
 } from "@/lib/hiring/candidateReportModes";
 import {
@@ -73,7 +77,13 @@ import {
   dashboardSectionSub,
   dashboardSectionTitle,
 } from "@/components/dashboard/dashboardTokens";
-import { hiringHeroRadialOverlay, hiringHeroShell, hiringTransition } from "../hiringTokens";
+import {
+  hiringHeroPrimaryBtn,
+  hiringHeroRadialOverlay,
+  hiringHeroSecondaryBtnSm,
+  hiringHeroShell,
+  hiringTransition,
+} from "../hiringTokens";
 import { HiringHeroTexture } from "../HiringHeroTexture";
 import { AddTagsDialog } from "./AddTagsDialog";
 import { EditCandidateDialog } from "./EditCandidateDialog";
@@ -89,6 +99,14 @@ import {
 } from "@/lib/hiring/moveApplicantPermissions";
 import { CandidateReportInterviewDialogs } from "./CandidateReportInterviewDialogs";
 import { useCandidateInterviewScheduling } from "./useCandidateInterviewScheduling";
+import { InterviewerHeroInterviewNotes } from "./InterviewerHeroInterviewNotes";
+import {
+  buildInterviewerReportContext,
+  interviewerVisibleTabIds,
+  isInterviewerReportRole,
+  type InterviewerAssignmentOverride,
+  type InterviewerReportContext,
+} from "@/lib/hiring/interviewerReportContext";
 
 const reportMenuItem =
   "flex cursor-pointer items-center gap-2 rounded-[8px] px-2 py-1.5 text-[12px] font-medium outline-none focus:bg-[rgba(15,23,42,0.04)] data-[highlighted]:bg-[rgba(15,23,42,0.04)]";
@@ -113,7 +131,8 @@ const REPORT_TABS = [
 const TABS_BY_SHELL: Record<CandidateReportShellMode, Array<(typeof REPORT_TABS)[number][0]>> = {
   overview: ["overview", "profile", "emails", "timeline"],
   assessment: ["assessment"],
-  interview: ["feedback", "interviews", "timeline"],
+  /** Hiring / interview pipeline — never includes assessment */
+  interview: ["overview", "profile", "feedback", "emails", "interviews", "timeline"],
 };
 
 /** Dashboard hero — contained card, aligned to report column */
@@ -127,10 +146,20 @@ const reportHeroShell = cn(
 const heroGlassMeta =
   "inline-flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.08] px-3 py-1.5 text-[13px] font-medium text-white backdrop-blur-md [&_svg]:text-white";
 
-const heroActionBtn = cn(
-  "h-10 gap-1.5 rounded-[10px] px-3.5 text-[13px] font-medium",
-  "border-white/[0.16] bg-white/[0.1] text-white/90 shadow-none backdrop-blur-sm",
-  "hover:bg-white/[0.14] hover:text-white",
+const heroPrimaryActionBtn = cn(
+  hiringHeroPrimaryBtn,
+  "h-10 gap-1.5 rounded-[10px] px-3.5 text-[13px]",
+);
+
+const heroSecondaryActionBtn = cn(
+  hiringHeroSecondaryBtnSm,
+  "h-10 rounded-[10px] px-3.5",
+);
+
+const heroKebabBtn = cn(
+  "h-10 w-10 rounded-[10px] border-0 p-0 text-white shadow-none backdrop-blur-sm",
+  hiringTransition,
+  "bg-white/[0.14] hover:bg-white/[0.2]",
 );
 
 function Panel({
@@ -254,20 +283,20 @@ function CandidateReportHero({
 
           <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
             {canMoveApplicant ? (
-              <Button variant="outline" size="sm" className={heroActionBtn} onClick={onMoveApplicant}>
+              <Button type="button" size="sm" className={heroSecondaryActionBtn} onClick={onMoveApplicant}>
                 <MoveRight className="h-4 w-4" strokeWidth={1.5} />
                 Move Applicant
               </Button>
             ) : null}
             {canSchedule ? (
-              <Button variant="outline" size="sm" className={heroActionBtn} onClick={onScheduleInterview}>
+              <Button type="button" size="sm" className={heroPrimaryActionBtn} onClick={onScheduleInterview}>
                 <Calendar className="h-4 w-4" strokeWidth={1.5} />
                 Schedule
               </Button>
             ) : null}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className={cn(heroActionBtn, "w-10 px-0")}>
+                <Button type="button" size="sm" className={heroKebabBtn} aria-label="More actions">
                   <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
                 </Button>
               </DropdownMenuTrigger>
@@ -318,17 +347,20 @@ function CandidateReportHero({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <DialogClose
-              className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-[10px] border border-white/[0.16] bg-white/[0.08] backdrop-blur-sm",
-                dialogCloseButtonOnDarkClass,
-                hiringTransition,
-              )}
-              onClick={onClose}
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" strokeWidth={1.5} />
-            </DialogClose>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DialogClose
+                  className={dialogCloseButtonLg}
+                  onClick={onClose}
+                  aria-label="Close report"
+                >
+                  <X className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+                </DialogClose>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={8}>
+                Close report
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>
@@ -336,6 +368,96 @@ function CandidateReportHero({
   );
 }
 
+function InterviewerCandidateReportHero({
+  candidate,
+  job,
+  profile,
+  initials,
+  ctx,
+  onClose,
+}: {
+  candidate: HiringCandidate;
+  job: HiringJob;
+  profile: CandidateEditProfile;
+  initials: string;
+  ctx: InterviewerReportContext;
+  onClose: () => void;
+}) {
+  const hasNotes = ctx.isAssignedCompleted && ctx.sessionNoteBullets.length > 0;
+
+  return (
+    <header
+      className={cn(
+        reportHeroShell,
+        "!overflow-visible",
+        hasNotes && "pb-24 sm:pb-12 lg:pb-10",
+      )}
+    >
+      <HiringHeroTexture />
+      <div
+        className="pointer-events-none absolute -right-20 -top-16 h-56 w-56 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.14)] blur-3xl"
+        aria-hidden
+      />
+      <div className="pointer-events-none absolute inset-0" aria-hidden style={hiringHeroRadialOverlay} />
+
+      <div className="relative w-full">
+        <div className="flex flex-col gap-5 pr-12 lg:flex-row lg:items-start lg:justify-between lg:gap-6 lg:pr-14">
+          <div className="flex min-w-0 gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] border border-white/[0.16] bg-white/[0.1] text-base font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:h-16 sm:w-16 sm:text-lg">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="text-[1.5rem] font-semibold tracking-[-0.035em] text-white sm:text-[1.75rem]">
+                {displayCandidateName(profile, candidate.name)}
+              </DialogTitle>
+              <p className="mt-1.5 text-[14px] text-white/68 sm:text-[15px]">{job.title}</p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {ctx.assignedRound ? (
+                  <span className={heroGlassMeta}>{ctx.assignedRound}</span>
+                ) : null}
+                {ctx.scheduledLabel ? (
+                  <span className={heroGlassMeta}>{ctx.scheduledLabel}</span>
+                ) : null}
+                {ctx.isAssignedCompleted ? (
+                  <span className={heroGlassMeta}>
+                    <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                    Interview completed
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {ctx.isAssignedCompleted ? (
+        <InterviewerHeroInterviewNotes
+          bullets={ctx.sessionNoteBullets}
+          capturedRound={ctx.sessionNotesRound}
+        />
+      ) : null}
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogClose
+            className={cn(
+              "absolute right-4 top-4 z-30 sm:right-5 sm:top-5",
+              dialogCloseButtonLg,
+            )}
+            onClick={onClose}
+            aria-label="Close report"
+          >
+            <X className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+          </DialogClose>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={8}>
+          Close report
+        </TooltipContent>
+      </Tooltip>
+    </header>
+  );
+}
 
 export function CandidateReportDialog({
   candidate,
@@ -343,7 +465,9 @@ export function CandidateReportDialog({
   open,
   onOpenChange,
   initialTab = "overview",
-  reportScope = "full",
+  reportContext = "job",
+  focusRound,
+  interviewerAssignment,
   onApplicantMoved,
   onCandidateUpdated,
 }: {
@@ -352,7 +476,11 @@ export function CandidateReportDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialTab?: string;
-  reportScope?: "auto" | "full";
+  /** `directory` = global Candidates sidebar (may switch assessment + interview) */
+  reportContext?: CandidateReportContext;
+  /** Interviewer workspace: assigned panel round for tab + hero context */
+  focusRound?: string;
+  interviewerAssignment?: InterviewerAssignmentOverride;
   onApplicantMoved?: () => void;
   onCandidateUpdated?: (candidate: HiringCandidate) => void;
 }) {
@@ -366,37 +494,68 @@ export function CandidateReportDialog({
   const [liveCandidate, setLiveCandidate] = useState<HiringCandidate | null>(candidate);
   const editReturnFocusRef = useRef<HTMLElement | null>(null);
   const { selectedRole } = useRole();
+  const { data: session } = useSession();
   const canSchedule = canScheduleInterview(selectedRole);
   const canMoveApplicant = canUseMoveApplicantAction(selectedRole);
   const canDirectMove = canDirectMoveApplicant(selectedRole);
   const canRequestTransfer = canRequestApplicantTransfer(selectedRole);
 
-  const reportAvailability = useMemo(
-    () => (liveCandidate ? getCandidateReportAvailability(liveCandidate) : null),
-    [liveCandidate],
+  const reportModes = useMemo(
+    () => (liveCandidate ? getCandidateReportModes(liveCandidate, reportContext) : null),
+    [liveCandidate, reportContext],
   );
 
-  const useShellModes = reportScope === "auto" && reportAvailability && reportAvailability.shellModes.length > 1;
+  const interviewerCtx = useMemo(
+    () =>
+      liveCandidate
+        ? buildInterviewerReportContext(
+            liveCandidate,
+            selectedRole,
+            session?.user?.name,
+            focusRound,
+            interviewerAssignment,
+          )
+        : null,
+    [liveCandidate, selectedRole, session?.user?.name, focusRound, interviewerAssignment],
+  );
+
+  const isInterviewerMode = Boolean(interviewerCtx);
+
+  const useShellModes = Boolean(reportModes?.showSwitcher) && !isInterviewerMode;
 
   const visibleReportTabs = useMemo(() => {
-    if (reportScope === "full") return REPORT_TABS;
+    if (isInterviewerMode && interviewerCtx) {
+      const allowed = interviewerVisibleTabIds(interviewerCtx);
+      return REPORT_TABS.filter(([id]) => allowed.includes(id));
+    }
     const allowed = TABS_BY_SHELL[shellMode];
     return REPORT_TABS.filter(([id]) => allowed.includes(id));
-  }, [shellMode, reportScope]);
+  }, [shellMode, isInterviewerMode, interviewerCtx]);
 
   useEffect(() => {
     setLiveCandidate(candidate);
     if (!candidate) return;
-    if (reportScope === "full") {
-      setShellMode("overview");
-      setActiveTab(initialTab);
-      return;
-    }
-    const availability = getCandidateReportAvailability(candidate);
-    const nextShell = availability.defaultShellMode;
+    const modes = getCandidateReportModes(candidate, reportContext);
+    const nextShell = isInterviewerReportRole(selectedRole) ? "interview" : modes.defaultShellMode;
     setShellMode(nextShell);
-    setActiveTab(shellModeToInitialTab(nextShell));
-  }, [candidate, initialTab, reportScope]);
+    const ctx = buildInterviewerReportContext(
+      candidate,
+      selectedRole,
+      session?.user?.name,
+      focusRound,
+      interviewerAssignment,
+    );
+    const allowed = ctx ? interviewerVisibleTabIds(ctx) : TABS_BY_SHELL[nextShell];
+    setActiveTab(normalizeReportTab(initialTab, allowed));
+  }, [candidate, initialTab, reportContext, selectedRole, session?.user?.name, focusRound, interviewerAssignment]);
+
+  useEffect(() => {
+    if (!isInterviewerMode || !interviewerCtx) return;
+    const allowed = interviewerVisibleTabIds(interviewerCtx);
+    if (!allowed.includes(activeTab)) {
+      setActiveTab(allowed[0] ?? "overview");
+    }
+  }, [isInterviewerMode, interviewerCtx, activeTab]);
 
   const profile = useMemo(
     () => (liveCandidate ? getCandidateEditProfile(liveCandidate, job) : null),
@@ -485,30 +644,41 @@ export function CandidateReportDialog({
                 className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
               >
                 <div className={cn("shrink-0", REPORT_COLUMN, REPORT_PAD_X, "pb-5 pt-5 sm:pb-6 sm:pt-6")}>
-                  <CandidateReportHero
-                    candidate={liveCandidate}
-                    job={job}
-                    profile={profile}
-                    initials={initials}
-                  onClose={() => onOpenChange(false)}
-                  onMoveApplicant={() => {
-                    if (canDirectMove) setMoveOpen(true);
-                    else if (canRequestTransfer) setTransferRequestOpen(true);
-                  }}
-                  canMoveApplicant={canMoveApplicant}
-                  onEditCandidate={() => {
-                    editReturnFocusRef.current = document.activeElement as HTMLElement;
-                    setEditOpen(true);
-                  }}
-                  onAddTags={() => setTagsOpen(true)}
-                  onMoveToStage={handleMoveToStage}
-                  onRejectApplicant={() => setRejectOpen(true)}
-                  canSchedule={canSchedule}
-                  onScheduleInterview={() => {
-                    setActiveTab("interviews");
-                    openSchedule();
-                  }}
-                  />
+                  {isInterviewerMode && interviewerCtx ? (
+                    <InterviewerCandidateReportHero
+                      candidate={liveCandidate}
+                      job={job}
+                      profile={profile}
+                      initials={initials}
+                      ctx={interviewerCtx}
+                      onClose={() => onOpenChange(false)}
+                    />
+                  ) : (
+                    <CandidateReportHero
+                      candidate={liveCandidate}
+                      job={job}
+                      profile={profile}
+                      initials={initials}
+                      onClose={() => onOpenChange(false)}
+                      onMoveApplicant={() => {
+                        if (canDirectMove) setMoveOpen(true);
+                        else if (canRequestTransfer) setTransferRequestOpen(true);
+                      }}
+                      canMoveApplicant={canMoveApplicant}
+                      onEditCandidate={() => {
+                        editReturnFocusRef.current = document.activeElement as HTMLElement;
+                        setEditOpen(true);
+                      }}
+                      onAddTags={() => setTagsOpen(true)}
+                      onMoveToStage={handleMoveToStage}
+                      onRejectApplicant={() => setRejectOpen(true)}
+                      canSchedule={canSchedule}
+                      onScheduleInterview={() => {
+                        setActiveTab("interviews");
+                        openSchedule();
+                      }}
+                    />
+                  )}
                 </div>
 
                 <div
@@ -518,14 +688,14 @@ export function CandidateReportDialog({
                     "sticky top-0 z-10 shrink-0 space-y-3 border-b border-[rgba(15,23,42,0.06)] bg-white/95 py-2 backdrop-blur-md dark:border-white/[0.06] dark:bg-surface/95",
                   )}
                 >
-                  {useShellModes && reportAvailability ? (
+                  {useShellModes && reportModes ? (
                     <DirectoryViewSwitcher
                       value={shellMode}
                       onChange={(mode) => {
                         setShellMode(mode);
                         setActiveTab(shellModeToInitialTab(mode));
                       }}
-                      options={reportAvailability.shellModes.map((mode) => ({
+                      options={reportModes.shellModes.map((mode) => ({
                         value: mode,
                         label: SHELL_MODE_LABELS[mode],
                       }))}
@@ -553,6 +723,7 @@ export function CandidateReportDialog({
                       candidate={liveCandidate}
                       job={job}
                       profile={profile}
+                      variant={isInterviewerMode ? "interviewer" : "default"}
                       onCandidateUpdated={handleCandidateUpdated}
                     />
                   </TabsContent>
@@ -566,7 +737,11 @@ export function CandidateReportDialog({
                   </TabsContent>
 
                   <TabsContent value="feedback" className="mt-0 min-h-0 focus-visible:ring-0">
-                    <CandidateReportFeedback candidate={liveCandidate} job={job} />
+                    <CandidateReportFeedback
+                      candidate={liveCandidate}
+                      job={job}
+                      interviewerContext={interviewerCtx}
+                    />
                   </TabsContent>
 
                   <TabsContent value="emails" className="mt-0 min-h-0 focus-visible:ring-0">
@@ -598,7 +773,7 @@ export function CandidateReportDialog({
         </DialogPortal>
       </Dialog>
 
-      {canDirectMove ? (
+      {!isInterviewerMode && canDirectMove ? (
         <MoveApplicantDialog
           open={moveOpen}
           onOpenChange={setMoveOpen}
@@ -611,7 +786,7 @@ export function CandidateReportDialog({
         />
       ) : null}
 
-      {canRequestTransfer ? (
+      {!isInterviewerMode && canRequestTransfer ? (
         <RequestApplicantTransferDialog
           open={transferRequestOpen}
           onOpenChange={setTransferRequestOpen}
@@ -624,32 +799,36 @@ export function CandidateReportDialog({
         />
       ) : null}
 
-      <EditCandidateDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        candidate={liveCandidate}
-        job={job}
-        onSaved={handleCandidateUpdated}
-        returnFocusRef={editReturnFocusRef}
-      />
+      {!isInterviewerMode ? (
+        <>
+          <EditCandidateDialog
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            candidate={liveCandidate}
+            job={job}
+            onSaved={handleCandidateUpdated}
+            returnFocusRef={editReturnFocusRef}
+          />
 
-      <AddTagsDialog
-        open={tagsOpen}
-        onOpenChange={setTagsOpen}
-        candidate={liveCandidate}
-        job={job}
-        onSaved={handleCandidateUpdated}
-      />
+          <AddTagsDialog
+            open={tagsOpen}
+            onOpenChange={setTagsOpen}
+            candidate={liveCandidate}
+            job={job}
+            onSaved={handleCandidateUpdated}
+          />
 
-      <RejectApplicantDialog
-        open={rejectOpen}
-        onOpenChange={setRejectOpen}
-        candidate={liveCandidate}
-        onRejected={(updated) => {
-          handleCandidateUpdated(updated);
-          onOpenChange(false);
-        }}
-      />
+          <RejectApplicantDialog
+            open={rejectOpen}
+            onOpenChange={setRejectOpen}
+            candidate={liveCandidate}
+            onRejected={(updated) => {
+              handleCandidateUpdated(updated);
+              onOpenChange(false);
+            }}
+          />
+        </>
+      ) : null}
 
       <CandidateReportInterviewDialogs
         candidate={liveCandidate}

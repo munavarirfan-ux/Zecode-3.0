@@ -32,10 +32,19 @@ export type InterviewKanbanCardModel = {
   feedbackLabel: string;
   feedbackTone: "neutral" | "success" | "warning" | "danger";
   isOverdueFeedback: boolean;
-  primaryAction: "schedule" | "view" | "reschedule";
+  primaryAction: "schedule" | "join" | "view" | "reschedule" | "request-feedback" | "move-next";
 };
 
-export type InterviewCardAction = "schedule" | "view" | "reschedule" | "cancel";
+export type InterviewCardAction =
+  | "schedule"
+  | "join"
+  | "view"
+  | "reschedule"
+  | "cancel"
+  | "request-feedback"
+  | "move-next"
+  | "add-note"
+  | "reject";
 
 export function hasScheduledInterviewActions(status: InterviewOperationalStatus): boolean {
   return status === "Scheduled" || status === "Ongoing";
@@ -175,10 +184,13 @@ function buildFeedbackState(interview: CandidateInterview | null): {
 
 function resolvePrimaryAction(
   status: InterviewOperationalStatus,
+  interview: CandidateInterview | null,
 ): InterviewKanbanCardModel["primaryAction"] {
   if (status === "Pending") return "schedule";
+  if ((status === "Scheduled" || status === "Ongoing") && interview?.meetUrl) return "join";
   if (status === "Scheduled" || status === "Ongoing") return "view";
-  if (status === "Completed" || status === "Feedback Pending") return "reschedule";
+  if (status === "Feedback Pending") return "request-feedback";
+  if (status === "Completed") return "move-next";
   return "schedule";
 }
 
@@ -205,7 +217,7 @@ export function buildInterviewKanbanCardModel(
     feedbackLabel: feedback.label,
     feedbackTone: feedback.tone,
     isOverdueFeedback: feedback.isOverdue,
-    primaryAction: resolvePrimaryAction(status),
+    primaryAction: resolvePrimaryAction(status, primaryInterview),
   };
 }
 

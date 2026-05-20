@@ -19,6 +19,11 @@ import {
   type ApplicantsFilterState,
 } from "./ApplicantsFiltersPopover";
 import { normalizeSource } from "@/lib/hiring/stages";
+import { cn } from "@/lib/utils";
+import { DirectoryPagination } from "../directories/DirectoryPagination";
+import { hiringCard } from "../hiringTokens";
+
+export const APPLICANTS_PAGE_SIZE = 25;
 
 type SortKey = "newest" | "oldest";
 
@@ -78,6 +83,7 @@ export function JobApplicantsTab({
   const [selected, setSelected] = useState<HiringCandidate | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportTab, setReportTab] = useState("overview");
+  const [page, setPage] = useState(1);
   const [applicants, setApplicants] = useState<HiringCandidate[]>(candidates);
 
   useEffect(() => {
@@ -101,6 +107,21 @@ export function JobApplicantsTab({
     });
     return list;
   }, [applicants, filters, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / APPLICANTS_PAGE_SIZE));
+
+  const paginatedApplicants = useMemo(() => {
+    const start = (page - 1) * APPLICANTS_PAGE_SIZE;
+    return filtered.slice(start, start + APPLICANTS_PAGE_SIZE);
+  }, [filtered, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters, sort]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const openReport = (c: HiringCandidate, tab = "overview") => {
     setSelected(c);
@@ -161,23 +182,40 @@ export function JobApplicantsTab({
           {resolvedEmptyMessage}
         </p>
       ) : (
-        <ul className="space-y-2.5" role="list">
-          {filtered.map((c) => (
-            <li key={c.id}>
-              <ApplicantRowCard
-                candidate={c}
-                onOpenReport={() => openReport(c)}
-                onOpenResume={() => openReport(c, "resume")}
-                onStageChanged={refreshApplicants}
-              />
-            </li>
-          ))}
-        </ul>
+        <div
+          className={cn(
+            hiringCard,
+            "overflow-hidden !rounded-[14px] !p-0",
+            "border-[rgba(15,23,42,0.05)] shadow-[0_1px_3px_rgba(15,23,42,0.04)]",
+          )}
+        >
+          <ul className="divide-y divide-[rgba(15,23,42,0.05)] px-1 py-1 sm:px-1.5" role="list">
+            {paginatedApplicants.map((c) => (
+              <li key={c.id} className="py-1.5 first:pt-2 last:pb-2">
+                <ApplicantRowCard
+                  candidate={c}
+                  onOpenReport={() => openReport(c)}
+                  onOpenResume={() => openReport(c, "resume")}
+                  onStageChanged={refreshApplicants}
+                />
+              </li>
+            ))}
+          </ul>
+          <DirectoryPagination
+            page={page}
+            totalPages={totalPages}
+            totalCount={filtered.length}
+            pageSize={APPLICANTS_PAGE_SIZE}
+            onPageChange={setPage}
+            itemLabel="applicants"
+          />
+        </div>
       )}
 
       <CandidateReportDialog
         candidate={selected}
         job={job}
+        reportContext="job"
         open={reportOpen}
         initialTab={reportTab}
         onOpenChange={(open) => {

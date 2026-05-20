@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -27,8 +28,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
-import { hiringHeroRadialOverlay, hiringHeroShell, hiringTransition } from "../hiringTokens";
+import { ROUTES } from "@/config/routes";
+import {
+  hiringHeroPrimaryBtnSm,
+  hiringHeroRadialOverlay,
+  hiringHeroSecondaryBtnSm,
+  hiringHeroShell,
+  hiringTransition,
+} from "../hiringTokens";
 import { HeroMetricsCollapsible } from "../HeroMetricsCollapsible";
+import { HeroMetricsToggleButton } from "../HeroMetricsToggleButton";
 import { HiringHeroGlassKpiCard } from "../HiringHeroGlassKpiCard";
 import { HiringHeroTexture } from "../HiringHeroTexture";
 import type { JobWorkspaceMetrics } from "./jobWorkspaceUtils";
@@ -63,6 +72,8 @@ export function JobWorkspaceHero({
   onAddCandidate?: () => void;
   addCandidateButtonRef?: React.Ref<HTMLButtonElement>;
 }) {
+  const searchParams = useSearchParams();
+  const isInterviewMode = searchParams.get("mode") === "interview";
   const hiringStage = getActiveHiringStage(job, candidates);
 
   const copyJobLink = () => {
@@ -105,7 +116,7 @@ export function JobWorkspaceHero({
 
   return (
     <section
-      className={cn(hiringHeroShell, "px-5 py-5 sm:px-7 sm:py-6")}
+      className={cn(hiringHeroShell, "px-8 py-8")}
       aria-label="Job workspace header"
     >
       <HiringHeroTexture />
@@ -121,7 +132,7 @@ export function JobWorkspaceHero({
 
       <div className="relative space-y-5">
         <Link
-          href="/hiring/jobs"
+          href={isInterviewMode ? ROUTES.interviews : ROUTES.hiringJobs}
           className={cn(
             "inline-flex w-fit items-center gap-1.5 rounded-full border border-white/[0.16] bg-white/[0.07] px-3 py-1 text-[11px] font-medium text-white/72 backdrop-blur-sm",
             hiringTransition,
@@ -129,7 +140,7 @@ export function JobWorkspaceHero({
           )}
         >
           <ArrowLeft className="h-3 w-3" strokeWidth={2} />
-          Back to jobs
+          {isInterviewMode ? "Back to interviews" : "Back to jobs"}
         </Link>
 
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -153,15 +164,8 @@ export function JobWorkspaceHero({
           </header>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              className={cn(
-                "h-9 gap-1.5 rounded-[11px] px-4 text-[13px] font-medium text-white",
-                hiringTransition,
-                "bg-white/[0.14] shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-white/[0.2]",
-              )}
-              onClick={copyJobLink}
-            >
+            <HeroMetricsToggleButton storageKey="job-workspace-hero-metrics-collapsed" />
+            <Button size="sm" className={hiringHeroSecondaryBtnSm} onClick={copyJobLink}>
               <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} />
               Share job
             </Button>
@@ -169,11 +173,7 @@ export function JobWorkspaceHero({
               ref={addCandidateButtonRef}
               type="button"
               size="sm"
-              className={cn(
-                "h-9 gap-1.5 rounded-[11px] px-4 text-[13px] font-medium text-white",
-                hiringTransition,
-                "bg-accent shadow-[0_2px_12px_rgb(var(--accent-rgb)/0.35)] hover:bg-accent-hover",
-              )}
+              className={hiringHeroPrimaryBtnSm}
               onClick={onAddCandidate}
             >
               <Plus className="h-3.5 w-3.5" strokeWidth={2} />
@@ -223,7 +223,8 @@ export function JobWorkspaceHero({
 
         <HeroMetricsCollapsible
           id="job-workspace-hero-metrics"
-          gridClassName="grid grid-cols-1 gap-2.5 pt-3 sm:grid-cols-2 sm:gap-3 lg:grid-cols-5"
+          storageKey="job-workspace-hero-metrics-collapsed"
+          gridClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-5"
         >
           {kpis.map((k) => (
             <HiringHeroGlassKpiCard
@@ -232,7 +233,6 @@ export function JobWorkspaceHero({
               value={k.value}
               subtitle={k.subtitle}
               icon={k.icon}
-              compact
               padValue
             />
           ))}

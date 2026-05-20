@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -81,7 +80,7 @@ export const CardExample: Story = {
     <Card className="w-[360px]">
       <CardHeader>
         <CardTitle>Staff Product Designer</CardTitle>
-        <CardDescription>Berlin · Hybrid · 12 candidates</CardDescription>
+        <p className="text-sm text-text-secondary">Berlin · Hybrid · 12 candidates</p>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-text-secondary">

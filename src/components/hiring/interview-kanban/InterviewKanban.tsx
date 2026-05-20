@@ -32,11 +32,13 @@ export function InterviewKanban({
   candidates,
   onCardClick,
   onCandidateMoved,
+  onRequestFeedback,
 }: {
   rounds: InterviewRound[];
   candidates: HiringCandidate[];
   onCardClick?: (candidate: HiringCandidate) => void;
   onCandidateMoved?: () => void;
+  onRequestFeedback?: (candidate: HiringCandidate) => void;
 }) {
   const [statusFilter, setStatusFilter] = useState<InterviewOperationalStatus | "All">("All");
   const [advanced, setAdvanced] = useState<InterviewKanbanAdvancedFilters>(EMPTY_ADVANCED_FILTERS);
@@ -75,6 +77,24 @@ export function InterviewKanban({
     [allModels, statusFilter, advanced],
   );
 
+  const statusCounts = useMemo(() => {
+    const base = allModels.filter((m) => matchesAdvancedFilters(m, advanced));
+    const counts: Record<InterviewOperationalStatus | "All", number> = {
+      All: base.length,
+      Scheduled: 0,
+      Pending: 0,
+      Ongoing: 0,
+      Completed: 0,
+      "Feedback Pending": 0,
+      Cancelled: 0,
+    };
+    for (const k of Object.keys(counts) as Array<InterviewOperationalStatus | "All">) {
+      if (k === "All") continue;
+      counts[k] = base.filter((m) => matchesStatusFilter(m.status, k)).length;
+    }
+    return counts;
+  }, [allModels, advanced]);
+
   const filterOptions = useMemo(() => collectInterviewFilterOptions(candidates), [candidates]);
 
   const modelsByColumn = useMemo(() => {
@@ -94,8 +114,53 @@ export function InterviewKanban({
   }, [rounds]);
 
   function handleCardAction(model: InterviewKanbanCardModel, action: InterviewCardAction) {
+    if (action === "request-feedback") {
+      onRequestFeedback?.(model.candidate);
+      if (!onRequestFeedback) onCardClick?.(model.candidate);
+      return;
+    }
+    if (action === "move-next") {
+      const currentId = resolveInterviewColumnId(model.candidate, rounds);
+      const idx = rounds.findIndex((r) => r.id === currentId);
+      const next = rounds[idx + 1];
+      if (!next) {
+        toast.message("Already at last stage", { description: model.roundTitle });
+        return;
+      }
+      const substage = substageForInterviewColumn(next.id, rounds);
+      const result = moveCandidateToStage(model.candidate.id, "Interviews", { substage });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(`Moved to ${next.title}`);
+      onCandidateMoved?.();
+      return;
+    }
+
+    if (action === "add-note") {
+      toast.message("Add internal note", { description: `${model.candidate.name} (demo)` });
+      return;
+    }
+
+    if (action === "reject") {
+      const result = moveCandidateToStage(model.candidate.id, "Rejected");
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Candidate rejected", { description: model.candidate.name });
+      onCandidateMoved?.();
+      return;
+    }
+
     if (action === "cancel") {
       setCancelTarget({ candidate: model.candidate, roundTitle: model.roundTitle });
+      return;
+    }
+
+    if (action === "join" && model.primaryInterview?.meetUrl) {
+      window.open(model.primaryInterview.meetUrl, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -155,6 +220,7 @@ export function InterviewKanban({
         interviewers={filterOptions.interviewers}
         interviewTypes={filterOptions.types}
         resultCount={filteredModels.length}
+        statusCounts={statusCounts}
       />
 
       <div className="interview-kanban-board">

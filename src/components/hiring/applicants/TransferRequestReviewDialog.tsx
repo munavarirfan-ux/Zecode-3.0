@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
+  dialogCloseButtonSm,
   DialogDescription,
   DialogOverlay,
   DialogPanel,
@@ -131,10 +132,8 @@ export function TransferRequestReviewDialog({
                   {request.candidateName}
                 </DialogDescription>
               </div>
-              <DialogClose asChild>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg" aria-label="Close">
-                  <X className="h-4 w-4" />
-                </Button>
+              <DialogClose className={dialogCloseButtonSm} aria-label="Close">
+                <X className="h-4 w-4" strokeWidth={2} />
               </DialogClose>
             </div>
 

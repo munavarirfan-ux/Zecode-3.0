@@ -127,7 +127,7 @@ export function getInterviewListFilterOptions(rows: InterviewListRow[]) {
     if (row.interviewer !== "—") interviewers.add(row.interviewer);
   }
   return {
-    rounds: [...rounds].sort(),
-    interviewers: [...interviewers].sort(),
+    rounds: Array.from(rounds).sort(),
+    interviewers: Array.from(interviewers).sort(),
   };
 }

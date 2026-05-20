@@ -157,7 +157,7 @@ export function formatSessionNoteTime(note: ZeMeetNoteEntry): string {
     return new Date(note.createdAt).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
     });
   } catch {
     return note.createdAt;

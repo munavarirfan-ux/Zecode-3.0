@@ -139,7 +139,7 @@ export function buildCandidateActivities(candidate: HiringCandidate): CandidateA
       kind: "resume_parsed",
       title: "Resume parsed",
       description: `Resume ${candidate.resumeStatus.toLowerCase()} · ready for recruiter review`,
-      actor: "Ze[code] Intelligence",
+      actor: "Ze[hub] Intelligence",
       atRaw: candidate.resumeUploadedAt || candidate.appliedAt,
     });
   }

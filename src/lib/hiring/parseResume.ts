@@ -1,7 +1,5 @@
 import {
   createEducationEntry,
-  createEmptyEmployer,
-  createEmptySocialLink,
   profileUid,
   type CandidateEditProfile,
 } from "./candidateProfile";
@@ -33,46 +31,48 @@ export async function parseResumeFile(_fileName: string): Promise<ParsedResumePa
     mobile: "+49 170 555 0192",
     skills: ["Figma", "Design systems", "User research", "Prototyping"],
     education: [
-      createEducationEntry("Master's", {
-        required: false,
-        isHighest: true,
-        seed: {
-          institution: "UdK Berlin",
-          place: "Berlin, DE",
-          yearOfPassing: "2018",
-          grade: "1.4",
-        },
+      createEducationEntry("10th", {
+        required: true,
+        seed: { details: "Delhi Public School · 2010 · 90%" },
+      }),
+      createEducationEntry("12th", {
+        required: true,
+        seed: { details: "Delhi Public School · 2012 · 92%" },
       }),
       createEducationEntry("Bachelors", {
         required: true,
         seed: {
-          institution: "National Institute of Design",
-          place: "Ahmedabad, IN",
-          yearOfPassing: "2016",
-          grade: "8.6 CGPA",
+          details: "National Institute of Design, Ahmedabad, IN\n2016 · 8.6 CGPA",
         },
       }),
-      createEducationEntry("12th", { required: true, seed: { institution: "Delhi Public School", yearOfPassing: "2012", grade: "92%" } }),
-      createEducationEntry("10th", { required: true, seed: { institution: "Delhi Public School", yearOfPassing: "2010", grade: "90%" } }),
+      createEducationEntry("Master's", {
+        required: true,
+        isHighest: true,
+        seed: {
+          details: "UdK Berlin, Berlin, DE\n2018 · Grade 1.4",
+        },
+      }),
     ],
     employers: [
       {
         id: profileUid(),
-        designation: "Senior Product Designer",
-        company: "Northwind Systems",
-        fromDate: "2021-03",
+        designation: "",
+        company: "",
+        fromDate: "",
         toDate: "",
         current: true,
-        summary: "Led design system adoption across 3 product squads; shipped recruiter workflows used by 40+ teams.",
+        summary:
+          "Senior Product Designer — Northwind Systems (Mar 2021 – Present)\nLed design system adoption across 3 product squads; shipped recruiter workflows used by 40+ teams.",
       },
       {
         id: profileUid(),
-        designation: "Product Designer",
-        company: "Studio Lattice",
-        fromDate: "2018-06",
-        toDate: "2021-02",
+        designation: "",
+        company: "",
+        fromDate: "",
+        toDate: "",
         current: false,
-        summary: "Owned end-to-end flows for B2B analytics dashboards.",
+        summary:
+          "Product Designer — Studio Lattice (Jun 2018 – Feb 2021)\nOwned end-to-end flows for B2B analytics dashboards.",
       },
     ],
     socialLinks: [

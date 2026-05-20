@@ -1,79 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Plus, Trash2, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { ChevronDown, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SKILL_QUICK_SIGNALS, type SkillFeedbackEntry } from "@/lib/hiring/interviewFeedback";
+import type { SkillFeedbackEntry } from "@/lib/hiring/interviewFeedback";
 import { DeleteSkillAlertDialog } from "./DeleteSkillAlertDialog";
-import { QuickSignalTags, StarRating } from "./FeedbackUi";
-
-function ListEditor({
-  label,
-  items,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  items: string[];
-  onChange: (items: string[]) => void;
-  placeholder: string;
-}) {
-  const [draft, setDraft] = useState("");
-
-  const add = () => {
-    const v = draft.trim();
-    if (!v) return;
-    onChange([...items, v]);
-    setDraft("");
-  };
-
-  return (
-    <div>
-      <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-[#71717A]">{label}</p>
-      <ul className="mb-2 space-y-1">
-        {items.map((item, i) => (
-          <li
-            key={`${item}-${i}`}
-            className="flex items-center justify-between gap-2 rounded-lg border border-[rgba(15,23,42,0.06)] bg-[#FCFCFD] px-2.5 py-1.5 text-[12px] text-[#3F3F46]"
-          >
-            <span>{item}</span>
-            <button
-              type="button"
-              aria-label={`Remove ${item}`}
-              className="rounded p-0.5 text-[#A1A1AA] hover:text-[#52525B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-              onClick={() => onChange(items.filter((_, idx) => idx !== i))}
-            >
-              <X className="h-3 w-3" strokeWidth={2} />
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="flex gap-1.5">
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={placeholder}
-          className="h-8 flex-1 text-[12px]"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add();
-            }
-          }}
-        />
-        <button
-          type="button"
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-[8px] border border-[rgba(15,23,42,0.08)] px-2.5 text-[11px] font-medium text-[#52525B] hover:bg-[#FAFAFA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-          onClick={add}
-        >
-          <Plus className="h-3 w-3" strokeWidth={2} aria-hidden />
-          Add
-        </button>
-      </div>
-    </div>
-  );
-}
+import { StarRating, StrengthPills } from "./FeedbackUi";
 
 function SkillCard({
   skill,
@@ -90,7 +22,6 @@ function SkillCard({
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const [showNotes, setShowNotes] = useState(Boolean(skill.detailedNotes.trim()));
-  const signals = SKILL_QUICK_SIGNALS[skill.title] ?? ["Clear", "Structured", "Needs work", "Strong"];
 
   return (
     <article className="overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.02)] dark:border-white/[0.06] dark:bg-surface">
@@ -147,14 +78,11 @@ function SkillCard({
 
       {open ? (
         <div className="space-y-3 border-t border-[rgba(15,23,42,0.06)] px-4 pb-4 pt-3">
-          <div>
-            <p className="mb-1.5 text-[11px] font-medium text-[#71717A]">Quick signals</p>
-            <QuickSignalTags
-              options={signals}
-              selected={skill.quickSignals}
-              onChange={(quickSignals) => onChange({ ...skill, quickSignals })}
-            />
-          </div>
+          <StrengthPills
+            items={skill.strengths}
+            onChange={(strengths) => onChange({ ...skill, strengths })}
+            readOnly={readOnly}
+          />
 
           <div>
             <label htmlFor={`summary-${skill.id}`} className="mb-1 block text-[11px] font-medium text-[#71717A]">
@@ -164,12 +92,13 @@ function SkillCard({
               id={`summary-${skill.id}`}
               value={skill.summary}
               onChange={(e) => onChange({ ...skill, summary: e.target.value })}
+              readOnly={readOnly}
               placeholder="One-line evaluation summary…"
-              className="flex h-9 w-full rounded-[9px] border border-[rgba(15,23,42,0.08)] bg-[#FCFCFD] px-3 text-[13px] text-[#18181B] placeholder:text-[#A1A1AA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+              className="flex h-9 w-full rounded-[9px] border border-[rgba(15,23,42,0.08)] bg-[#FCFCFD] px-3 text-[13px] text-[#18181B] placeholder:text-[#A1A1AA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 read-only:opacity-80"
             />
           </div>
 
-          {!showNotes ? (
+          {!showNotes && !skill.detailedNotes.trim() && !readOnly ? (
             <button
               type="button"
               className="text-[12px] font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
@@ -177,7 +106,7 @@ function SkillCard({
             >
               Add detailed notes
             </button>
-          ) : (
+          ) : showNotes || skill.detailedNotes.trim() ? (
             <div>
               <label htmlFor={`notes-${skill.id}`} className="mb-1 block text-[11px] font-medium text-[#71717A]">
                 Detailed notes
@@ -186,27 +115,13 @@ function SkillCard({
                 id={`notes-${skill.id}`}
                 value={skill.detailedNotes}
                 onChange={(e) => onChange({ ...skill, detailedNotes: e.target.value })}
+                readOnly={readOnly}
                 rows={3}
-                className="w-full resize-y rounded-[9px] border border-[rgba(15,23,42,0.08)] bg-[#FCFCFD] px-3 py-2 text-[13px] leading-relaxed text-[#18181B] placeholder:text-[#A1A1AA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                className="w-full resize-y rounded-[9px] border border-[rgba(15,23,42,0.08)] bg-[#FCFCFD] px-3 py-2 text-[13px] leading-relaxed text-[#18181B] placeholder:text-[#A1A1AA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 read-only:opacity-80"
                 placeholder="Optional expanded evaluation…"
               />
             </div>
-          )}
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <ListEditor
-              label="Strengths"
-              items={skill.strengths}
-              onChange={(strengths) => onChange({ ...skill, strengths })}
-              placeholder="Add strength"
-            />
-            <ListEditor
-              label="Concerns"
-              items={skill.concerns}
-              onChange={(concerns) => onChange({ ...skill, concerns })}
-              placeholder="Add concern"
-            />
-          </div>
+          ) : null}
         </div>
       ) : null}
     </article>
@@ -247,9 +162,9 @@ export function SkillEvaluationAccordion({
             skill={skill}
             defaultOpen={i === 0}
             onChange={(next) => updateSkill(skill.id, next)}
-          onDelete={!readOnly && skill.custom ? () => setSkillToDelete(skill) : undefined}
-          readOnly={readOnly}
-        />
+            onDelete={!readOnly && skill.custom ? () => setSkillToDelete(skill) : undefined}
+            readOnly={readOnly}
+          />
         ))}
       </div>
 

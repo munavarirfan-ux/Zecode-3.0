@@ -15,7 +15,6 @@ import { NotesTimeline } from "./NotesTimeline";
 const NESTED_TABS = [
   { id: "feedback", label: "Feedback" },
   { id: "code", label: "Code Challenge" },
-  { id: "recording", label: "Interview Recording" },
   { id: "notes", label: "Notes" },
 ] as const;
 

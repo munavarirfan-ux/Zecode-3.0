@@ -1,6 +1,8 @@
 import type { PreviewRole } from "@/config/previewRole";
 import type { NavGroupConfig } from "@/config/navTypes";
+import { MODULE_CODE, MODULE_HIRE } from "@/constants/app";
 import { ROUTES } from "@/config/routes";
+import { getEffectivePreviewRole } from "@/lib/onboarding/effectiveRole";
 
 /** Role-driven navigation — sidebar reads from this config only. */
 const OVERVIEW: NavGroupConfig = {
@@ -9,16 +11,17 @@ const OVERVIEW: NavGroupConfig = {
 };
 
 const HIRING_DESIGN: NavGroupConfig = {
-  label: "Hiring",
+  label: MODULE_HIRE,
   items: [
     { href: ROUTES.hiringJobs, label: "Jobs", icon: "briefcase" },
     { href: ROUTES.interviews, label: "Interviews", icon: "mic2" },
     { href: ROUTES.candidates, label: "Candidates", icon: "users" },
+    { href: ROUTES.mySchedule, label: "My schedule", icon: "calendar" },
   ],
 };
 
 const EVALUATION_DESIGN: NavGroupConfig = {
-  label: "Evaluation",
+  label: MODULE_CODE,
   items: [
     { href: ROUTES.assessments, label: "Assessments", icon: "graduationCap" },
     { href: ROUTES.schedules, label: "Assessments Schedules", icon: "calendar" },
@@ -37,10 +40,10 @@ const SYSTEM: NavGroupConfig = {
 };
 
 const INTERVIEW_OPS: NavGroupConfig = {
-  label: "Hiring",
+  label: MODULE_HIRE,
   items: [
     { href: ROUTES.interviews, label: "Interviews", icon: "mic2" },
-    { href: ROUTES.schedules, label: "Schedules", icon: "calendar" },
+    { href: ROUTES.mySchedule, label: "My schedule", icon: "calendar" },
   ],
 };
 
@@ -53,7 +56,7 @@ const CURATOR_CONTENT: NavGroupConfig = {
 };
 
 const ASSESSMENT_OPS: NavGroupConfig = {
-  label: "Evaluation",
+  label: MODULE_CODE,
   items: [{ href: ROUTES.assessments, label: "Assessments", icon: "graduationCap" }],
 };
 
@@ -61,10 +64,11 @@ export const navigationByRole: Record<PreviewRole, NavGroupConfig[]> = {
   superAdmin: [OVERVIEW, HIRING_DESIGN, EVALUATION_DESIGN, INSIGHTS_REPORTS, SYSTEM],
   admin: [OVERVIEW, HIRING_DESIGN, EVALUATION_DESIGN, INSIGHTS_REPORTS, SYSTEM],
   curator: [OVERVIEW, CURATOR_CONTENT, INSIGHTS_REPORTS, SYSTEM],
-  interviewer: [OVERVIEW, INTERVIEW_OPS, SYSTEM],
-  evaluator: [OVERVIEW, ASSESSMENT_OPS, INSIGHTS_REPORTS, SYSTEM],
+  evaluator: [OVERVIEW, INTERVIEW_OPS, ASSESSMENT_OPS, INSIGHTS_REPORTS, SYSTEM],
+  newUser: [OVERVIEW, HIRING_DESIGN, EVALUATION_DESIGN, INSIGHTS_REPORTS, SYSTEM],
 };
 
 export function getNavigationForRole(role: PreviewRole): NavGroupConfig[] {
-  return navigationByRole[role] ?? navigationByRole.admin;
+  const effective = getEffectivePreviewRole(role);
+  return navigationByRole[effective] ?? navigationByRole.admin;
 }

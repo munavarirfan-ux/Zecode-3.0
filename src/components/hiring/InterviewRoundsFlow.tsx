@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { kanbanBoardTint } from "./hiringTokens";
 
 export type InterviewRoundPill = {
   id: string;
@@ -58,7 +59,13 @@ export function InterviewRoundsFlow({
   }
 
   return (
-    <div className="rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white p-4 dark:border-white/[0.06] dark:bg-surface">
+    <div
+      className={cn(
+        // Match kanban board's light, accent-tinted gradient background
+        kanbanBoardTint,
+        "!rounded-[14px] p-3 sm:p-4",
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-text">{title}</p>
@@ -69,7 +76,9 @@ export function InterviewRoundsFlow({
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 rounded-[9px] text-[12px]"
+            className={cn(
+              "h-8 gap-1.5 rounded-[9px] border-[rgba(15,23,42,0.08)] bg-white/70 text-[12px] text-text shadow-sm hover:bg-white",
+            )}
             onClick={() => setShowAddForm(true)}
           >
             <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
@@ -83,7 +92,7 @@ export function InterviewRoundsFlow({
           {rounds.map((round) => (
             <li
               key={round.id}
-              className="inline-flex items-center gap-1 rounded-full border border-[rgba(15,23,42,0.08)] bg-[#FAFAFB] py-1 pl-3 pr-1 text-[12px] font-medium text-[#3F3F46] dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-text-secondary"
+              className="inline-flex items-center gap-1 rounded-full border border-[rgba(15,23,42,0.08)] bg-white/70 py-1 pl-3 pr-1 text-[12px] font-medium text-[#3F3F46] shadow-sm backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-text-secondary"
             >
               {onRoundClick ? (
                 <button

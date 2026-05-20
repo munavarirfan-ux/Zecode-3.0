@@ -37,10 +37,8 @@ export interface EmployerEntry {
 export interface EducationEntry {
   id: string;
   degree: string;
-  institution: string;
-  place: string;
-  yearOfPassing: string;
-  grade: string;
+  /** Free-form qualification details (institution, years, grades, etc.) */
+  details: string;
   required: boolean;
   isHighest: boolean;
 }
@@ -89,12 +87,15 @@ export const SUGGESTED_TAGS = [
   "Portfolio reviewed",
 ] as const;
 
-const DEFAULT_EDUCATION_DEGREES = [
-  { degree: "Master's", required: false },
-  { degree: "Bachelors", required: true },
-  { degree: "12th", required: true },
+/** Fixed headings on add-candidate education step; not removable. */
+export const PREDEFINED_EDUCATION_DEGREES = [
   { degree: "10th", required: true },
+  { degree: "12th", required: true },
+  { degree: "Bachelors", required: true },
+  { degree: "Master's", required: true },
 ] as const;
+
+const DEFAULT_EDUCATION_DEGREES = PREDEFINED_EDUCATION_DEGREES;
 
 const profileStore = new Map<string, CandidateEditProfile>();
 
@@ -118,21 +119,44 @@ export function createEmptyEmployer(): EmployerEntry {
   };
 }
 
+type LegacyEducationFields = {
+  institution?: string;
+  place?: string;
+  yearOfPassing?: string;
+  grade?: string;
+  details?: string;
+};
+
+function legacyEducationDetails(seed?: LegacyEducationFields): string {
+  if (!seed) return "";
+  if (seed.details?.trim()) return seed.details.trim();
+  return [seed.institution, seed.place, seed.yearOfPassing, seed.grade].filter(Boolean).join("\n").trim();
+}
+
+export function normalizeEducationEntry(
+  entry: EducationEntry & LegacyEducationFields,
+): EducationEntry {
+  return {
+    id: entry.id,
+    degree: entry.degree,
+    details: entry.details?.trim() ? entry.details : legacyEducationDetails(entry),
+    required: entry.required ?? false,
+    isHighest: entry.isHighest ?? false,
+  };
+}
+
 export function createEducationEntry(
   degree: string,
   options?: {
     required?: boolean;
     isHighest?: boolean;
-    seed?: Partial<Pick<EducationEntry, "institution" | "place" | "yearOfPassing" | "grade">>;
+    seed?: LegacyEducationFields;
   },
 ): EducationEntry {
   return {
     id: profileUid(),
     degree,
-    institution: options?.seed?.institution ?? "",
-    place: options?.seed?.place ?? "",
-    yearOfPassing: options?.seed?.yearOfPassing ?? "",
-    grade: options?.seed?.grade ?? "",
+    details: legacyEducationDetails(options?.seed),
     required: options?.required ?? false,
     isHighest: options?.isHighest ?? false,
   };
@@ -150,16 +174,16 @@ function parseName(full: string) {
 }
 
 function defaultEmployers(candidate: HiringCandidate): EmployerEntry[] {
-  const company = candidate.experience.split("·")[0]?.trim() || "Previous company";
+  const summary = candidate.experience?.trim() || "";
   return [
     {
       id: profileUid(),
-      designation: "Product Designer",
-      company,
-      fromDate: "2021-03",
+      designation: "",
+      company: "",
+      fromDate: "",
       toDate: "",
       current: true,
-      summary: candidate.experience,
+      summary,
     },
   ];
 }
@@ -189,9 +213,9 @@ function defaultSocialLinks(candidate: HiringCandidate): SocialLink[] {
   return links;
 }
 
-function seedFromLegacyText(text: string): Partial<Pick<EducationEntry, "institution" | "place" | "yearOfPassing" | "grade">> {
+function seedFromLegacyText(text: string): LegacyEducationFields {
   if (!text.trim()) return {};
-  return { institution: text.trim() };
+  return { details: text.trim() };
 }
 
 function defaultEducationEntries(candidate: HiringCandidate): EducationEntry[] {
@@ -203,7 +227,7 @@ function defaultEducationEntries(candidate: HiringCandidate): EducationEntry[] {
     }),
   );
 
-  const highestIdx = entries.findIndex((e) => e.degree === "Master's" && e.institution);
+  const highestIdx = entries.findIndex((e) => e.degree === "Master's" && e.details.trim());
   const fallbackHighest = entries.findIndex((e) => e.degree === "Bachelors");
   const highestIndex = highestIdx >= 0 ? highestIdx : fallbackHighest >= 0 ? fallbackHighest : 0;
   return entries.map((entry, index) => ({ ...entry, isHighest: index === highestIndex }));
@@ -220,11 +244,9 @@ function isLegacyEducation(value: unknown): value is LegacyEducationDetails {
 
 function migrateEducation(value: unknown): EducationEntry[] {
   if (Array.isArray(value)) {
-    return (value as EducationEntry[]).map((entry) => ({
-      ...entry,
-      required: entry.required ?? false,
-      isHighest: entry.isHighest ?? false,
-    }));
+    return (value as (EducationEntry & LegacyEducationFields)[]).map((entry) =>
+      normalizeEducationEntry(entry),
+    );
   }
 
   if (isLegacyEducation(value)) {
@@ -242,7 +264,7 @@ function migrateEducation(value: unknown): EducationEntry[] {
         ),
       }),
     );
-    const highestIdx = entries.findIndex((e) => e.institution.trim());
+    const highestIdx = entries.findIndex((e) => e.details.trim());
     return entries.map((entry, index) => ({
       ...entry,
       isHighest: index === (highestIdx >= 0 ? highestIdx : 1),
@@ -272,10 +294,10 @@ function normalizeStoredProfile(stored: CandidateEditProfile): CandidateEditProf
 export function createEmptyCandidateProfile(_job: HiringJob, addedBy: AddedBy): CandidateEditProfile {
   const stage = getDefaultStageForAddedBy(addedBy);
   const substage = getDefaultSubstageForAddedBy(addedBy);
-  const education = DEFAULT_EDUCATION_DEGREES.map(({ degree, required }, index) =>
+  const education = DEFAULT_EDUCATION_DEGREES.map(({ degree, required }) =>
     createEducationEntry(degree, {
       required,
-      isHighest: degree === "Bachelors",
+      isHighest: degree === "Master's",
     }),
   );
 
@@ -308,13 +330,12 @@ export function registerCandidateFromProfile(
 ): HiringCandidate {
   const name = [profile.firstName, profile.middleName, profile.lastName].filter(Boolean).join(" ");
   const currentEmployer = profile.employers.find((e) => e.current) ?? profile.employers[0];
-  const experience = currentEmployer
-    ? `${currentEmployer.company || "Company"} · ${currentEmployer.designation || "Role"}`
-    : "—";
+  const experience =
+    currentEmployer?.summary.trim().split("\n")[0] ||
+    [currentEmployer?.company, currentEmployer?.designation].filter(Boolean).join(" · ") ||
+    "—";
 
-  const eduLines = profile.education
-    .filter((entry) => entry.institution.trim() || entry.grade.trim() || entry.place.trim())
-    .map(formatEducationEntry);
+  const eduLines = profile.education.filter((entry) => entry.details.trim()).map(formatEducationEntry);
 
   const linkedIn = profile.socialLinks.find((l) => l.label.toLowerCase().includes("linkedin"));
   const github = profile.socialLinks.find((l) => l.label.toLowerCase().includes("github"));
@@ -451,14 +472,9 @@ export function uploadCandidateResume(
 }
 
 function formatEducationEntry(entry: EducationEntry): string {
-  const parts = [
-    entry.degree,
-    entry.institution,
-    entry.place,
-    entry.yearOfPassing,
-    entry.grade,
-  ].filter(Boolean);
-  return parts.join(" · ");
+  const details = entry.details.trim().replace(/\s+/g, " ");
+  if (!details) return entry.degree;
+  return `${entry.degree}: ${details}`;
 }
 
 export function applyProfileToCandidate(
@@ -476,14 +492,12 @@ export function applyProfileToCandidate(
   candidate.sourceCategory = profile.application.sourceCategory;
   syncCandidateStageFields(candidate, profile.application.stage, profile.application.substage);
 
-  const eduLines = profile.education
-    .filter((entry) => entry.institution.trim() || entry.grade.trim() || entry.place.trim())
-    .map(formatEducationEntry);
+  const eduLines = profile.education.filter((entry) => entry.details.trim()).map(formatEducationEntry);
   candidate.education = eduLines.join("\n") || candidate.education;
 
   const currentEmployer = profile.employers.find((e) => e.current) ?? profile.employers[0];
-  if (currentEmployer) {
-    candidate.experience = `${currentEmployer.company} · ${currentEmployer.designation}`;
+  if (currentEmployer?.summary.trim()) {
+    candidate.experience = currentEmployer.summary.trim().split("\n")[0] || candidate.experience;
   }
 
   const linkedIn = profile.socialLinks.find((l) => l.label.toLowerCase().includes("linkedin"));
@@ -579,11 +593,9 @@ export function validateCandidateProfile(profile: CandidateEditProfile): Profile
 
   profile.education.forEach((entry) => {
     if (!entry.required) return;
-    const incomplete =
-      !entry.institution.trim() || !entry.yearOfPassing.trim() || !entry.grade.trim();
-    if (incomplete) {
-      errors[`education-${entry.id}`] =
-        `Complete institution, year of passing, and grade for ${entry.degree} (required)`;
+    if (!entry.details.trim()) {
+      const label = entry.degree.trim() || "this qualification";
+      errors[`education-${entry.id}`] = `Add details for ${label} (required)`;
     }
   });
 

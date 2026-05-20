@@ -126,7 +126,7 @@ export function addFeedbackRequestNotification(input: {
     ctaLabel: "Open Feedback",
     read: false,
     createdAt: new Date().toISOString(),
-    recipientRoles: ["interviewer", "evaluator"],
+    recipientRoles: ["evaluator"],
   };
   getStore().items.unshift(entry);
   notify();

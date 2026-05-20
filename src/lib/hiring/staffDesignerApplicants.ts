@@ -1,4 +1,41 @@
-import type { HiringCandidate } from "./types";
+import type { CandidateInterview, HiringCandidate } from "./types";
+
+const STAFF_DESIGNER_JOB_ID = "staff-product-designer";
+const STAFF_DESIGNER_TARGET_COUNT = 100;
+
+const SOURCES = ["Careers", "LinkedIn", "Referral", "Agency", "Campus", "Direct"] as const;
+const RESUME_STATUSES = ["Parsed", "Reviewed", "Flagged"] as const;
+
+type ApplicantBucket = {
+  stage: HiringCandidate["currentStage"];
+  substage: string;
+  kanbanColumn: string;
+  withInterview?: boolean;
+  withAssessment?: boolean;
+};
+
+const BULK_BUCKETS: ApplicantBucket[] = [
+  { stage: "Applicants", substage: "New Application", kanbanColumn: "new-application" },
+  { stage: "Applicants", substage: "Resume Review", kanbanColumn: "resume-review" },
+  { stage: "Screening", substage: "Recruiter Screening", kanbanColumn: "recruiter-screening", withAssessment: true },
+  { stage: "Screening", substage: "Hiring Manager Review", kanbanColumn: "hm-review" },
+  { stage: "Screening", substage: "Shortlisted", kanbanColumn: "shortlisted" },
+  { stage: "Interviews", substage: "Portfolio Review", kanbanColumn: "portfolio", withInterview: true },
+  { stage: "Interviews", substage: "Design Review", kanbanColumn: "design-review", withInterview: true },
+  { stage: "Interviews", substage: "Technical Round 1", kanbanColumn: "tech-1", withInterview: true },
+  { stage: "Hire & Offers", substage: "Offer Sent", kanbanColumn: "offer-sent", withInterview: true },
+  { stage: "Hire & Offers", substage: "Rejected", kanbanColumn: "rejected" },
+];
+
+function canonicalRoundTitleForColumn(columnId: string, fallback: string): string {
+  if (columnId === "tech-1" || columnId === "portfolio" || columnId === "assignment") return "Technical Round 1";
+  if (columnId === "tech-2" || columnId === "design-review" || columnId === "system-design") return "Technical Round 2";
+  if (columnId === "hr-round" || columnId === "culture") return "HR Round";
+  // If a candidate moved beyond interviews, keep their interview tied to the last canonical round.
+  if (columnId === "offer-sent" || columnId === "offer-draft" || columnId === "offer-accepted") return "HR Round";
+  if (columnId === "rejected") return "Technical Round 2";
+  return fallback;
+}
 
 type CandidateSeed = Omit<
   HiringCandidate,
@@ -92,6 +129,19 @@ export function buildStaffDesignerApplicants(
           scheduledAt: "May 16, 10:00 GMT",
           status: "Scheduled",
           feedbackStatus: "Pending",
+        },
+        {
+          id: "jo-i2",
+          round: "Recruiter Screening",
+          interviewers: ["Ava Patel"],
+          scheduledAt: "Tue · 11:30 CET",
+          status: "Completed",
+          feedbackStatus: "Pending",
+          feedbackRequestedAt: "3 days",
+          interviewType: "Video",
+          durationMinutes: 30,
+          platform: "ZeMeet",
+          hasNotes: true,
         },
       ],
       timeline: [
@@ -249,6 +299,21 @@ export function buildStaffDesignerApplicants(
           preview: "Thanks for attending our Copenhagen campus session…",
         },
       ],
+      interviews: [
+        {
+          id: "el-i1",
+          round: "Design Review",
+          interviewers: ["Ava Patel", "Elena Hoffmann"],
+          scheduledAt: "Fri · 09:00 CET",
+          status: "Completed",
+          feedbackStatus: "Pending",
+          feedbackRequestedAt: "12 hours",
+          interviewType: "Panel",
+          durationMinutes: 60,
+          platform: "ZeMeet",
+          hasNotes: true,
+        },
+      ],
       timeline: [{ id: "el-t1", label: "Applied", detail: "Campus event — Copenhagen", at: "May 9, 16:40" }],
     },
     {
@@ -346,6 +411,20 @@ export function buildStaffDesignerApplicants(
           scheduledAt: "May 18, 17:00 EST",
           status: "Scheduled",
           feedbackStatus: "Pending",
+        },
+        {
+          id: "og-i2",
+          round: "Portfolio review",
+          interviewers: ["Ava Patel"],
+          scheduledAt: "Mon · 16:00 CET",
+          status: "Completed",
+          feedbackStatus: "Pending",
+          feedbackRequestedAt: "1 day",
+          interviewType: "Panel",
+          durationMinutes: 45,
+          platform: "ZeMeet",
+          result: "Lean Hire",
+          hasNotes: true,
         },
       ],
       timeline: [
@@ -449,5 +528,134 @@ export function buildStaffDesignerApplicants(
     },
   ];
 
-  return rows.map((r) => base(r));
+  const manual = rows.map((r) => base(r));
+  const bulk = generateBulkStaffDesignerApplicants(
+    base,
+    1 + manual.length,
+    STAFF_DESIGNER_TARGET_COUNT,
+  );
+  return [...manual, ...bulk];
+}
+
+function generateBulkStaffDesignerApplicants(
+  base: (c: CandidateSeed) => HiringCandidate,
+  existingCount: number,
+  targetTotal: number,
+): HiringCandidate[] {
+  const count = Math.max(0, targetTotal - existingCount);
+  if (count === 0) return [];
+
+  const out: HiringCandidate[] = [];
+  const baseDate = new Date("2026-05-15");
+
+  for (let i = 0; i < count; i++) {
+    const bucket = BULK_BUCKETS[i % BULK_BUCKETS.length];
+    const source = SOURCES[i % SOURCES.length];
+    const applied = new Date(baseDate);
+    applied.setDate(applied.getDate() - (i % 90));
+    const appliedAt = applied.toISOString().slice(0, 10);
+    const first = ["Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Avery", "Quinn", "Sam", "Jamie"][
+      i % 10
+    ];
+    const last = [
+      "Nguyen",
+      "Brooks",
+      "Fischer",
+      "Moreau",
+      "Silva",
+      "Kowalski",
+      "Andersen",
+      "Petrov",
+      "Chen",
+      "Williams",
+    ][Math.floor(i / 10) % 10];
+    const name = `${first} ${last}`;
+    const slug = name.toLowerCase().replace(/\s+/g, "-");
+    const id = `c-bulk-spd-${i + 1}`;
+
+    const canonicalRoundTitle = canonicalRoundTitleForColumn(bucket.kanbanColumn, bucket.substage);
+
+    const isCancelled = i % 11 === 0;
+    const isFeedbackPending = i % 7 === 0;
+    const isCompleted = i % 5 === 0;
+
+    const interviews: CandidateInterview[] = bucket.withInterview
+      ? [
+          {
+            id: `${id}-i1`,
+            round: canonicalRoundTitle,
+            interviewers: i % 2 === 0 ? ["Elena Hoffmann", "Marcus Chen"] : ["Marcus Chen"],
+            scheduledAt: `May ${10 + (i % 8)}, ${9 + (i % 6)}:00 CET`,
+            status: isCancelled ? "Cancelled" : isFeedbackPending || isCompleted ? "Completed" : "Scheduled",
+            feedbackStatus: isCancelled
+              ? "Submitted"
+              : isFeedbackPending
+                ? "Pending"
+                : isCompleted
+                  ? "Submitted"
+                  : "Pending",
+            feedbackRequestedAt: isFeedbackPending ? `${6 + (i % 4)}d ago` : undefined,
+            interviewType: i % 3 === 0 ? "Panel" : "Video",
+            durationMinutes: 45,
+            platform: i % 2 === 0 ? "ZeMeet" : "Google Meet",
+            feedbackPendingCount: isFeedbackPending ? 1 : 0,
+            feedbackSubmittedCount: isFeedbackPending ? 0 : isCompleted ? 1 : 0,
+          },
+        ]
+      : [];
+
+    const emails = bucket.withAssessment
+      ? [
+          {
+            id: `${id}-e1`,
+            subject: "Design exercise — Staff Product Designer",
+            sender: "Marcus Chen",
+            recipient: `${slug}@example.com`,
+            timestamp: `May ${8 + (i % 5)}, 10:00`,
+            type: "Assessment" as const,
+            preview: "Please complete the structured design exercise within 5 business days…",
+          },
+        ]
+      : [];
+
+    out.push(
+      base({
+        id,
+        jobId: STAFF_DESIGNER_JOB_ID,
+        name,
+        email: `${slug}.${i + 1}@example.com`,
+        phone: `+49 170 ${String(1000000 + i).slice(-7)}`,
+        location: ["Berlin, DE", "Munich, DE", "Hamburg, DE", "Amsterdam, NL", "London, UK"][i % 5],
+        source,
+        appliedAt,
+        currentStage: bucket.stage,
+        currentSubstage: bucket.substage,
+        recruiterOwner: "Marcus Chen",
+        experience: `${4 + (i % 8)} years · Product design · B2B SaaS`,
+        skills: ["Figma", "Design systems", "User research", "Prototyping"],
+        education: "B.A. / M.A. Design",
+        noticePeriod: i % 2 === 0 ? "2 weeks" : "1 month",
+        expectedSalary: `€${78 + (i % 25)}k`,
+        resumeStatus: RESUME_STATUSES[i % RESUME_STATUSES.length],
+        resumeUploadedAt: appliedAt,
+        kanbanColumn: bucket.kanbanColumn,
+        lastActivity: i < 5 ? `${i + 1}h ago` : i < 15 ? "Yesterday" : `${Math.floor(i / 7)}d ago`,
+        emails,
+        interviews,
+        timeline: [
+          {
+            id: `${id}-t1`,
+            label: "Applied",
+            detail: `Via ${source}`,
+            at: appliedAt,
+          },
+        ],
+        recruiterNotes: i % 7 === 0 ? "Strong portfolio — prioritize for panel." : "",
+        hiringManagerNotes: bucket.stage === "Interviews" && i % 5 === 0 ? "Ready for design review." : "",
+        interviewerNotes: "",
+      }),
+    );
+  }
+
+  return out;
 }

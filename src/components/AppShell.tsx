@@ -40,6 +40,9 @@ import { navChromeClasses } from "@/lib/themeChrome";
 import { rgbSpaceToCssRgb } from "@/lib/theme";
 import { getNavigationForRole } from "@/config/navigationByRole";
 import type { NavIconKey } from "@/config/navTypes";
+import { readOnboardingState } from "@/lib/onboarding/onboardingStore";
+import { getNewUserNavOnboardingHints } from "@/lib/onboarding/newUserSetupProgress";
+import { useWorkspaceRefresh } from "@/lib/onboarding/useWorkspaceRefresh";
 import { APP_NAME, APP_TAGLINE, COMPANY_NAME } from "@/constants/app";
 import { ROUTES } from "@/config/routes";
 import { FeedbackNotificationsMenu } from "@/components/hiring/FeedbackNotificationsMenu";
@@ -116,6 +119,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   const visibleGroups = useMemo(() => getNavigationForRole(selectedRole), [selectedRole]);
+  const workspaceRefresh = useWorkspaceRefresh();
+  const navOnboardingHints = useMemo(
+    () => getNewUserNavOnboardingHints(selectedRole),
+    [selectedRole, workspaceRefresh],
+  );
+
+  const isNewUserDashboard =
+    pathname === ROUTES.dashboard &&
+    selectedRole === "newUser" &&
+    readOnboardingState().completed;
 
   const sidebarWidth = collapsed ? 72 : 280;
   return (
@@ -215,12 +228,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <Icon className={cn("h-[18px] w-[18px] shrink-0", active ? nc.iconActive : nc.iconIdle)} strokeWidth={1.5} />
                       );
 
+                      const showOnboardingHint =
+                        selectedRole === "newUser" && navOnboardingHints.has(item.href);
+
                       const link = (
                         <Link
                           key={item.href}
                           href={item.href}
                           className={cn(
-                            "group flex items-center border font-medium",
+                            "group relative flex items-center border font-medium",
                             collapsed ? "h-10 w-10 justify-center rounded-[10px] px-0" : "h-10 gap-2.5 rounded-[10px] px-2.5",
                             active ? nc.linkActive : nc.linkIdle,
                           )}
@@ -228,6 +244,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           {icon}
                           {!collapsed ? (
                             <span className="truncate text-[13px] font-medium leading-none text-inherit">{item.label}</span>
+                          ) : null}
+                          {showOnboardingHint ? (
+                            <span
+                              className={cn(
+                                "absolute rounded-full bg-[rgb(var(--accent-rgb))] shadow-[0_0_10px_2px_rgb(var(--accent-rgb)/0.45)]",
+                                collapsed ? "right-1.5 top-1.5 h-2 w-2" : "right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2",
+                              )}
+                              aria-label="Setup suggested"
+                            />
                           ) : null}
                         </Link>
                       );
@@ -286,7 +311,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:overflow-hidden">
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:p-5">
+        <main
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden p-3 sm:p-4 md:p-5",
+            isNewUserDashboard ? "overflow-hidden" : "overflow-y-auto",
+          )}
+        >
           <header className="sticky top-0 z-[100] isolate mb-3 shrink-0 rounded-[16px] border border-[rgba(15,23,42,0.06)] bg-surface py-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-white/[0.06] sm:mb-4">
             <div className="flex flex-col gap-2 px-2.5 py-2 sm:flex-row sm:items-center sm:gap-2.5 sm:px-3 sm:py-2.5 lg:gap-3">
               <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5">
@@ -345,7 +375,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <div className="relative z-0 min-w-0 flex-1 pb-6 pt-1 sm:pb-8">{children}</div>
+          <div
+            className={cn(
+              "relative z-0 min-w-0 flex-1 pt-1",
+              isNewUserDashboard ? "flex min-h-0 flex-col overflow-hidden pb-0" : "pb-6 sm:pb-8",
+            )}
+          >
+            {children}
+          </div>
         </main>
       </div>
     </div>

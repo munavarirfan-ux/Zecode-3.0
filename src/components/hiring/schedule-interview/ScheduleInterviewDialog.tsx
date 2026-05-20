@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
-  dialogCloseButtonClass,
+  dialogCloseButtonLg,
   DialogDescription,
   DialogOverlay,
   DialogPanel,
@@ -202,18 +202,11 @@ export function ScheduleInterviewDialog({
             onFocusOutside={preventDialogDismissOnPortaledOverlay}
           >
             <DialogTitle className="sr-only">{title}</DialogTitle>
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className={cn(
-                  "absolute right-3 top-3 z-20 h-10 w-10 rounded-[10px]",
-                  dialogCloseButtonClass,
-                )}
-                aria-label="Close schedule interview"
-              >
-                <X className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-              </Button>
+            <DialogClose
+              className={cn("absolute right-3 top-3 z-20", dialogCloseButtonLg)}
+              aria-label="Close schedule interview"
+            >
+              <X className="h-4 w-4" strokeWidth={2} aria-hidden />
             </DialogClose>
             <DialogDescription className="sr-only">
               Schedule an interview for {candidate.name}

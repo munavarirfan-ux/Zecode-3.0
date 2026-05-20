@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
+  dialogCloseButtonSm,
   DialogDescription,
   DialogOverlay,
   DialogPanel,
@@ -96,16 +97,8 @@ export function HiringRoundConfigPanel({
                   Configure interview details for this step.
                 </DialogDescription>
               </div>
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0 rounded-lg text-[#71717A]"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <DialogClose className={dialogCloseButtonSm} aria-label="Close">
+                <X className="h-4 w-4" strokeWidth={2} />
               </DialogClose>
             </div>
 

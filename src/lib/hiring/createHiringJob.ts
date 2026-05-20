@@ -52,15 +52,19 @@ export type CreateHiringJobInput = {
   hiringStages: JobHiringStageConfig[];
 };
 
-export function createHiringJob(input: CreateHiringJobInput): HiringJob {
+function buildHiringJob(
+  input: CreateHiringJobInput,
+  status: HiringJob["status"],
+): HiringJob {
   const { basic, additional, hiringStages } = input;
-  const id = slugifyJobId(basic.title);
+  const title = basic.title.trim() || "Untitled job";
+  const id = slugifyJobId(title);
   const interviewSubstages = buildInterviewSubstages(hiringStages);
   const now = new Date().toISOString();
 
   const job: HiringJob = {
     id,
-    title: basic.title.trim(),
+    title,
     department: basic.department,
     location: basic.location,
     workMode: basic.workMode as WorkMode,
@@ -68,7 +72,7 @@ export function createHiringJob(input: CreateHiringJobInput): HiringJob {
     experienceLevel: basic.experienceLevel,
     hiringManager: basic.hiringManager,
     recruiterOwner: basic.recruiterOwner,
-    status: "Published",
+    status,
     visibility: additional.visibility as JobVisibility,
     priority: "Normal" as HiringPriority,
     candidateCount: 0,
@@ -92,12 +96,25 @@ export function createHiringJob(input: CreateHiringJobInput): HiringJob {
     deadline: additional.deadline || "—",
   };
 
+  return job;
+}
+
+function persistNewJob(job: HiringJob, hiringStages: JobHiringStageConfig[]) {
   HIRING_JOBS.unshift(job);
   persistCreatedJob(job);
-
   const rounds = hiringStagesToInterviewRounds(hiringStages);
-  saveInterviewRounds(id, rounds);
-  saveJobHiringStageConfigs(id, hiringStages);
+  saveInterviewRounds(job.id, rounds);
+  saveJobHiringStageConfigs(job.id, hiringStages);
+}
 
+export function createHiringJobDraft(input: CreateHiringJobInput): HiringJob {
+  const job = buildHiringJob(input, "Draft");
+  persistNewJob(job, input.hiringStages);
+  return job;
+}
+
+export function createHiringJob(input: CreateHiringJobInput): HiringJob {
+  const job = buildHiringJob(input, "Published");
+  persistNewJob(job, input.hiringStages);
   return job;
 }

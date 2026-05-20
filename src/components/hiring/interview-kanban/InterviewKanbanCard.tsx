@@ -1,7 +1,16 @@
 "use client";
 
 import { useRef } from "react";
-import { Calendar, ChevronDown, GripVertical, UserRound } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  GripVertical,
+  MessageSquarePlus,
+  MoveRight,
+  Timer,
+  UserRound,
+  UserX,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,9 +29,14 @@ import { InterviewStatusChip } from "./InterviewStatusChip";
 
 const ACTION_LABELS = {
   schedule: "Schedule Interview",
+  join: "Join interview",
   view: "View Schedule",
   reschedule: "Reschedule",
   cancel: "Cancel interview",
+  "request-feedback": "Request feedback",
+  "move-next": "Move to next stage",
+  "add-note": "Add internal note",
+  reject: "Reject candidate",
 } as const;
 
 const viewScheduleBtnClass =
@@ -114,6 +128,8 @@ export function InterviewKanbanCard({
     model;
   const suppressClickRef = useRef(false);
   const showScheduledActions = hasScheduledInterviewActions(status);
+  const showOverdue =
+    (status === "Feedback Pending" && model.isOverdueFeedback) || model.isOverdueFeedback;
 
   function triggerAction(action: InterviewCardAction) {
     if (onAction) {
@@ -170,6 +186,10 @@ export function InterviewKanbanCard({
       )}
       aria-label={`${candidate.name}, ${status}, ${roundTitle}`}
     >
+      <div
+        className="pointer-events-none absolute inset-0 rounded-[12px] opacity-[0.9] [background-image:linear-gradient(135deg,rgba(255,255,255,0.85)_0%,rgba(255,255,255,0.35)_38%,rgba(255,255,255,0.75)_100%)] dark:opacity-[0.22] dark:[background-image:linear-gradient(135deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.02)_38%,rgba(255,255,255,0.05)_100%)]"
+        aria-hidden
+      />
       <div className="flex items-start gap-2">
         {draggable ? (
           <GripVertical
@@ -178,7 +198,7 @@ export function InterviewKanbanCard({
             aria-hidden
           />
         ) : null}
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="relative min-w-0 flex-1 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-text">
@@ -225,10 +245,23 @@ export function InterviewKanbanCard({
             </p>
           ) : null}
 
-          <p className="text-[10px]">
-            <span className="text-muted">Feedback: </span>
-            <span className={cn("font-medium", feedbackToneClass[feedbackTone])}>{feedbackLabel}</span>
-          </p>
+          {status === "Feedback Pending" ? (
+            <div className="rounded-[9px] border border-amber-200/80 bg-amber-50/80 px-2 py-1.5 dark:border-amber-500/20 dark:bg-amber-500/10">
+              <p className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-800 dark:text-amber-300">
+                <Timer className="h-3 w-3 opacity-80" strokeWidth={2} aria-hidden />
+                Feedback pending
+                {showOverdue ? <span className="font-medium text-red-600 dark:text-red-300">· overdue</span> : null}
+              </p>
+              <p className="mt-0.5 text-[10px] text-amber-800/80 dark:text-amber-200/80">
+                {feedbackLabel}
+              </p>
+            </div>
+          ) : (
+            <p className="text-[10px]">
+              <span className="text-muted">Feedback: </span>
+              <span className={cn("font-medium", feedbackToneClass[feedbackTone])}>{feedbackLabel}</span>
+            </p>
+          )}
 
           {candidate.skills.length > 0 ? (
             <div className="flex flex-wrap gap-1">
@@ -244,24 +277,130 @@ export function InterviewKanbanCard({
           ) : null}
 
           {showScheduledActions ? (
-            <ScheduledInterviewActionSplit
-              onView={(e) => handleAction(e, "view")}
-              onReschedule={() => triggerAction("reschedule")}
-              onCancel={() => triggerAction("cancel")}
-            />
+            <div className="flex w-full pt-0.5" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={(e) => handleAction(e, model.primaryAction === "join" ? "join" : "view")}
+                className={cn(
+                  "inline-flex h-8 min-w-0 flex-1 items-center justify-center rounded-l-[9px] border px-2 text-[11px] font-semibold",
+                  "transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent-rgb)/0.25)]",
+                  // Theme-driven primary surface (works for purple/orange/blue)
+                  "border-[rgb(var(--accent-rgb)/0.22)] bg-[rgb(var(--accent-rgb)/0.12)] text-[rgb(var(--accent-rgb))]",
+                  "hover:bg-[rgb(var(--accent-rgb)/0.16)]",
+                )}
+              >
+                {ACTION_LABELS[model.primaryAction === "join" ? "join" : "view"]}
+              </button>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="More interview actions"
+                    className={cn(
+                      "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-r-[9px] border border-l-[rgb(var(--accent-rgb)/0.18)]",
+                      "transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent-rgb)/0.25)]",
+                      "border-[rgb(var(--accent-rgb)/0.22)] bg-[rgb(var(--accent-rgb)/0.12)] text-[rgb(var(--accent-rgb))]",
+                      "hover:bg-[rgb(var(--accent-rgb)/0.16)]",
+                    )}
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className={cn(
+                    "z-[210] w-56 rounded-[12px] border border-[rgba(15,23,42,0.08)]",
+                    "bg-white/75 p-1 shadow-[0_16px_48px_-18px_rgba(15,23,42,0.35)] backdrop-blur-md",
+                    "dark:border-white/[0.10] dark:bg-surface/70",
+                  )}
+                >
+                  <DropdownMenuItem
+                    className={cn(menuItemClass, "hover:bg-[rgba(59,130,246,0.10)]")}
+                    onSelect={() => triggerAction("reschedule")}
+                  >
+                    <Calendar className="h-3.5 w-3.5 opacity-75" strokeWidth={2} aria-hidden />
+                    Reschedule interview
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className={cn(menuItemClass, "hover:bg-red-500/10 text-red-700 dark:text-red-300")}
+                    onSelect={() => triggerAction("cancel")}
+                  >
+                    <UserX className="h-3.5 w-3.5 opacity-75" strokeWidth={2} aria-hidden />
+                    Cancel interview
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
-            <Button
-              type="button"
-              size="sm"
-              variant={model.primaryAction === "schedule" ? "default" : "outline"}
-              className={cn(
-                "h-8 w-full rounded-[9px] text-[11px] font-medium",
-                model.primaryAction === "schedule" && "bg-forest text-white hover:bg-forest/90",
-              )}
-              onClick={(e) => handleAction(e, model.primaryAction)}
-            >
-              {ACTION_LABELS[model.primaryAction]}
-            </Button>
+            <div className="flex w-full gap-2 pt-0.5">
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                className={cn(
+                  "h-8 w-full rounded-[9px] text-[11px] font-semibold",
+                  // Theme-driven primary CTA with subtle glow
+                  "shadow-[0_8px_20px_-10px_rgb(var(--accent-rgb)/0.55),0_0_0_1px_rgb(var(--accent-rgb)/0.12)]",
+                )}
+                onClick={(e) => handleAction(e, model.primaryAction as any)}
+              >
+                {ACTION_LABELS[model.primaryAction]}
+              </Button>
+
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 w-8 shrink-0 rounded-[9px] px-0"
+                    aria-label="Candidate actions"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className={cn(
+                    "z-[210] w-56 rounded-[12px] border border-[rgba(15,23,42,0.08)]",
+                    "bg-white/75 p-1 shadow-[0_16px_48px_-18px_rgba(15,23,42,0.35)] backdrop-blur-md",
+                    "dark:border-white/[0.10] dark:bg-surface/70",
+                  )}
+                >
+                  <DropdownMenuItem
+                    className={cn(menuItemClass, "hover:bg-[rgb(var(--accent-rgb)/0.10)]")}
+                    onSelect={() => triggerAction("move-next")}
+                  >
+                    <MoveRight className="h-3.5 w-3.5 opacity-75" strokeWidth={2} aria-hidden />
+                    Move to next stage
+                  </DropdownMenuItem>
+                  {status !== "Pending" ? (
+                    <DropdownMenuItem
+                      className={cn(menuItemClass, "hover:bg-[rgba(59,130,246,0.10)]")}
+                      onSelect={() => triggerAction("reschedule")}
+                    >
+                      <Calendar className="h-3.5 w-3.5 opacity-75" strokeWidth={2} aria-hidden />
+                      Reschedule interview
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem
+                    className={cn(menuItemClass, "hover:bg-[rgba(15,23,42,0.04)]")}
+                    onSelect={() => triggerAction("add-note")}
+                  >
+                    <MessageSquarePlus className="h-3.5 w-3.5 opacity-75" strokeWidth={2} aria-hidden />
+                    Add internal note
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className={cn(menuItemClass, "hover:bg-red-500/10 text-red-700 dark:text-red-300")}
+                    onSelect={() => triggerAction("reject")}
+                  >
+                    <UserX className="h-3.5 w-3.5 opacity-75" strokeWidth={2} aria-hidden />
+                    Reject candidate
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
       </div>

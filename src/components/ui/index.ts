@@ -36,12 +36,19 @@ export {
   DialogPortal,
   DialogOverlay,
   DialogClose,
+  DialogCloseIcon,
   DialogTrigger,
   DialogContent,
+  DialogPanel,
   DialogHeader,
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  dialogCloseButtonClass,
+  dialogCloseButtonSm,
+  dialogCloseButtonMd,
+  dialogCloseButtonLg,
+  dialogCloseButtonPositionClass,
 } from "./dialog";
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from "./popover";
 export { Calendar, type CalendarProps } from "./calendar";

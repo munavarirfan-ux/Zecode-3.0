@@ -24,17 +24,22 @@ import {
   submitFeedbackRequest,
   type InterviewFeedbackBundle,
 } from "@/lib/hiring/interviewFeedback";
+import type { InterviewerReportContext } from "@/lib/hiring/interviewerReportContext";
 import { EvaluationSidebar } from "./feedback/EvaluationSidebar";
 import { InterviewerFeedbackWorkspace } from "./feedback/InterviewerFeedbackWorkspace";
 import { RecruiterFeedbackWorkspace } from "./feedback/RecruiterFeedbackWorkspace";
 import { FeedbackStatusBadge } from "./feedback/FeedbackStatusBadge";
+import { PriorRoundFeedbackPanel } from "./feedback/PriorRoundFeedbackPanel";
 import { RequestFeedbackModal } from "./feedback/RequestFeedbackModal";
+
 export function CandidateReportFeedback({
   candidate,
   job,
+  interviewerContext = null,
 }: {
   candidate: HiringCandidate;
   job?: HiringJob | null;
+  interviewerContext?: InterviewerReportContext | null;
 }) {
   const { selectedRole } = useRole();
   const { data: session } = useSession();
@@ -43,7 +48,7 @@ export function CandidateReportFeedback({
   const [requesting, setRequesting] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
   const [workspaceTab, setWorkspaceTab] = useState<"interviewer" | "recruiter">("interviewer");
-  const [evaluationTab, setEvaluationTab] = useState<"feedback" | "code" | "recording" | "notes">("feedback");
+  const [evaluationTab, setEvaluationTab] = useState<"feedback" | "code" | "notes">("feedback");
   const openedRef = useRef(false);
 
   const actorName = session?.user?.name ?? getPreviewActorLabel(selectedRole);
@@ -52,8 +57,9 @@ export function CandidateReportFeedback({
   /** Only lock request CTA when feedback was formally submitted, not merely rated in draft */
   const isSubmitted = bundle.status === "submitted" || workflowStatus === "submitted";
 
-  const canSubmit = canSubmitInterviewerFeedback(selectedRole);
-  const canRequest = canRequestFeedback(selectedRole);
+  const isInterviewerMode = Boolean(interviewerContext);
+  const canSubmit = canSubmitInterviewerFeedback(selectedRole) && (!isInterviewerMode || interviewerContext!.showFeedbackTab);
+  const canRequest = canRequestFeedback(selectedRole) && !isInterviewerMode;
   const interviewerReadOnly =
     isInterviewerFeedbackReadOnly(selectedRole) ||
     (isSubmitted && !canEditOwnSubmittedFeedback(selectedRole, bundle, actorName));
@@ -69,6 +75,20 @@ export function CandidateReportFeedback({
     openedRef.current = true;
     setBundle((b) => openInterviewFeedback(candidate.id, b, actorName));
   }, [candidate.id, canSubmit, actorName]);
+
+  useEffect(() => {
+    if (!interviewerContext?.assignedRound) return;
+    setBundle((b) => ({
+      ...b,
+      interviewer: {
+        ...b.interviewer,
+        interviewRound: interviewerContext.assignedRound!,
+        interviewDate:
+          interviewerContext.assignedInterview?.scheduledAt?.split("·")[0]?.trim() ??
+          b.interviewer.interviewDate,
+      },
+    }));
+  }, [interviewerContext?.assignedRound, interviewerContext?.assignedInterview?.scheduledAt]);
 
   const patchInterviewer = (interviewer: InterviewFeedbackBundle["interviewer"]) => {
     setBundle((b) => ({ ...b, interviewer }));
@@ -161,6 +181,10 @@ export function CandidateReportFeedback({
   return (
     <>
       <div className="relative -mx-1 min-w-0 px-1">
+        {isInterviewerMode && interviewerContext ? (
+          <PriorRoundFeedbackPanel rounds={interviewerContext.priorRoundFeedback} />
+        ) : null}
+
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <FeedbackStatusBadge bundle={bundle} />
         </div>

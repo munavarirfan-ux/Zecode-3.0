@@ -1,5 +1,6 @@
 import type { PreviewRole } from "@/config/previewRole";
-import { getAllJobs, HIRING_CANDIDATES, getJobById } from "@/lib/hiring/mockData";
+import { HIRING_CANDIDATES, getJobById } from "@/lib/hiring/mockData";
+import { getJobsForRole } from "@/lib/hiring/jobsForWorkspace";
 import { enrichCandidate, getCandidateStage } from "@/lib/hiring/stages";
 import {
   candidateVisibleToRole,
@@ -50,10 +51,12 @@ export const EMPTY_CANDIDATE_DIRECTORY_FILTERS: CandidateDirectoryFilters = {
 };
 
 export function getAllCandidateDirectoryRows(role: PreviewRole): CandidateDirectoryRow[] {
-  const jobs = getAllJobs();
+  const jobs = getJobsForRole(role);
+  const jobIds = new Set(jobs.map((j) => j.id));
   const jobMap = new Map(jobs.map((j) => [j.id, j]));
 
   return HIRING_CANDIDATES.map((c) => enrichCandidate(c))
+    .filter((c) => jobIds.has(c.jobId))
     .filter((c) => candidateVisibleToRole(c, role))
     .map((c) => {
       const job = jobMap.get(c.jobId) ?? getJobById(c.jobId);
@@ -70,7 +73,7 @@ export function getAllCandidateDirectoryRows(role: PreviewRole): CandidateDirect
 }
 
 export function getInterviewDirectoryJobs(role: PreviewRole): InterviewDirectoryJob[] {
-  const jobs = getAllJobs().filter((j) => ACTIVE_JOB_STATUSES.has(j.status));
+  const jobs = getJobsForRole(role).filter((j) => ACTIVE_JOB_STATUSES.has(j.status));
 
   return jobs
     .map((job) => {
@@ -160,9 +163,11 @@ export function getCandidateDirectoryFilterOptions(rows: CandidateDirectoryRow[]
   }
 
   return {
-    jobs: [...jobs.entries()].map(([id, title]) => ({ id, title })).sort((a, b) => a.title.localeCompare(b.title)),
-    stages: [...stages].sort(),
-    sources: [...sources].sort(),
-    owners: [...owners].sort(),
+    jobs: Array.from(jobs.entries())
+      .map(([id, title]) => ({ id, title }))
+      .sort((a, b) => a.title.localeCompare(b.title)),
+    stages: Array.from(stages).sort(),
+    sources: Array.from(sources).sort(),
+    owners: Array.from(owners).sort(),
   };
 }

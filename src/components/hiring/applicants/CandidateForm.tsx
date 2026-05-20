@@ -309,28 +309,21 @@ export function CandidateForm({
         </div>
 
         <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
-          <BentoCard title="Education" description="Qualifications with institution, year, and grade.">
+          <BentoCard title="Education" description="10th, 12th, Bachelors, and Master's are required. Add other qualifications if needed.">
             <div className="space-y-4">
               {profile.education.map((entry, index) => (
                 <EducationBlock
                   key={entry.id}
                   entry={entry}
                   error={visibleErrors[`education-${entry.id}`]}
+                  titleEditable={!entry.required}
                   onChange={(next) => {
                     const education = [...profile.education];
                     education[index] = next;
                     onPatch({ education });
                   }}
-                  onSetHighest={() => {
-                    onPatch({
-                      education: profile.education.map((e) => ({
-                        ...e,
-                        isHighest: e.id === entry.id,
-                      })),
-                    });
-                  }}
                   onRemove={() => onPatch({ education: profile.education.filter((e) => e.id !== entry.id) })}
-                  canRemove={!entry.required && profile.education.length > 1}
+                  canRemove={!entry.required}
                 />
               ))}
               <Button
@@ -340,22 +333,23 @@ export function CandidateForm({
                 className="gap-1.5"
                 onClick={() =>
                   onPatch({
-                    education: [...profile.education, createEducationEntry("Qualification")],
+                    education: [...profile.education, createEducationEntry("", { required: false })],
                   })
                 }
               >
                 <Plus className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-                Add education
+                Add qualification
               </Button>
             </div>
           </BentoCard>
 
-          <BentoCard title="Experience" description="Work history and role summaries.">
+          <BentoCard title="Experience" description="One details field per role — add more as needed.">
             <div className="space-y-4">
               {profile.employers.map((emp, index) => (
                 <EmployerBlock
                   key={emp.id}
                   employer={emp}
+                  index={index}
                   onChange={(next) => {
                     const employers = [...profile.employers];
                     employers[index] = next;

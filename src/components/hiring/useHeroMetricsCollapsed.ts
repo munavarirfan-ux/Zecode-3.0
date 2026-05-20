@@ -33,6 +33,17 @@ export function useHeroMetricsCollapsed(
     setHydrated(true);
   }, []);
 
+  useEffect(() => {
+    const sync = () => setCollapsed(readCollapsedPreference(storageKey));
+    const eventName = `hero-metrics-sync:${storageKey}`;
+    window.addEventListener("storage", sync);
+    window.addEventListener(eventName, sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener(eventName, sync);
+    };
+  }, [storageKey]);
+
   const toggle = useCallback(() => {
     setCollapsed((prev) => {
       const next = !prev;
@@ -44,6 +55,7 @@ export function useHeroMetricsCollapsed(
       } catch {
         /* ignore */
       }
+      window.dispatchEvent(new Event(`hero-metrics-sync:${storageKey}`));
       return next;
     });
   }, [storageKey]);

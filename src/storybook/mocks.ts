@@ -45,15 +45,14 @@ export const mockInterviewerData = () => mockFeedbackBundle().interviewer;
 export const mockSkillEntries = () => [
   createSkillEntry("Systems thinking", {
     rating: 4,
-    quickSignals: ["Structured", "Tradeoffs"],
+    strengths: ["Structured", "Tradeoffs"],
     summary: "Strong decomposition of the design review prompt.",
   }),
   createSkillEntry("Communication", {
     rating: 3,
     strengths: ["Clear narrative"],
-    concerns: ["Needs sharper metrics framing"],
   }),
-  createSkillEntry("Visual craft", { rating: 5, quickSignals: ["Polished", "Consistent"] }),
+  createSkillEntry("Visual craft", { rating: 5, strengths: ["Polished", "Consistent"] }),
 ];
 
 export const mockSessionNotes: ZeMeetNoteEntry[] = [
@@ -73,4 +72,4 @@ export const mockSessionNotes: ZeMeetNoteEntry[] = [
   },
 ];
 
-export const mockCandidateProfile = getCandidateEditProfile(mockCandidate);
+export const mockCandidateProfile = getCandidateEditProfile(mockCandidate, mockJob);

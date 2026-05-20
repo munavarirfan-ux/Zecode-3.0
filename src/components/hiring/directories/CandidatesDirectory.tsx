@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Users } from "lucide-react";
 import { useRole } from "@/context/RoleContext";
 import {
   EMPTY_CANDIDATE_DIRECTORY_FILTERS,
@@ -20,17 +19,34 @@ import {
   CandidateDirectoryPagination,
 } from "./CandidateDirectoryPagination";
 import { CandidatesDirectoryHero } from "./CandidatesDirectoryHero";
+import { PremiumEmptyState } from "@/components/onboarding/PremiumEmptyState";
+import { NewUserModuleEmptyState } from "@/components/onboarding/NewUserModuleEmptyState";
+import { EMPTY_STATE_PRESETS } from "@/lib/onboarding/emptyStatePresets";
+import { isFreshNewUserWorkspace } from "@/lib/onboarding/workspaceMode";
+import { useWorkspaceRefresh } from "@/lib/onboarding/useWorkspaceRefresh";
+import { ROUTES } from "@/config/routes";
 import type { CandidateDirectoryRow } from "@/lib/hiring/candidateDirectory";
 
 export function CandidatesDirectory() {
   const { selectedRole } = useRole();
+  const workspaceRefresh = useWorkspaceRefresh();
   const [view, setView] = useState<"list" | "grid">("list");
   const [filters, setFilters] = useState(EMPTY_CANDIDATE_DIRECTORY_FILTERS);
   const [page, setPage] = useState(1);
   const [reportRow, setReportRow] = useState<CandidateDirectoryRow | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
 
-  const allRows = useMemo(() => getAllCandidateDirectoryRows(selectedRole), [selectedRole]);
+  const freshNewUser = useMemo(
+    () => isFreshNewUserWorkspace(selectedRole),
+    [selectedRole, workspaceRefresh],
+  );
+
+  const allRows = useMemo(
+    () => getAllCandidateDirectoryRows(selectedRole),
+    [selectedRole, workspaceRefresh],
+  );
+
+  const showNewUserEmpty = freshNewUser && allRows.length === 0;
   const filterOptions = useMemo(() => getCandidateDirectoryFilterOptions(allRows), [allRows]);
   const rows = useMemo(
     () => filterCandidateDirectoryRows(allRows, filters),
@@ -65,6 +81,10 @@ export function CandidatesDirectory() {
         aria-hidden
       />
       <div className="relative mx-auto max-w-shell space-y-4 pb-10">
+        {showNewUserEmpty ? (
+          <NewUserModuleEmptyState module="candidates" />
+        ) : (
+        <>
         <CandidatesDirectoryHero stats={stats} />
 
         <CandidateDirectoryFiltersBar
@@ -100,23 +120,22 @@ export function CandidatesDirectory() {
                 onRowClick={openReport}
               />
             )
+          ) : allRows.length === 0 ? (
+            <PremiumEmptyState
+              {...EMPTY_STATE_PRESETS.candidates}
+              ctaLabel="Add Candidate"
+              ctaHref={`${ROUTES.hiringJobs}?addJob=1`}
+            />
           ) : (
-            <div
-              className={cn(
-                hiringCard,
-                "flex flex-col items-center justify-center border-dashed px-6 py-16 text-center",
-              )}
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)]">
-                <Users className="h-5 w-5 text-muted/50" strokeWidth={1.5} />
-              </div>
-              <p className="mt-3 text-sm font-semibold tracking-tight text-text">No candidates match</p>
-              <p className="mt-1 max-w-sm text-[12px] text-text-secondary/65">
-                Adjust filters or search to explore your hiring pipeline.
-              </p>
-            </div>
+            <PremiumEmptyState
+              illustration="candidates"
+              headline="No candidates match"
+              subtext="Adjust filters or search to explore your hiring pipeline."
+            />
           )}
         </section>
+        </>
+        )}
       </div>
 
       {reportRow ? (
@@ -125,7 +144,7 @@ export function CandidatesDirectory() {
           job={reportRow.job}
           open={reportOpen}
           onOpenChange={setReportOpen}
-          reportScope="auto"
+          reportContext="directory"
         />
       ) : null}
     </div>

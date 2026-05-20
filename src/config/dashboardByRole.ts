@@ -37,21 +37,21 @@ export const dashboardKpisByRole: Record<PreviewRole, KpiDef[]> = {
     kpi("lowQualityQuestions", "Low Quality Questions", "37", "Calibration / peer review", "flag", "Needs review"),
     kpi("archivedQuestions", "Archived Questions", "214", "Retired from active use", "archive", "+18 this quarter"),
   ],
-  interviewer: [
+  evaluator: [
     kpi("interviewsToday", "Interviews Today", "3", "Your calendar", "calendar", "Next at 2:30 PM"),
     kpi("feedbackDue", "Feedback Due", "5", "Write-ups owed", "inbox", "2 overdue", false),
-    kpi("upcomingInterviews", "Upcoming Interviews", "11", "This week", "mic", "This week"),
-    kpi("completedInterviews", "Completed Interviews", "42", "Trailing 30 days", "check", "+6 vs last month", true),
-  ],
-  evaluator: [
     kpi("ongoingAssessments", "Ongoing Assessments", "28", "Active reviews", "clipboard", "12 due this week"),
-    kpi("pendingReviews", "Pending Reviews", "16", "Evaluator queue", "inbox", "5 high priority"),
-    kpi("flaggedAssessments", "Flagged Assessments", "6", "Integrity / malpractice", "flag", "Needs escalation", false),
+    kpi("timeSpentWeek", "Time spent this week", "8h 15m", "Interview panels", "calendar", "4 sessions"),
+    kpi("upcomingInterviews", "Upcoming Interviews", "11", "This week", "mic", "This week"),
     kpi("completedEvaluations", "Completed Evaluations", "94", "Closed reviews", "shield", "+11 vs last month", true),
+  ],
+  newUser: [
+    kpi("setup", "Profile setup", "2 / 5", "Onboarding steps", "clipboard", "3 remaining"),
+    kpi("access", "Workspace access", "Pending", "Awaiting role assignment", "shield", "Contact your admin"),
   ],
 };
 
-export type DashboardInsightTabId = "interviews" | "assessments" | "schedules";
+export type DashboardInsightTabId = "interviews" | "assessments" | "feedback-due";
 
 export const insightTabsForUserRole: Record<
   PreviewRole,
@@ -60,19 +60,26 @@ export const insightTabsForUserRole: Record<
   superAdmin: [
     { id: "interviews", label: "Interviews", description: "Pipeline health, interviewer load, and outcomes." },
     { id: "assessments", label: "Assessments", description: "Quality signals, calibration, and completion." },
-    { id: "schedules", label: "Schedules", description: "Utilization, conflicts, and upcoming load." },
+    { id: "feedback-due", label: "Feedback due", description: "Operational reminders that unblock hiring loops." },
   ],
   admin: [
     { id: "interviews", label: "Interviews", description: "Pipeline health, interviewer load, and outcomes." },
     { id: "assessments", label: "Assessments", description: "Quality signals, calibration, and completion." },
-    { id: "schedules", label: "Schedules", description: "Utilization, conflicts, and upcoming load." },
+    { id: "feedback-due", label: "Feedback due", description: "Operational reminders that unblock hiring loops." },
   ],
-  curator: [{ id: "assessments", label: "Assessments", description: "Quality signals, calibration, and completion." }],
-  interviewer: [
-    { id: "interviews", label: "Interviews", description: "Pipeline health, interviewer load, and outcomes." },
-    { id: "schedules", label: "Schedules", description: "Utilization, conflicts, and upcoming load." },
+  curator: [
+    { id: "interviews", label: "Interviews", description: "Your interview flow and upcoming panels." },
+    { id: "assessments", label: "Assessments", description: "Quality signals, calibration, and completion." },
+    { id: "feedback-due", label: "Feedback due", description: "Operational reminders that unblock hiring loops." },
   ],
-  evaluator: [{ id: "assessments", label: "Assessments", description: "Quality signals, calibration, and completion." }],
+  evaluator: [
+    { id: "interviews", label: "My workspace", description: "Your schedule, panels, assigned jobs, and interview load." },
+    { id: "assessments", label: "Assessments", description: "Quality signals, calibration, and completion." },
+    { id: "feedback-due", label: "Feedback due", description: "Scorecards and reviews waiting on you." },
+  ],
+  newUser: [
+    { id: "interviews", label: "Getting started", description: "Complete onboarding to unlock hiring workflows." },
+  ],
 };
 
 export function getDashboardKpisForRole(role: PreviewRole): KpiDef[] {
@@ -92,8 +99,9 @@ const DASHBOARD_CONTEXT_LINE: Record<PreviewRole, string> = {
     "Enterprise-wide hiring intelligence — usage, risk, and throughput across your organization.",
   admin: "Operational command center for this workspace — keep interviews, assessments, and schedules moving.",
   curator: "Content intelligence for the question library and assessment quality signals.",
-  interviewer: "Today-focused view — your schedule, feedback commitments, and upcoming panels.",
-  evaluator: "Assessment review lane — throughput, flags, and calibration load.",
+  evaluator:
+    "Your evaluator workspace — interview panels, assessment reviews, feedback commitments, and calibration load.",
+  newUser: "Welcome to Ze[hub] — finish setup and your admin will assign the right hiring permissions.",
 };
 
 export function dashboardContextLineForRole(role: PreviewRole): string {

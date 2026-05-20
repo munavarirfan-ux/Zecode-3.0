@@ -183,15 +183,25 @@ export function createDefaultSkillSet(
   );
 }
 
+function mergeStrengths(partial?: Partial<SkillFeedbackEntry>): string[] {
+  const strengths = partial?.strengths ?? [];
+  const legacySignals = partial?.quickSignals ?? [];
+  const merged = [...strengths];
+  for (const signal of legacySignals) {
+    if (!merged.includes(signal)) merged.push(signal);
+  }
+  return merged;
+}
+
 export function createSkillEntry(title: string, partial?: Partial<SkillFeedbackEntry>): SkillFeedbackEntry {
   return {
-    id: uid("skill"),
+    id: partial?.id ?? uid("skill"),
     title,
     rating: partial?.rating ?? 0,
-    quickSignals: partial?.quickSignals ?? [],
+    quickSignals: [],
     summary: partial?.summary ?? "",
     detailedNotes: partial?.detailedNotes ?? "",
-    strengths: partial?.strengths ?? [],
+    strengths: mergeStrengths(partial),
     concerns: partial?.concerns ?? [],
     custom: partial?.custom ?? false,
   };
@@ -201,48 +211,44 @@ const SEED_SKILLS: Partial<SkillFeedbackEntry>[] = [
   {
     title: "Communication",
     rating: 4,
-    quickSignals: ["Clear", "Structured"],
     summary: "Explains trade-offs clearly; tighten executive summaries.",
-    strengths: ["Active listening", "Structured narratives"],
-    concerns: ["Verbose on edge cases"],
+    strengths: ["Clear", "Structured", "Active listening", "Structured narratives"],
   },
   {
     title: "Technical Depth",
     rating: 5,
-    quickSignals: ["Deep expertise"],
     summary: "Strong .NET and API design depth with pragmatic system thinking.",
-    strengths: ["System design", "API modeling"],
+    strengths: ["Deep expertise", "System design", "API modeling"],
   },
   {
     title: "Problem Solving",
     rating: 4,
-    quickSignals: ["Structured approach", "Methodical"],
     summary: "Decomposes problems well; occasionally needs a nudge on constraints.",
+    strengths: ["Structured approach", "Methodical"],
   },
   {
     title: "Collaboration",
     rating: 4,
-    quickSignals: ["Cross-functional", "Team-oriented"],
     summary: "Works well with PM and design partners.",
+    strengths: ["Cross-functional", "Team-oriented"],
   },
   {
     title: "Leadership",
     rating: 3,
-    quickSignals: ["Emerging leader"],
     summary: "Shows influence in squad context; limited org-wide examples.",
-    concerns: ["Few mentorship examples"],
+    strengths: ["Emerging leader"],
   },
   {
     title: "Culture Fit",
     rating: 4,
-    quickSignals: ["Values-aligned", "Adaptable"],
     summary: "Product-minded and comfortable with ambiguity.",
+    strengths: ["Values-aligned", "Adaptable"],
   },
   {
     title: "Ownership",
     rating: 4,
-    quickSignals: ["Proactive", "Accountable"],
     summary: "Drives initiatives end-to-end with clear accountability.",
+    strengths: ["Proactive", "Accountable"],
   },
 ];
 
@@ -359,17 +365,12 @@ function migrateBundle(bundle: InterviewFeedbackBundle): InterviewFeedbackBundle
 
   const skills = bundle.interviewer.skills.map((s) => {
     const legacy = s as SkillFeedbackEntry & { comment?: string };
-    return {
+    return createSkillEntry(s.title, {
+      ...legacy,
       id: s.id,
-      title: s.title,
-      rating: s.rating,
-      quickSignals: legacy.quickSignals ?? [],
       summary: legacy.summary ?? legacy.comment ?? "",
-      detailedNotes: legacy.detailedNotes ?? "",
-      strengths: legacy.strengths ?? [],
-      concerns: legacy.concerns ?? [],
       custom: legacy.custom ?? !DEFAULT_SKILL_TITLES.includes(s.title as (typeof DEFAULT_SKILL_TITLES)[number]),
-    };
+    });
   });
 
   const workflowStatus = resolveWorkflowStatus(bundle);
@@ -596,8 +597,8 @@ export function computeFeedbackCompletion(data: InterviewerFeedbackData): number
       let score = 0;
       if (skill.rating > 0) score += 0.35;
       if (skill.summary.trim()) score += 0.25;
-      if (skill.quickSignals.length > 0) score += 0.2;
-      if (skill.strengths.length > 0 || skill.concerns.length > 0 || skill.detailedNotes.trim()) {
+      if (skill.strengths.length > 0) score += 0.2;
+      if (skill.detailedNotes.trim()) {
         score += 0.2;
       }
       return acc + score;

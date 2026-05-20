@@ -1,9 +1,9 @@
 import type { PreviewRole } from "@/config/previewRole";
 import type { InterviewFeedbackBundle } from "./interviewFeedback";
 
-/** Interviewer or assigned panel member (evaluator) may submit interviewer feedback. */
+/** Evaluator (panel + assessment reviewer) may submit interviewer feedback. */
 export function canSubmitInterviewerFeedback(role: PreviewRole): boolean {
-  return role === "interviewer" || role === "evaluator";
+  return role === "evaluator";
 }
 
 /** Admin and Super Admin request feedback — they cannot submit interviewer evaluations. */
@@ -46,8 +46,8 @@ export function getPreviewActorLabel(role: PreviewRole): string {
     superAdmin: "Marcus Chen",
     admin: "Alex Rivera",
     curator: "Jordan Lee",
-    interviewer: "Irfan Hassan",
-    evaluator: "Sam Patel",
+    evaluator: "Irfan Hassan",
+    newUser: "New User",
   };
   return map[role];
 }
