@@ -64,7 +64,7 @@ export function AssessmentDetailPage({ assessmentId }: { assessmentId: string })
 
   return (
     <div className={hiringCanvas}>
-      <div className="mx-auto max-w-shell space-y-5 pb-8 sm:space-y-6">
+      <div className="w-full min-w-0 space-y-5 pb-8 sm:space-y-6">
         <AssessmentDetailHero
           assessment={assessment}
           stats={stats ?? { invited: 0, attempted: 0, qualified: 0, pending: 0, malpractice: 0 }}

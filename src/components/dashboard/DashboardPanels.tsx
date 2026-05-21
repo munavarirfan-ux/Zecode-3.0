@@ -16,8 +16,13 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { hiringHeroRadialOverlay, hiringHeroShell } from "@/components/hiring/hiringTokens";
-import { HiringHeroTexture } from "@/components/hiring/HiringHeroTexture";
+import { HiringHeroDecor } from "@/components/hiring/HiringHeroDecor";
+import {
+  hiringHeroReportStripShell,
+  hiringHeroStripMetaLine,
+  hiringHeroStripRow,
+  hiringHeroStripTitle,
+} from "@/components/hiring/hiringTokens";
 import {
   Dialog,
   DialogClose,
@@ -662,19 +667,16 @@ function InterviewerOperationalReportDialog({
               <X className="h-5 w-5" strokeWidth={2.5} aria-hidden />
             </DialogClose>
 
-            <header className={cn(hiringHeroShell, "shrink-0 rounded-none border-0 shadow-none !px-7 !py-7 sm:!px-8 sm:!py-8")}>
-              <HiringHeroTexture />
-              <div className="pointer-events-none absolute inset-0" aria-hidden style={hiringHeroRadialOverlay} />
-              <div className="relative pr-12">
-                <DialogHeader className="pr-0">
-                  <DialogTitle className="text-[1.5rem] font-semibold tracking-[-0.035em] text-white sm:text-[1.75rem]">
-                    {interviewer.name}
-                  </DialogTitle>
-                  <DialogDescription className="mt-1.5 text-[13px] text-white/[0.68] sm:text-sm">
+            <header className={cn(hiringHeroReportStripShell, "shrink-0 rounded-none")}>
+              <HiringHeroDecor />
+              <div className={cn(hiringHeroStripRow, "relative pr-12")}>
+                <DialogHeader className="min-w-0 space-y-0.5 pr-0 text-left">
+                  <DialogTitle className={hiringHeroStripTitle}>{interviewer.name}</DialogTitle>
+                  <DialogDescription className={hiringHeroStripMetaLine}>
                     {interviewer.title} · Interview operations report
                   </DialogDescription>
                 </DialogHeader>
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.08] px-3 py-1.5 text-[12px] font-medium text-white backdrop-blur-md">
                       <span className={cn("h-2 w-2 rounded-full", workloadDot(interviewer.status))} aria-hidden />

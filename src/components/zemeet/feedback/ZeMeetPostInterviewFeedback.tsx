@@ -25,6 +25,7 @@ import { FeedbackEditorialSkills } from "./workspace/FeedbackEditorialSkills";
 import { FeedbackReviewHeader } from "./workspace/FeedbackReviewHeader";
 import { FeedbackWorkspaceHeading } from "./workspace/FeedbackWorkspaceHeading";
 import { FeedbackReviewSidebar } from "./workspace/FeedbackReviewSidebar";
+import { SessionNotesBoard } from "./workspace/SessionNotesBoard";
 import { AutoGrowTextarea } from "./workspace/AutoGrowTextarea";
 import {
   compactInput,
@@ -54,6 +55,7 @@ export function ZeMeetPostInterviewFeedback({ onComplete }: { onComplete: () => 
   const [submitting, setSubmitting] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [showClosing, setShowClosing] = useState(false);
+  const [notesBoardOpen, setNotesBoardOpen] = useState(false);
 
   useEffect(() => {
     if (phase !== "feedback") return;
@@ -79,21 +81,6 @@ export function ZeMeetPostInterviewFeedback({ onComplete }: { onComplete: () => 
       if (saveState === "saved") setSaveState("idle");
     },
     [saveState],
-  );
-
-  const handleInsertNote = useCallback(
-    (note: ZeMeetNoteEntry) => {
-      if (!bundle) return;
-      const line = `${note.label ? `[${note.label}] ` : ""}${note.body}`;
-      const existing = bundle.interviewer.additionalInterviewNotes.trim();
-      patchInterviewer({
-        ...bundle.interviewer,
-        additionalInterviewNotes: existing ? `${existing}\n\n${line}` : line,
-      });
-      setShowClosing(true);
-      toast.success("Added to closing thoughts");
-    },
-    [bundle, patchInterviewer],
   );
 
   const buildArtifact = useCallback((): ZeMeetSessionArtifact => {
@@ -162,11 +149,20 @@ export function ZeMeetPostInterviewFeedback({ onComplete }: { onComplete: () => 
 
   const durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
   const completion = computeFeedbackCompletion(bundle.interviewer);
+  const sessionNotes = resolveSessionNotesForDisplay(notes, bundle.interviewer.notes);
 
   return (
     <div className={workspaceOverlay} data-zemeet-feedback-theme="light" role="presentation">
       <div
-        className={cn(feedbackModalPanel, "flex min-h-0 flex-col")}
+        className={cn(
+          "flex w-full flex-col items-stretch justify-center gap-4",
+          notesBoardOpen
+            ? "max-w-[min(1380px,calc(100vw-1.5rem))] lg:flex-row lg:items-stretch"
+            : "max-w-[960px]",
+        )}
+      >
+      <div
+        className={cn(feedbackModalPanel, "flex min-h-0 min-w-0 flex-1 flex-col")}
         role="dialog"
         aria-modal="true"
         aria-label="Submit feedback"
@@ -180,8 +176,9 @@ export function ZeMeetPostInterviewFeedback({ onComplete }: { onComplete: () => 
               durationMinutes={durationMinutes}
               saveState={saveState}
               completionPercent={completion}
-              sessionNotes={resolveSessionNotesForDisplay(notes, bundle.interviewer.notes)}
-              onInsertNote={handleInsertNote}
+              sessionNotes={sessionNotes}
+              onOpenNotesBoard={() => setNotesBoardOpen(true)}
+              notesBoardOpen={notesBoardOpen}
             />
 
             <div className={workspaceContent}>
@@ -246,6 +243,11 @@ export function ZeMeetPostInterviewFeedback({ onComplete }: { onComplete: () => 
           onSaveDraft={handleSaveDraft}
           onSubmit={handleSubmit}
         />
+      </div>
+
+      {notesBoardOpen ? (
+        <SessionNotesBoard notes={sessionNotes} onClose={() => setNotesBoardOpen(false)} />
+      ) : null}
       </div>
     </div>
   );

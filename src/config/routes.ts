@@ -23,6 +23,8 @@ export const ROUTES = {
   assessments: "/assessments",
   assessment: (id: string) => `/assessments/${id}`,
   schedules: "/schedules",
+  scheduleAssessment: (assessmentId: string) => `/schedules/${assessmentId}`,
+  scheduleScheduledDetail: (scheduleId: string) => `/schedules/scheduled/${scheduleId}`,
   mySchedule: "/my-schedule",
   questionPool: "/question-pool",
   reports: "/reports",

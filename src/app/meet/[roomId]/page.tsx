@@ -19,7 +19,7 @@ export default function ZeMeetRoomPage() {
 
   if (!session) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-[#0B0F14] px-4 text-center text-white/70">
+      <div className="flex min-h-dvh items-center justify-center bg-[var(--zemeet-video-bg)] px-4 text-center text-secondary">
         <p>Invalid or missing meeting room.</p>
       </div>
     );

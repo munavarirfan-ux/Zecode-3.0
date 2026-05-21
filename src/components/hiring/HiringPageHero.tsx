@@ -1,50 +1,44 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { hiringHeroRadialOverlay, hiringHeroShell } from "./hiringTokens";
-import { HiringHeroTexture } from "./HiringHeroTexture";
+import { HiringHeroStrip } from "./HiringHeroStrip";
 
+/** @deprecated Prefer `HiringHeroStrip` — alias kept for existing imports */
 export function HiringPageHero({
   title,
   subtitle,
   meta,
+  collapsedMeta,
   action,
   children,
   className,
   "aria-label": ariaLabel,
+  heroCollapseStorageKey,
+  defaultHeroCollapsed,
 }: {
   title: string;
   subtitle?: string;
   meta?: string;
+  collapsedMeta?: string;
   action?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
   "aria-label"?: string;
+  heroCollapseStorageKey?: string;
+  defaultHeroCollapsed?: boolean;
 }) {
   return (
-    <section className={cn(hiringHeroShell, className)} aria-label={ariaLabel ?? title}>
-      <HiringHeroTexture />
-      <div
-        className="pointer-events-none absolute -right-24 -top-20 h-64 w-64 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.14)] blur-3xl"
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute inset-0" aria-hidden style={hiringHeroRadialOverlay} />
-
-      <div className="relative space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-          <header className="min-w-0 space-y-2">
-            <h1 className="text-[1.875rem] font-semibold leading-[1.1] tracking-[-0.035em] text-white sm:text-[2.125rem]">
-              {title}
-            </h1>
-            {subtitle ? (
-              <p className="max-w-2xl text-[13px] leading-relaxed text-white/[0.68] sm:text-sm">{subtitle}</p>
-            ) : null}
-            {meta ? <p className="text-[11px] text-white/55">{meta}</p> : null}
-          </header>
-          {action ? <div className="shrink-0">{action}</div> : null}
-        </div>
-        {children}
-      </div>
-    </section>
+    <HiringHeroStrip
+      title={title}
+      subtitle={subtitle}
+      meta={meta}
+      collapsedMeta={collapsedMeta}
+      action={action}
+      className={className}
+      aria-label={ariaLabel}
+      heroCollapseStorageKey={heroCollapseStorageKey}
+      defaultHeroCollapsed={defaultHeroCollapsed}
+    >
+      {children}
+    </HiringHeroStrip>
   );
 }

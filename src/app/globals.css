@@ -1,4 +1,5 @@
 @import "react-day-picker/dist/style.css";
+@import "../styles/tokens.css";
 
 @tailwind base;
 @tailwind components;
@@ -6,13 +7,7 @@
 
 @layer base {
   :root {
-    /* Surfaces & type (RGB triplets for Tailwind opacity modifiers) */
-    --app-bg-rgb: 248 250 252;
-    --surface-rgb: 255 255 255;
-    --border-rgb: 226 232 240;
-    --text-rgb: 24 24 27;
-    --text-secondary-rgb: 113 113 122;
-    --muted-rgb: 161 161 170;
+    /* Surfaces & type — bridged from src/styles/tokens.css; accent vars below stay dynamic */
     --secondary-fill-rgb: 221 239 231;
 
     /* Brand / intelligence (forest tracks accent 700; overridden by theme) */
@@ -49,6 +44,8 @@
 
     /* Kanban board — shared min height across hiring workspace tabs */
     --kanban-board-min-height: clamp(28rem, calc(100dvh - 15.5rem), 36rem);
+    /* Applicants stats — taller board (collapsed hero + compact toolbar) */
+    --kanban-board-min-height-tall: clamp(32rem, calc(100dvh - 10.5rem), 44rem);
 
     /* Legacy single-token aliases used in a few CSS rules */
     --app-bg: rgb(var(--app-bg-rgb));
@@ -69,36 +66,12 @@
     --chrome-border: var(--border);
   }
 
-  .dark {
-    --app-bg-rgb: 16 16 18;
-    --surface-rgb: 30 30 33;
-    --border-rgb: 55 55 60;
-    --text-rgb: 244 244 245;
-    --text-secondary-rgb: 161 161 170;
-    --muted-rgb: 113 113 122;
+  html.dark,
+  [data-theme="dark"] {
     --secondary-fill-rgb: 39 39 42;
-
     --forest-rgb: 255 201 173;
     --sage-rgb: 45 62 56;
-
     --nav-bg-rgb: 2 6 23;
-
-    --app-bg: rgb(var(--app-bg-rgb));
-    --surface: rgb(var(--surface-rgb));
-    --border: rgb(var(--border-rgb));
-    --text: rgb(var(--text-rgb));
-    --text-secondary: rgb(var(--text-secondary-rgb));
-    --muted: rgb(var(--muted-rgb));
-    --ig-900: rgb(var(--ig-900-rgb));
-    --ig-800: rgb(var(--ig-800-rgb));
-    --ig-700: rgb(var(--ig-700-rgb));
-    --ig-600: rgb(var(--ig-600-rgb));
-    --forest: rgb(var(--forest-rgb));
-    --sage: rgb(var(--sage-rgb));
-    --accent: rgb(var(--accent-rgb));
-    --parchment: var(--app-bg);
-    --chrome-active: var(--text);
-    --chrome-border: var(--border);
   }
 
   html {
@@ -149,6 +122,11 @@
   }
   .group\/kpi .bg-accent:active {
     box-shadow: 0 2px 10px rgb(var(--accent-rgb) / 0.34);
+  }
+
+  /* Wrapper for job workspace Applicants stats tab */
+  .kanban-board-area--tall {
+    --kanban-board-min-height: var(--kanban-board-min-height-tall);
   }
 
   /* Kanban — theme-tinted workspace (tracks --accent-*-rgb from appearance) */

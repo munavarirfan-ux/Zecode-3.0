@@ -12,14 +12,8 @@ import { cn } from "@/lib/utils";
 import { Briefcase, Calendar, MessageSquare, Users } from "lucide-react";
 import { HiringHeroGlassKpiCard } from "../HiringHeroGlassKpiCard";
 import { HeroMetricsCollapsible } from "../HeroMetricsCollapsible";
-import { HeroMetricsToggleButton } from "../HeroMetricsToggleButton";
-import {
-  hiringCanvas,
-  hiringHeroRadialOverlay,
-  hiringHeroShell,
-  hiringTransition,
-} from "../hiringTokens";
-import { HiringHeroTexture } from "../HiringHeroTexture";
+import { HiringHeroStrip } from "../HiringHeroStrip";
+import { hiringCanvas, hiringTransition } from "../hiringTokens";
 import { InterviewDirectoryJobCard } from "./InterviewDirectoryJobCard";
 import { PremiumEmptyState } from "@/components/onboarding/PremiumEmptyState";
 import { EMPTY_STATE_PRESETS } from "@/lib/onboarding/emptyStatePresets";
@@ -54,69 +48,50 @@ function AdminInterviewsDirectory({ selectedRole }: { selectedRole: PreviewRole 
 
   return (
     <div className={hiringCanvas}>
-      <div className="relative mx-auto max-w-shell space-y-8 pb-14">
+      <div className="relative w-full min-w-0 space-y-8 pb-14">
         {showNewUserEmpty ? (
           <NewUserModuleEmptyState module="interviews" />
         ) : (
         <>
-          <section className={hiringHeroShell} aria-label="Interview operations overview">
-            <HiringHeroTexture />
-            <div
-              className="pointer-events-none absolute -right-24 -top-20 h-72 w-72 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.14)] blur-3xl"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-white/[0.06] blur-3xl"
-              aria-hidden
-            />
-            <div className="pointer-events-none absolute inset-0" aria-hidden style={hiringHeroRadialOverlay} />
-
-            <div className="relative space-y-9 sm:space-y-10">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-                <header className="min-w-0 space-y-2">
-                  <h1 className="text-[1.875rem] font-semibold leading-[1.1] tracking-[-0.035em] text-white sm:text-[2.125rem]">
-                    Interviews
-                  </h1>
-                  <p className="max-w-2xl text-[13px] leading-relaxed text-white/[0.68] sm:text-sm">
-                    View and manage interview pipelines across all active jobs.
-                  </p>
-                </header>
-                <HeroMetricsToggleButton storageKey="interviews-directory-hero-metrics-collapsed" />
-              </div>
-
-              <HeroMetricsCollapsible
-                id="interviews-directory-hero-metrics"
-                withBorder={false}
-                storageKey="interviews-directory-hero-metrics-collapsed"
-                gridClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-              >
-                <HiringHeroGlassKpiCard
-                  value={summary.activePipelines}
-                  label="Active pipelines"
-                  subtitle="Jobs with interview activity"
-                  icon={Briefcase}
-                />
-                <HiringHeroGlassKpiCard
-                  value={summary.ongoingInterviews}
-                  label="Ongoing interviews"
-                  subtitle="Candidates in interview stages"
-                  icon={Users}
-                />
-                <HiringHeroGlassKpiCard
-                  value={summary.interviewsToday}
-                  label="Interviews today"
-                  subtitle={summary.interviewsToday > 0 ? "On the calendar" : "No sessions today"}
-                  icon={Calendar}
-                />
-                <HiringHeroGlassKpiCard
-                  value={summary.feedbackPending}
-                  label="Pending feedback"
-                  subtitle={summary.feedbackPending > 0 ? "Needs review" : "Inbox clear"}
-                  icon={MessageSquare}
-                />
-              </HeroMetricsCollapsible>
-            </div>
-          </section>
+          <HiringHeroStrip
+            aria-label="Interview operations overview"
+            title="Interviews"
+            subtitle="View and manage interview pipelines across all active jobs."
+            collapsedMeta="View and manage interview pipelines across all active jobs."
+            heroCollapseStorageKey="interviews-directory"
+          >
+            <HeroMetricsCollapsible
+              id="interviews-directory-hero-metrics"
+              withBorder={false}
+              storageKey="interviews-directory-hero-metrics-collapsed"
+              gridClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <HiringHeroGlassKpiCard
+                value={summary.activePipelines}
+                label="Active pipelines"
+                subtitle="Jobs with interview activity"
+                icon={Briefcase}
+              />
+              <HiringHeroGlassKpiCard
+                value={summary.ongoingInterviews}
+                label="Ongoing interviews"
+                subtitle="Candidates in interview stages"
+                icon={Users}
+              />
+              <HiringHeroGlassKpiCard
+                value={summary.interviewsToday}
+                label="Interviews today"
+                subtitle={summary.interviewsToday > 0 ? "On the calendar" : "No sessions today"}
+                icon={Calendar}
+              />
+              <HiringHeroGlassKpiCard
+                value={summary.feedbackPending}
+                label="Pending feedback"
+                subtitle={summary.feedbackPending > 0 ? "Needs review" : "Inbox clear"}
+                icon={MessageSquare}
+              />
+            </HeroMetricsCollapsible>
+          </HiringHeroStrip>
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
               {jobs.map((job) => (

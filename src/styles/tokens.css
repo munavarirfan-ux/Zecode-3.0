@@ -1,0 +1,171 @@
+/**
+ * Ze[hub] / Ze[meet] semantic design tokens.
+ * Components should use these via Tailwind (`bg-token-base`) or `var(--*)`.
+ * Legacy RGB aliases (--app-bg-rgb, etc.) are bridged for existing utilities.
+ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Page layout — AppShell main column (toolbar + page body) */
+  --page-padding-x: 0.75rem; /* 12px — mobile; main column uses flex-1 (no max-width cap) */
+
+  /* Surfaces */
+  --bg-base: #ffffff;
+  --surface-1: #f9fafb;
+  --surface-2: #f3f4f6;
+  --surface-3: #e5e7eb;
+  --surface-4: #d1d5db;
+
+  /* Text */
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --text-disabled: #d1d5db;
+  --text-inverse: #ffffff;
+
+  /* Borders */
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-default: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.16);
+
+  /* Brand */
+  --brand-primary: #7c3aed;
+  --brand-secondary: #ec4899;
+  --brand-gradient: linear-gradient(135deg, #7c3aed, #ec4899);
+  --brand-text-on: #ffffff;
+
+  /* Semantic */
+  --success: #16a34a;
+  --success-bg: #dcfce7;
+  --warning: #eab308;
+  --warning-bg: #fef3c7;
+  --error: #dc2626;
+  --error-bg: #fee2e2;
+  --info: #2563eb;
+  --info-bg: #dbeafe;
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.4);
+
+  /* ZeMeet video stage (slightly deeper than base in dark; same as base in light) */
+  --zemeet-video-bg: #f4f6f9;
+  --zemeet-sticky-bg: #fef3c7;
+  --zemeet-sticky-text: #78350f;
+
+  /* Interactive */
+  --focus-ring: var(--brand-primary);
+  --state-hover-mix: 8%;
+  --state-active-mix: 12%;
+  --state-disabled-opacity: 0.4;
+
+  /* Chart row selection */
+  --table-row-selected: rgba(124, 58, 237, 0.08);
+
+  /* Legacy bridge (RGB triplets for Tailwind opacity) */
+  --app-bg-rgb: 255 255 255;
+  --surface-rgb: 249 250 251;
+  --surface-2-rgb: 243 244 246;
+  --surface-3-rgb: 229 231 235;
+  --border-rgb: 0 0 0;
+  --border-opacity: 0.1;
+  --text-rgb: 17 24 39;
+  --text-secondary-rgb: 107 114 128;
+  --muted-rgb: 156 163 175;
+  --brand-primary-rgb: 124 58 237;
+  --brand-secondary-rgb: 236 72 153;
+  --success-rgb: 22 163 74;
+  --warning-rgb: 234 179 8;
+  --error-rgb: 220 38 38;
+  --info-rgb: 37 99 235;
+}
+
+[data-theme="dark"],
+html.dark {
+  color-scheme: dark;
+
+  --bg-base: #0e0e11;
+  --surface-1: #18181c;
+  --surface-2: #1f1f24;
+  --surface-3: #26262c;
+  --surface-4: #2d2d34;
+
+  --text-primary: #e8e8ec;
+  --text-secondary: #a0a0ab;
+  --text-tertiary: #6e6e78;
+  --text-disabled: #3f3f46;
+  --text-inverse: #0e0e11;
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --brand-primary: #a78bfa;
+  --brand-secondary: #f472b6;
+  --brand-gradient: linear-gradient(135deg, #a78bfa, #f472b6);
+  --brand-text-on: #1a1625;
+
+  --success: #4ade80;
+  --success-bg: #1f3a2a;
+  --warning: #fcd34d;
+  --warning-bg: #3a3520;
+  --error: #f87171;
+  --error-bg: #3a1f1f;
+  --info: #60a5fa;
+  --info-bg: #1f2a3a;
+
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  --zemeet-video-bg: #0a0a0d;
+  --zemeet-sticky-bg: #3a3520;
+  --zemeet-sticky-text: #f4e4b8;
+
+  --table-row-selected: rgba(167, 139, 250, 0.08);
+
+  --app-bg-rgb: 14 14 17;
+  --surface-rgb: 24 24 28;
+  --surface-2-rgb: 31 31 36;
+  --surface-3-rgb: 38 38 44;
+  --border-rgb: 255 255 255;
+  --border-opacity: 0.1;
+  --text-rgb: 232 232 236;
+  --text-secondary-rgb: 160 160 171;
+  --muted-rgb: 110 110 120;
+  --brand-primary-rgb: 167 139 250;
+  --brand-secondary-rgb: 244 114 182;
+  --success-rgb: 74 222 128;
+  --warning-rgb: 252 211 77;
+  --error-rgb: 248 113 113;
+  --info-rgb: 96 165 250;
+}
+
+@media (min-width: 640px) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"],
+  html.dark {
+    --page-padding-x: 1rem; /* 16px — tablet */
+  }
+}
+
+@media (min-width: 1024px) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"],
+  html.dark {
+    --page-padding-x: 1.5rem; /* 24px — desktop */
+  }
+}
+
+/* Theme toggle transitions (respect reduced motion) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    transition:
+      background-color 200ms ease,
+      color 200ms ease,
+      border-color 200ms ease;
+  }
+}

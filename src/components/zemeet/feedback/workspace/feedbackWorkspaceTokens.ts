@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import type { FeedbackNoteEntry } from "@/lib/hiring/interviewFeedback";
 import type { ZeMeetNoteEntry } from "@/lib/zemeet/types";
 import { dashboardCanvas } from "@/components/dashboard/dashboardTokens";
-import { hiringHeroShell } from "@/components/hiring/hiringTokens";
+import { hiringHeroReportStripShell } from "@/components/hiring/hiringTokens";
 
 /** Centered overlay — matches Add Candidate dialog */
 export const workspaceOverlay = cn(
@@ -68,13 +68,10 @@ export function feedbackCardShell(className?: string, expanded?: boolean) {
   );
 }
 
-/** Hero card — full width of modal column; overflow visible for sticky notes */
+/** Hero card — compact strip; overflow visible for sticky notes */
 export const feedbackHeroShell = cn(
-  hiringHeroShell,
-  feedbackCardRadius,
-  "w-full shrink-0 overflow-visible border-b-0 shadow-none",
-  feedbackCardPadImportant,
-  "min-h-[11rem] sm:min-h-[11.5rem]",
+  hiringHeroReportStripShell,
+  "w-full overflow-visible",
 );
 
 /** Sticky note on hero — post-it on gradient card */

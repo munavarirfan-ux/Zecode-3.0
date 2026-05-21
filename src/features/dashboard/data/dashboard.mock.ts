@@ -512,7 +512,7 @@ export const myAssignedInterviewsAll: MyAssignedInterview[] = [
     timezone: "GMT",
     durationMin: 55,
     status: "Confirmed",
-    roomId: "zm-dashboard-alex-chen-tr1",
+    roomId: "zm-c-alex-chen-technical-round-1",
     interviewerName: "Ava Patel",
     jobId: "job-sbe-1",
   },

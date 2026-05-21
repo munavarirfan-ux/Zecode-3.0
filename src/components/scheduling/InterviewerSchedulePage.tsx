@@ -113,7 +113,7 @@ export function InterviewerSchedulePage() {
 
   return (
     <div className={cn(hiringCanvas, "pb-10")}>
-      <div className="mx-auto max-w-shell space-y-5">
+      <div className="w-full min-w-0 space-y-5">
         {showNewUserScheduleEmpty ? (
           <NewUserModuleEmptyState module="mySchedule" onPrimaryAction={() => openAdd()} />
         ) : (
@@ -121,8 +121,10 @@ export function InterviewerSchedulePage() {
           <HiringPageHero
             title="My schedule"
             subtitle={`${summary.booked} interview${summary.booked === 1 ? "" : "s"} booked · ${summary.openHours} open hours this week`}
+            collapsedMeta={`${summary.booked} booked · ${summary.openHours} open hrs · ${timezone}`}
             meta={`All times in ${timezone}`}
             aria-label="My schedule"
+            heroCollapseStorageKey="my-schedule"
             action={
               <Button
                 type="button"

@@ -134,7 +134,7 @@ export function AssessmentsDashboard() {
 
   return (
     <div className={hiringCanvas}>
-      <div className="relative mx-auto max-w-shell space-y-5 pb-12">
+      <div className="relative w-full min-w-0 space-y-5 pb-12">
         {showNewUserEmpty ? (
           <NewUserModuleEmptyState
             module="assessments"

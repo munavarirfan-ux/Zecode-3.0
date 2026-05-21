@@ -24,7 +24,7 @@ const EVALUATION_DESIGN: NavGroupConfig = {
   label: MODULE_CODE,
   items: [
     { href: ROUTES.assessments, label: "Assessments", icon: "graduationCap" },
-    { href: ROUTES.schedules, label: "Assessments Schedules", icon: "calendar" },
+    { href: ROUTES.schedules, label: "Assessment Drive", icon: "calendar" },
     { href: ROUTES.questionPool, label: "Question Pool", icon: "databaseZap" },
   ],
 };

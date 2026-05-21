@@ -12,12 +12,14 @@ import {
   MonitorUp,
   MoreHorizontal,
   PhoneOff,
+  Share2,
   StickyNote,
   Users,
   Video,
   VideoOff,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +42,7 @@ import {
   glassTooltipSurface,
   type GlassBubbleVariant,
 } from "@/components/zemeet/room/zeMeetGlassDock";
+import { copyZeMeetCandidateJoinLink } from "@/components/zemeet/room/ZeMeetShareJoinLink";
 import { useZeMeet } from "@/components/zemeet/ZeMeetProvider";
 import { useZeMeetTokens } from "@/components/zemeet/zemeetTokens";
 import { cn } from "@/lib/utils";
@@ -277,6 +280,7 @@ export function ZeMeetControlBar({
               isCandidate={isCandidate}
               showIntelControls={showIntelControls}
               interviewerIntelPanel={interviewerIntelPanel}
+              roomId={session.context.roomId}
               onNotes={() => toggleSidebar("notes")}
               onInstructions={() => toggleSidebar("instructions")}
               onToggleIntel={toggleInterviewerIntel}
@@ -288,6 +292,21 @@ export function ZeMeetControlBar({
 
         <div className={cn(glassDockRow(), "flex md:hidden")}>
           {mediaCluster}
+          {isInterviewer && session.codeChallengeEnabled ? (
+            <>
+              <GroupDivider isLight={t.isLight} />
+              <BubbleCluster tokens={t} label="Code challenge">
+                <GlassBubble
+                  label={codeChallengeLabel}
+                  variant={codeChallengePressed ? "active" : "hero"}
+                  tokens={t}
+                  onClick={openSendCodeChallengeConfirm}
+                >
+                  <Code2 className={ICON} strokeWidth={STROKE} />
+                </GlassBubble>
+              </BubbleCluster>
+            </>
+          ) : null}
           <GroupDivider isLight={t.isLight} />
           <BubbleCluster tokens={t} label="More">
             <GlassBubble
@@ -318,10 +337,16 @@ export function ZeMeetControlBar({
           codeChallengeEnabled={session.codeChallengeEnabled}
           codeChallengeLabel={codeChallengeLabel}
           codeChallengePressed={codeChallengePressed}
+          roomId={session.context.roomId}
           onClose={() => setMobileSheetOpen(false)}
           onToggleSidebar={toggleSidebar}
           onToggleIntel={toggleInterviewerIntel}
           onCodeChallenge={openSendCodeChallengeConfirm}
+          onCopyJoinLink={async () => {
+            const ok = await copyZeMeetCandidateJoinLink(session.context.roomId);
+            if (ok) toast.success("Candidate join link copied");
+            else toast.error("Could not copy link");
+          }}
           onLeave={onLeave}
         />
       ) : null}
@@ -436,6 +461,7 @@ function MoreMenu({
   isCandidate,
   showIntelControls,
   interviewerIntelPanel,
+  roomId,
   onNotes,
   onInstructions,
   onToggleIntel,
@@ -445,6 +471,7 @@ function MoreMenu({
   isCandidate: boolean;
   showIntelControls: boolean;
   interviewerIntelPanel: string;
+  roomId: string;
   onNotes: () => void;
   onInstructions: () => void;
   onToggleIntel: (panel: "resume" | "linkedin") => void;
@@ -479,10 +506,25 @@ function MoreMenu({
         )}
       >
         {isInterviewer ? (
-          <DropdownMenuItem onClick={onNotes} className="rounded-[10px] text-[13px]">
-            <StickyNote className="mr-2 h-4 w-4 opacity-70" strokeWidth={STROKE} />
-            Private notes
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem
+              className="rounded-[10px] text-[13px]"
+              onSelect={() => {
+                void copyZeMeetCandidateJoinLink(roomId).then((ok) => {
+                  if (ok) toast.success("Candidate join link copied");
+                  else toast.error("Could not copy link");
+                });
+              }}
+            >
+              <Share2 className="mr-2 h-4 w-4 opacity-70" strokeWidth={STROKE} />
+              Copy candidate join link
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className={t.isLight ? "bg-[rgba(15,23,42,0.08)]" : "bg-white/10"} />
+            <DropdownMenuItem onClick={onNotes} className="rounded-[10px] text-[13px]">
+              <StickyNote className="mr-2 h-4 w-4 opacity-70" strokeWidth={STROKE} />
+              Private notes
+            </DropdownMenuItem>
+          </>
         ) : null}
         {isCandidate ? (
           <DropdownMenuItem onClick={onInstructions} className="rounded-[10px] text-[13px]">
@@ -528,6 +570,7 @@ function MobileControlSheet({
   onToggleSidebar,
   onToggleIntel,
   onCodeChallenge,
+  onCopyJoinLink,
   onLeave,
 }: {
   tokens: ReturnType<typeof useZeMeetTokens>;
@@ -543,6 +586,7 @@ function MobileControlSheet({
   onToggleSidebar: (tab: "participants" | "chat" | "notes" | "instructions") => void;
   onToggleIntel: (panel: "resume" | "linkedin") => void;
   onCodeChallenge: () => void;
+  onCopyJoinLink: () => void;
   onLeave: () => void;
 }) {
   const sheetItem = (active: boolean) =>
@@ -624,14 +668,27 @@ function MobileControlSheet({
             </button>
           ) : null}
           {isInterviewer ? (
-            <button
-              type="button"
-              className={sheetItem(sidebarTab === "notes")}
-              onClick={() => onToggleSidebar("notes")}
-            >
-              <StickyNote className="h-[18px] w-[18px]" strokeWidth={STROKE} />
-              Private notes
-            </button>
+            <>
+              <button
+                type="button"
+                className={sheetItem(false)}
+                onClick={() => {
+                  onCopyJoinLink();
+                  onClose();
+                }}
+              >
+                <Share2 className="h-[18px] w-[18px]" strokeWidth={STROKE} />
+                Copy candidate join link
+              </button>
+              <button
+                type="button"
+                className={sheetItem(sidebarTab === "notes")}
+                onClick={() => onToggleSidebar("notes")}
+              >
+                <StickyNote className="h-[18px] w-[18px]" strokeWidth={STROKE} />
+                Private notes
+              </button>
+            </>
           ) : null}
           {isInterviewer && codeChallengeEnabled ? (
             <button

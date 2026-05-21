@@ -24,6 +24,8 @@ export type DatePickerProps = {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  /** Disallow dates before today */
+  disablePast?: boolean;
   placeholder?: string;
   className?: string;
   id?: string;
@@ -33,12 +35,18 @@ export function DatePicker({
   value,
   onChange,
   disabled,
+  disablePast,
   placeholder = "Pick a date",
   className,
   id,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const selected = parseIsoDateString(value);
+  const today = React.useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
 
   return (
     <Popover modal open={open} onOpenChange={setOpen}>
@@ -50,7 +58,7 @@ export function DatePicker({
           disabled={disabled}
           className={cn(
             "h-10 w-full justify-start rounded-[10px] border-[rgba(15,23,42,0.08)] bg-surface px-3 text-left text-[14px] font-normal text-text shadow-sm hover:bg-surface",
-            "focus-visible:ring-2 focus-visible:ring-forest/25 focus-visible:ring-offset-0",
+            "focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent-rgb)/0.35)] focus-visible:ring-offset-0",
             !value && "text-muted",
             className,
           )}
@@ -73,7 +81,8 @@ export function DatePicker({
             onChange(toIsoDateString(day));
             setOpen(false);
           }}
-          defaultMonth={selected}
+          defaultMonth={selected ?? (disablePast ? today : undefined)}
+          disabled={disablePast ? { before: today } : undefined}
         />
       </PopoverContent>
     </Popover>

@@ -20,13 +20,15 @@ export const DEMO_USERS = {
 
 /** localStorage keys (legacy kerohire.* keys are migrated on read) */
 export const STORAGE_KEYS = {
-  theme: "zecode.theme",
+  /** Light / dark / system — next-themes + boot script */
+  theme: "ze-theme",
   primary: "zecode.primary",
   sidebarCollapsed: "ze.sidebar.collapsed",
 } as const;
 
 export const LEGACY_STORAGE_KEYS = {
-  theme: "kerohire.theme",
+  theme: "zecode.theme",
+  themeKerohire: "kerohire.theme",
   primary: "kerohire.primary",
   navbar: "kerohire.navbar",
   navbarText: "kerohire.navbarText",

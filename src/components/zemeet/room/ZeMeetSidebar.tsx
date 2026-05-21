@@ -1,19 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useZeMeet } from "@/components/zemeet/ZeMeetProvider";
 import { ZeMeetCandidateInstructions } from "@/components/zemeet/lobby/ZeMeetCandidateInstructions";
+import { ZeMeetPrivateNotesPanel } from "@/components/zemeet/room/ZeMeetPrivateNotesPanel";
 import { useZeMeetTokens } from "@/components/zemeet/zemeetTokens";
 import { cn } from "@/lib/utils";
 
 export function ZeMeetSidebar() {
-  const { sidebarTab, session, chat, sendChat, notes, addNote } = useZeMeet();
+  const { sidebarTab, session, chat, sendChat } = useZeMeet();
   const [chatDraft, setChatDraft] = useState("");
-  const [noteDraft, setNoteDraft] = useState("");
   const t = useZeMeetTokens();
 
+  const isInterviewer =
+    session.viewerRole === "interviewer" || session.viewerRole === "observer";
+
   if (!sidebarTab) return null;
+
+  if (sidebarTab === "notes" && !isInterviewer) return null;
 
   const tabLabel =
     sidebarTab === "participants"
@@ -24,22 +29,33 @@ export function ZeMeetSidebar() {
           ? "Instructions"
           : "Private notes";
 
+  const isNotesPanel = sidebarTab === "notes";
+
   return (
     <aside
       className={cn(
-        t.panel,
         "flex w-full shrink-0 flex-col border-l sm:w-[320px]",
-        t.isLight ? "border-[rgba(15,23,42,0.08)]" : "border-white/[0.06]",
+        isNotesPanel
+          ? cn(
+              "sm:w-[360px]",
+              t.isLight
+                ? "border-amber-200/60 bg-[#FFFBEB]"
+                : "border-amber-900/40 bg-[#100e0b]",
+            )
+          : cn(t.panel, t.isLight ? "border-[rgba(15,23,42,0.08)]" : "border-white/[0.06]"),
       )}
+      aria-label={isNotesPanel ? "Private interviewer notes" : tabLabel}
     >
-      <header
-        className={cn(
-          "border-b px-4 py-3",
-          t.isLight ? "border-[rgba(15,23,42,0.08)]" : "border-white/[0.06]",
-        )}
-      >
-        <p className={t.label}>{tabLabel}</p>
-      </header>
+      {!isNotesPanel ? (
+        <header
+          className={cn(
+            "border-b px-4 py-3",
+            t.isLight ? "border-[rgba(15,23,42,0.08)]" : "border-white/[0.06]",
+          )}
+        >
+          <p className={t.label}>{tabLabel}</p>
+        </header>
+      ) : null}
 
       {sidebarTab === "participants" ? (
         <ul className="flex-1 space-y-2 overflow-y-auto p-3">
@@ -136,70 +152,7 @@ export function ZeMeetSidebar() {
         </>
       ) : null}
 
-      {sidebarTab === "notes" ? (
-        <>
-          <div
-            className={cn(
-              "flex items-center gap-2 border-b px-3 py-2 text-[10px]",
-              t.isLight
-                ? "border-[rgba(15,23,42,0.08)] text-amber-800"
-                : "border-white/[0.06] text-amber-300/90",
-            )}
-          >
-            <Lock className="h-3 w-3" strokeWidth={1.5} />
-            Candidate cannot see these notes
-          </div>
-          <ul className="flex-1 space-y-2 overflow-y-auto p-3">
-            {notes.map((n) => (
-              <li
-                key={n.id}
-                className={cn(
-                  "rounded-[10px] border p-2",
-                  t.isLight
-                    ? "border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)]"
-                    : "border-white/[0.05] bg-white/[0.03]",
-                )}
-              >
-                {n.timestampMs != null ? (
-                  <p className={cn("text-[10px] tabular-nums", t.isLight ? "text-[#A1A1AA]" : "text-white/40")}>
-                    +{Math.floor(n.timestampMs / 1000)}s
-                  </p>
-                ) : null}
-                <p
-                  className={cn(
-                    "mt-0.5 whitespace-pre-wrap text-[12px]",
-                    t.isLight ? "text-[#52525B]" : "text-white/80",
-                  )}
-                >
-                  {n.body}
-                </p>
-              </li>
-            ))}
-          </ul>
-          <form
-            className={cn(
-              "border-t p-3",
-              t.isLight ? "border-[rgba(15,23,42,0.08)]" : "border-white/[0.06]",
-            )}
-            onSubmit={(e) => {
-              e.preventDefault();
-              addNote(noteDraft);
-              setNoteDraft("");
-            }}
-          >
-            <textarea
-              value={noteDraft}
-              onChange={(e) => setNoteDraft(e.target.value)}
-              placeholder="Quick note… supports **markdown**"
-              rows={3}
-              className={cn(t.input, "w-full resize-none")}
-            />
-            <p className={cn("mt-1 text-[10px]", t.isLight ? "text-[#A1A1AA]" : "text-white/35")}>
-              Auto-saves to Candidate Report → Notes
-            </p>
-          </form>
-        </>
-      ) : null}
+      {isNotesPanel ? <ZeMeetPrivateNotesPanel /> : null}
     </aside>
   );
 }

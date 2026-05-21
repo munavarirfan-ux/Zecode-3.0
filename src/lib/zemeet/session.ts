@@ -1,7 +1,36 @@
-import { HIRING_CANDIDATES, HIRING_JOBS } from "@/lib/hiring/mockData";
+import { enrichInterviewDefaults } from "@/lib/hiring/candidateInterviews";
 import { getPrimaryInterviewForRound } from "@/lib/hiring/interviewKanbanOps";
+import { HIRING_CANDIDATES, HIRING_JOBS } from "@/lib/hiring/mockData";
+import type { CandidateInterview, HiringCandidate } from "@/lib/hiring/types";
 import { parseZeMeetRoomId } from "./rooms";
 import type { ZeMeetParticipant, ZeMeetSession } from "./types";
+
+function roundTitleFromSlug(slug: string): string {
+  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Prefer the round encoded in the room URL when it matches a scheduled interview */
+function resolveRoundTitle(candidate: HiringCandidate, roundSlug: string): string {
+  const fromRoom = roundTitleFromSlug(roundSlug);
+  const hasRound = candidate.interviews.some(
+    (i) => i.round.trim().toLowerCase() === fromRoom.trim().toLowerCase(),
+  );
+  if (hasRound) return fromRoom;
+  return candidate.currentSubstage ?? fromRoom;
+}
+
+/** Live coding is available on ZeMeet and technical-style interviews */
+function resolveCodeChallengeEnabled(
+  interview: CandidateInterview | null,
+  roundTitle: string,
+): boolean {
+  if (interview?.platform === "ZeMeet") return true;
+  const enriched = interview ? enrichInterviewDefaults(interview) : null;
+  if (enriched?.hasCodeChallenge) return true;
+  const type = (enriched?.interviewType ?? interview?.interviewType ?? "").toLowerCase();
+  if (type === "technical") return true;
+  return /technical|coding|code|engineer|developer|system design/i.test(roundTitle);
+}
 
 function initials(name: string): string {
   return name
@@ -26,11 +55,9 @@ export function resolveZeMeetSession(
   if (!candidate) return getDemoZeMeetSession(roomId, viewerRole);
 
   const job = HIRING_JOBS.find((j) => j.id === candidate.jobId);
-  const roundTitle =
-    candidate.currentSubstage ??
-    parsed.roundSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
+  const roundTitle = resolveRoundTitle(candidate, parsed.roundSlug);
   const interview = getPrimaryInterviewForRound(candidate, roundTitle);
+  const enrichedInterview = interview ? enrichInterviewDefaults(interview) : null;
 
   const interviewerNames = interview?.interviewers ?? ["Elena Hoffmann", "Marcus Chen"];
   const participants: ZeMeetParticipant[] = [
@@ -79,7 +106,7 @@ export function resolveZeMeetSession(
       jobTitle: job?.title ?? "Open Role",
       jobId: candidate.jobId,
       roundTitle,
-      interviewType: interview?.interviewType ?? "Technical",
+      interviewType: enrichedInterview?.interviewType ?? interview?.interviewType ?? "Technical",
       scheduledAt: interview?.scheduledAt ?? "TBD",
       timezone: "Europe/Berlin (CET)",
       durationMinutes: interview?.durationMinutes ?? 45,
@@ -101,7 +128,7 @@ export function resolveZeMeetSession(
     viewerRole,
     viewerId,
     recordingEnabled: true,
-    codeChallengeEnabled: interview?.hasCodeChallenge ?? interview?.interviewType === "Technical",
+    codeChallengeEnabled: resolveCodeChallengeEnabled(enrichedInterview ?? interview, roundTitle),
   };
 }
 

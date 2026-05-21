@@ -37,10 +37,17 @@ function designHeroBlock(): DashboardHeroBlock {
     topLabel: "",
     subheading: "You have 4 interviews today and 12 feedback items pending review.",
     kpis: [
-      { id: "interviewsToday", label: "Interviews today", value: "15", caption: "Scheduled panels", trend: "+3 today", trendUp: true },
-      { id: "feedbackDue", label: "Feedback due", value: "10", caption: "Write-ups owed", trend: "3 overdue", trendUp: false },
-      { id: "assessmentsProgress", label: "In progress", value: "42", caption: "Active assessments", trend: "+8 this week", trendUp: true },
+      { id: "interviewsToday", label: "Interviews", value: "15", caption: "Scheduled panels", trend: "+3 today", trendUp: true },
+      {
+        id: "upcomingInterviewsOverall",
+        label: "Upcoming interviews",
+        value: "63",
+        caption: "Org-wide scheduled",
+        trend: "31 this week · 24 next week",
+        trendUp: true,
+      },
       { id: "offers", label: "Offers sent", value: "09", caption: "Awaiting response", trend: "2 expiring", trendUp: false },
+      { id: "feedbackDue", label: "Feedback due", value: "10", caption: "Write-ups owed", trend: "3 overdue", trendUp: false },
     ],
     chips: [],
   };
@@ -58,9 +65,15 @@ export function getDashboardHeroBlock(role: PreviewRole, _organizationName: stri
       subheading:
         "Your interview panels and assessment queue — today's sessions, feedback you owe, and reviews in flight.",
       kpis: [
-        { id: "today", label: "Interviews today", value: "3", caption: "Scheduled with you", trend: "Next 45m", trendUp: true },
-        { id: "feedback", label: "Feedback due", value: "5", caption: "Write-ups outstanding", trend: "2 overdue", trendUp: false },
-        { id: "ongoing", label: "Ongoing reviews", value: "28", caption: "Active assessments", trend: "12 due this week", trendUp: true },
+        { id: "today", label: "Interviews", value: "3", caption: "Scheduled with you", trend: "Next 45m", trendUp: true },
+        {
+          id: "upcomingInterviewsOverall",
+          label: "Upcoming interviews",
+          value: "11",
+          caption: "On your calendar",
+          trend: "Scheduled ahead",
+          trendUp: true,
+        },
         {
           id: "timeSpent",
           label: "Time spent this week",
@@ -69,6 +82,7 @@ export function getDashboardHeroBlock(role: PreviewRole, _organizationName: stri
           trend: "4 sessions",
           trendUp: true,
         },
+        { id: "feedback", label: "Feedback due", value: "5", caption: "Write-ups outstanding", trend: "2 overdue", trendUp: false },
       ],
       chips: [
         "Next panel in 45m",

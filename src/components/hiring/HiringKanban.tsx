@@ -271,7 +271,7 @@ function KanbanCandidateCard({
       )}
       aria-label={`View ${candidate.name}, ${stage}`}
     >
-      <div className={cn("flex flex-col", showMoveToInterview && "min-h-[148px]")}>
+      <div className={cn("flex flex-col", showMoveToInterview && "min-h-[120px]")}>
         <div className="flex items-start gap-2">
           {draggable ? (
           <GripVertical
@@ -283,20 +283,6 @@ function KanbanCandidateCard({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-text">{candidate.name}</p>
           <p className="mt-0.5 text-[11px] text-muted">{candidate.source}</p>
-          <p className="mt-2 line-clamp-1 text-[11px] text-text-secondary">{candidate.experience}</p>
-          {candidate.interviews.length > 0 ? (
-            <p className="mt-1.5 text-[10px] font-medium text-forest">
-              {candidate.interviews[0].round} · {candidate.interviews[0].feedbackStatus}
-            </p>
-          ) : null}
-          <div className="mt-2 flex flex-wrap gap-1">
-            {candidate.skills.slice(0, 2).map((s) => (
-              <span key={s} className="rounded bg-muted/20 px-1.5 py-0.5 text-[10px] text-muted">
-                {s}
-              </span>
-            ))}
-          </div>
-          <p className="mt-2 text-[10px] text-muted">{candidate.recruiterOwner}</p>
         </div>
         </div>
         {showMoveToInterview ? (

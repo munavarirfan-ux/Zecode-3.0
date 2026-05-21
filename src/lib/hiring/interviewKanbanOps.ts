@@ -70,6 +70,29 @@ export const EMPTY_ADVANCED_FILTERS: InterviewKanbanAdvancedFilters = {
   feedbackStatus: "",
 };
 
+/** Shown inline on the compact interview toolbar; remainder go in +N more */
+export const INTERVIEW_STATUS_CHIPS_PRIMARY: Array<InterviewOperationalStatus | "All"> = [
+  "All",
+  "Scheduled",
+  "Pending",
+  "Ongoing",
+];
+
+export const INTERVIEW_STATUS_CHIPS_OVERFLOW: InterviewOperationalStatus[] = [
+  "Completed",
+  "Feedback Pending",
+  "Cancelled",
+];
+
+export function countActiveAdvancedFilters(advanced: InterviewKanbanAdvancedFilters): number {
+  let count = 0;
+  if (advanced.interviewer) count += 1;
+  if (advanced.interviewType) count += 1;
+  if (advanced.date) count += 1;
+  if (advanced.feedbackStatus) count += 1;
+  return count;
+}
+
 function interviewMatchesRound(interview: CandidateInterview, roundTitle: string): boolean {
   return interview.round.trim().toLowerCase() === roundTitle.trim().toLowerCase();
 }

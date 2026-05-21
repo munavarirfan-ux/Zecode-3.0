@@ -35,7 +35,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useRole } from "@/context/RoleContext";
 import { PREVIEW_ROLE_OPTIONS, type PreviewRole } from "@/config/previewRole";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/ThemeProvider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { navChromeClasses } from "@/lib/themeChrome";
 import { rgbSpaceToCssRgb } from "@/lib/theme";
 import { getNavigationForRole } from "@/config/navigationByRole";
@@ -46,6 +54,7 @@ import { useWorkspaceRefresh } from "@/lib/onboarding/useWorkspaceRefresh";
 import { APP_NAME, APP_TAGLINE, COMPANY_NAME } from "@/constants/app";
 import { ROUTES } from "@/config/routes";
 import { FeedbackNotificationsMenu } from "@/components/hiring/FeedbackNotificationsMenu";
+import { PageContainer } from "@/components/layout/PageContainer";
 
 const iconRegistry: Record<NavIconKey, LucideIcon> = {
   layoutDashboard: LayoutDashboard,
@@ -135,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full min-w-0 flex-col bg-app-bg text-text lg:h-[100dvh] lg:max-h-screen lg:flex-row lg:overflow-hidden">
       <aside
         className={cn(
-          "shrink-0 transition-[width] duration-[180ms] ease-[cubic-bezier(0.4,0,0.2,1)] lg:flex lg:h-full lg:flex-col lg:overflow-hidden",
+          "shrink-0 transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex lg:h-full lg:flex-col lg:overflow-hidden",
           "w-full lg:w-[var(--sidebar-px)]",
         )}
         style={{ ["--sidebar-px" as string]: `${sidebarWidth}px` } as Record<string, string>}
@@ -313,11 +322,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:overflow-hidden">
         <main
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden p-3 sm:p-4 md:p-5",
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden py-3 sm:py-4 md:py-5",
             isNewUserDashboard ? "overflow-hidden" : "overflow-y-auto",
           )}
         >
-          <header className="sticky top-0 z-[100] isolate mb-3 shrink-0 rounded-[16px] border border-[rgba(15,23,42,0.06)] bg-surface py-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-white/[0.06] sm:mb-4">
+          <PageContainer
+            className={cn(
+              "min-h-0 flex-1 gap-3 sm:gap-4",
+              isNewUserDashboard && "overflow-hidden",
+            )}
+          >
+          <header className="sticky top-0 z-[100] isolate shrink-0 rounded-[16px] border border-[rgba(15,23,42,0.06)] bg-surface py-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-white/[0.06]">
             <div className="flex flex-col gap-2 px-2.5 py-2 sm:flex-row sm:items-center sm:gap-2.5 sm:px-3 sm:py-2.5 lg:gap-3">
               <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5">
                 <Button
@@ -358,18 +373,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     size="sm"
                     onClick={toggleTheme}
                     aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-                    className="h-8 w-8 rounded-[10px] border-[rgba(15,23,42,0.05)] bg-transparent px-0 transition-all duration-[180ms] ease-out hover:border-[rgba(15,23,42,0.08)] hover:bg-[rgba(15,23,42,0.03)]"
+                    className="h-8 w-8 rounded-[10px] border-[rgba(15,23,42,0.05)] bg-transparent px-0 transition-all duration-[180ms] ease-out hover:border-[rgba(15,23,42,0.08)] hover:bg-[rgba(15,23,42,0.03)] dark:border-white/10 dark:hover:border-white/15 dark:hover:bg-white/[0.04]"
                   >
-                    {theme === "dark" ? <Sun className="h-4 w-4" strokeWidth={1.5} /> : <Moon className="h-4 w-4" strokeWidth={1.5} />}
+                    {theme === "dark" ? (
+                      <Sun className="h-4 w-4" strokeWidth={1.5} />
+                    ) : (
+                      <Moon className="h-4 w-4" strokeWidth={1.5} />
+                    )}
                   </Button>
 
-                  <button
-                    type="button"
-                    title={session?.user?.name ?? "Profile"}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgba(15,23,42,0.08)] bg-gradient-to-br from-accent-deep to-accent-900 text-xs font-semibold text-white shadow-sm"
-                  >
-                    {initials(session?.user?.name ?? session?.user?.email)}
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        title={session?.user?.name ?? "Profile"}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgba(15,23,42,0.08)] bg-gradient-to-br from-accent-deep to-accent-900 text-xs font-semibold text-white shadow-sm dark:border-white/10"
+                      >
+                        {initials(session?.user?.name ?? session?.user?.email)}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <ThemeToggle variant="menu" />
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href={ROUTES.settings} className="flex cursor-pointer items-center gap-2">
+                          <Settings className="h-4 w-4" strokeWidth={1.5} />
+                          Settings
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
@@ -377,12 +410,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div
             className={cn(
-              "relative z-0 min-w-0 flex-1 pt-1",
-              isNewUserDashboard ? "flex min-h-0 flex-col overflow-hidden pb-0" : "pb-6 sm:pb-8",
+              "relative z-0 min-w-0 flex-1",
+              isNewUserDashboard ? "flex min-h-0 flex-col overflow-hidden" : "pb-2 sm:pb-3",
             )}
           >
             {children}
           </div>
+          </PageContainer>
         </main>
       </div>
     </div>

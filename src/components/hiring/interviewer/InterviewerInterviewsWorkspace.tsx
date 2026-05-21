@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { useRole } from "@/context/RoleContext";
 import { CandidateReportDialog } from "@/components/hiring/applicants/CandidateReportDialog";
 import { HeroMetricsCollapsible } from "@/components/hiring/HeroMetricsCollapsible";
-import { HeroMetricsToggleButton } from "@/components/hiring/HeroMetricsToggleButton";
 import { HiringHeroSelectableKpiCard } from "@/components/hiring/HiringHeroSelectableKpiCard";
 import { HiringPageHero } from "@/components/hiring/HiringPageHero";
 import { hiringCanvas, hiringCard } from "@/components/hiring/hiringTokens";
@@ -115,14 +114,13 @@ export function InterviewerInterviewsWorkspace() {
 
   return (
     <div className={hiringCanvas}>
-      <div className="relative mx-auto max-w-shell space-y-6 pb-14">
+      <div className="relative w-full min-w-0 space-y-6 pb-14">
         <HiringPageHero
           title="My interviews"
           subtitle="Manage your assigned interviews and upcoming schedules."
+          collapsedMeta="Manage your assigned interviews and upcoming schedules."
           aria-label="My interviews"
-          action={
-            <HeroMetricsToggleButton storageKey="interviewer-interviews-hero-metrics-collapsed" />
-          }
+          heroCollapseStorageKey="interviewer-interviews"
         >
           <HeroMetricsCollapsible
             id="interviewer-interviews-hero-metrics"

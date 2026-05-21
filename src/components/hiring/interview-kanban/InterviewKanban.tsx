@@ -25,23 +25,36 @@ import { KanbanMoveConfirmDialog } from "../KanbanMoveConfirmDialog";
 import { ScheduleInterviewDialog } from "../schedule-interview/ScheduleInterviewDialog";
 import { InterviewCancelConfirmDialog } from "./InterviewCancelConfirmDialog";
 import { InterviewKanbanCard } from "./InterviewKanbanCard";
-import { InterviewKanbanFilters } from "./InterviewKanbanFilters";
+import {
+  InterviewKanbanToolbar,
+  type InterviewRoundOption,
+} from "./InterviewKanbanToolbar";
 
 export function InterviewKanban({
   rounds,
   candidates,
+  canManageRounds = false,
+  roundOptions,
+  onAddRound,
+  onDeleteRound,
   onCardClick,
   onCandidateMoved,
   onRequestFeedback,
 }: {
   rounds: InterviewRound[];
   candidates: HiringCandidate[];
+  canManageRounds?: boolean;
+  roundOptions: InterviewRoundOption[];
+  onAddRound: (title: string) => void;
+  onDeleteRound: (roundId: string) => void;
   onCardClick?: (candidate: HiringCandidate) => void;
   onCandidateMoved?: () => void;
   onRequestFeedback?: (candidate: HiringCandidate) => void;
 }) {
   const [statusFilter, setStatusFilter] = useState<InterviewOperationalStatus | "All">("All");
   const [advanced, setAdvanced] = useState<InterviewKanbanAdvancedFilters>(EMPTY_ADVANCED_FILTERS);
+  const [activeRoundId, setActiveRoundId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [pendingMove, setPendingMove] = useState<{
@@ -60,25 +73,34 @@ export function InterviewKanban({
   } | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
-  const columns = rounds;
-  const canDrag = columns.length > 1;
+  const columns = useMemo(
+    () => (activeRoundId ? rounds.filter((r) => r.id === activeRoundId) : rounds),
+    [rounds, activeRoundId],
+  );
+  const canDrag = rounds.length > 1 && !activeRoundId;
 
   const allModels = useMemo(
     () => candidates.map((c) => buildInterviewKanbanCardModel(c, rounds)),
     [candidates, rounds],
   );
 
-  const filteredModels = useMemo(
-    () =>
-      allModels.filter(
-        (m) =>
-          matchesStatusFilter(m.status, statusFilter) && matchesAdvancedFilters(m, advanced),
-      ),
-    [allModels, statusFilter, advanced],
-  );
+  const filteredModels = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return allModels.filter((m) => {
+      if (!matchesStatusFilter(m.status, statusFilter)) return false;
+      if (!matchesAdvancedFilters(m, advanced)) return false;
+      if (activeRoundId && m.columnId !== activeRoundId) return false;
+      if (q && !m.candidate.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [allModels, statusFilter, advanced, activeRoundId, searchQuery]);
 
   const statusCounts = useMemo(() => {
-    const base = allModels.filter((m) => matchesAdvancedFilters(m, advanced));
+    const base = allModels.filter((m) => {
+      if (!matchesAdvancedFilters(m, advanced)) return false;
+      if (activeRoundId && m.columnId !== activeRoundId) return false;
+      return true;
+    });
     const counts: Record<InterviewOperationalStatus | "All", number> = {
       All: base.length,
       Scheduled: 0,
@@ -93,7 +115,7 @@ export function InterviewKanban({
       counts[k] = base.filter((m) => matchesStatusFilter(m.status, k)).length;
     }
     return counts;
-  }, [allModels, advanced]);
+  }, [allModels, advanced, activeRoundId]);
 
   const filterOptions = useMemo(() => collectInterviewFilterOptions(candidates), [candidates]);
 
@@ -212,15 +234,23 @@ export function InterviewKanban({
 
   return (
     <>
-      <InterviewKanbanFilters
+      <InterviewKanbanToolbar
+        rounds={rounds}
+        roundOptions={roundOptions}
+        activeRoundId={activeRoundId}
+        onActiveRoundChange={setActiveRoundId}
+        canManageRounds={canManageRounds}
+        onAddRound={onAddRound}
+        onDeleteRound={onDeleteRound}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
+        statusCounts={statusCounts}
         advanced={advanced}
         onAdvancedChange={setAdvanced}
         interviewers={filterOptions.interviewers}
         interviewTypes={filterOptions.types}
-        resultCount={filteredModels.length}
-        statusCounts={statusCounts}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
       />
 
       <div className="interview-kanban-board">

@@ -13,7 +13,6 @@ import {
 } from "@/lib/hiring/interviewRounds";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
 import { InterviewKanban } from "./interview-kanban/InterviewKanban";
-import { InterviewRoundsFlow } from "./InterviewRoundsFlow";
 
 export function InterviewKanbanBoard({
   job,
@@ -68,7 +67,7 @@ export function InterviewKanbanBoard({
     toast.success(`Removed ${round.title}`);
   }
 
-  const roundPills = useMemo(
+  const roundOptions = useMemo(
     () =>
       rounds.map((round) => ({
         id: round.id,
@@ -82,29 +81,20 @@ export function InterviewKanbanBoard({
   const handleFeedback = onRequestFeedback ?? onCardClick;
 
   return (
-    <div className="space-y-4">
-      {canManage ? (
-        <InterviewRoundsFlow
-          rounds={roundPills}
-          onAddRound={handleAddRound}
-          onDeleteRound={(id) => {
-            const round = rounds.find((r) => r.id === id);
-            if (round) handleDeleteRound(round);
-          }}
-        />
-      ) : (
-        <p className="text-[12px] text-text-secondary/70">
-          {rounds.map((r) => r.title).join(" · ")}
-        </p>
-      )}
-
-      <InterviewKanban
-        rounds={rounds}
-        candidates={candidates}
-        onCardClick={onCardClick}
-        onCandidateMoved={onCandidateMoved}
-        onRequestFeedback={(c) => handleFeedback?.(c)}
-      />
-    </div>
+    <InterviewKanban
+      rounds={rounds}
+      candidates={candidates}
+      canManageRounds={canManage}
+      roundOptions={roundOptions}
+      onAddRound={handleAddRound}
+      onDeleteRound={(id) => {
+        const round = rounds.find((r) => r.id === id);
+        if (round) handleDeleteRound(round);
+      }}
+      onCardClick={onCardClick}
+      onCandidateMoved={onCandidateMoved}
+      onRequestFeedback={(c) => handleFeedback?.(c)}
+      onScheduleCandidate={handleSchedule}
+    />
   );
 }

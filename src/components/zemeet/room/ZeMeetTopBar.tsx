@@ -2,6 +2,7 @@
 
 import { Circle, FileText, Linkedin, Radio, Wifi } from "lucide-react";
 import { useZeMeet } from "@/components/zemeet/ZeMeetProvider";
+import { ZeMeetShareJoinLink } from "@/components/zemeet/room/ZeMeetShareJoinLink";
 import { ZeMeetThemeToggle } from "@/components/zemeet/ZeMeetThemeToggle";
 import { useZeMeetTokens } from "@/components/zemeet/zemeetTokens";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ export function ZeMeetTopBar({ codeChallengeActive }: { codeChallengeActive?: bo
       <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
         {isInterviewer ? (
           <div className="flex items-center gap-1.5">
+            <ZeMeetShareJoinLink roomId={context.roomId} candidateName={context.candidateName} />
             <button
               type="button"
               className={interviewerIntelPanel === "resume" ? intelBtnActive : intelBtn}

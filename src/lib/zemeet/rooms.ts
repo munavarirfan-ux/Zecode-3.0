@@ -47,3 +47,11 @@ export function zeMeetJoinUrl(roomId: string, origin?: string): string {
   const base = origin ?? (typeof window !== "undefined" ? window.location.origin : "");
   return `${base}${zeMeetPath(roomId)}`;
 }
+
+/** Join URL for the candidate — opens lobby with candidate role */
+export function zeMeetCandidateJoinUrl(roomId: string, origin?: string): string {
+  const base = zeMeetJoinUrl(roomId, origin);
+  const url = new URL(base);
+  url.searchParams.set("role", "candidate");
+  return url.toString();
+}

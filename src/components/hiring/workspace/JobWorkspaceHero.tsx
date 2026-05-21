@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -18,6 +17,7 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
+import { HeroActionButton } from "../HeroActionButton";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,16 +30,13 @@ import { cn } from "@/lib/utils";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
 import { ROUTES } from "@/config/routes";
 import {
-  hiringHeroPrimaryBtnSm,
-  hiringHeroRadialOverlay,
-  hiringHeroSecondaryBtnSm,
-  hiringHeroShell,
+  hiringHeroCollapsedIconBtn,
+  hiringHeroStripMetaChips,
   hiringTransition,
 } from "../hiringTokens";
 import { HeroMetricsCollapsible } from "../HeroMetricsCollapsible";
-import { HeroMetricsToggleButton } from "../HeroMetricsToggleButton";
 import { HiringHeroGlassKpiCard } from "../HiringHeroGlassKpiCard";
-import { HiringHeroTexture } from "../HiringHeroTexture";
+import { HiringHeroWorkspace } from "../HiringHeroWorkspace";
 import type { JobWorkspaceMetrics } from "./jobWorkspaceUtils";
 import { getActiveHiringStage } from "./jobWorkspaceUtils";
 
@@ -115,112 +112,95 @@ export function JobWorkspaceHero({
   ] as const;
 
   return (
-    <section
-      className={cn(hiringHeroShell, "px-8 py-8")}
+    <HiringHeroWorkspace
       aria-label="Job workspace header"
-    >
-      <HiringHeroTexture />
-      <div
-        className="pointer-events-none absolute -right-24 -top-20 h-72 w-72 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.14)] blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.35] mix-blend-overlay [background-image:url('data:image/svg+xml;utf8,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%220.04%22/%3E%3C/svg%3E')]"
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute inset-0" aria-hidden style={hiringHeroRadialOverlay} />
-
-      <div className="relative space-y-5">
-        <Link
-          href={isInterviewMode ? ROUTES.interviews : ROUTES.hiringJobs}
-          className={cn(
-            "inline-flex w-fit items-center gap-1.5 rounded-full border border-white/[0.16] bg-white/[0.07] px-3 py-1 text-[11px] font-medium text-white/72 backdrop-blur-sm",
-            hiringTransition,
-            "hover:border-white/[0.26] hover:bg-white/[0.11] hover:text-white",
-          )}
-        >
+      heroCollapseStorageKey="job-detail"
+      defaultHeroCollapsed
+      collapsedMeta={[job.department, job.location, job.workMode]}
+      backHref={isInterviewMode ? ROUTES.interviews : ROUTES.hiringJobs}
+      backLabel={
+        <>
           <ArrowLeft className="h-3 w-3" strokeWidth={2} />
           {isInterviewMode ? "Back to interviews" : "Back to jobs"}
-        </Link>
-
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <header className="min-w-0 space-y-3">
-            <h1 className="text-[1.5rem] font-medium leading-[1.15] tracking-[-0.04em] text-white sm:text-[1.75rem]">
-              {job.title}
-            </h1>
-            <p className="text-[13px] font-normal text-white/[0.58]">
-              {job.department}
-              <span className="mx-2 text-white/20">·</span>
-              {job.location}
-              <span className="mx-2 text-white/20">·</span>
-              {job.workMode}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={glassMeta}>{job.employmentType}</span>
-              <span className={cn(glassMeta, "text-white/88")}>{job.status}</span>
-              <span className={glassMeta}>{hiringStage}</span>
-              <span className={glassMeta}>Updated {job.lastUpdatedLabel}</span>
-            </div>
-          </header>
-
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <HeroMetricsToggleButton storageKey="job-workspace-hero-metrics-collapsed" />
-            <Button size="sm" className={hiringHeroSecondaryBtnSm} onClick={copyJobLink}>
-              <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Share job
-            </Button>
-            <Button
-              ref={addCandidateButtonRef}
-              type="button"
-              size="sm"
-              className={hiringHeroPrimaryBtnSm}
-              onClick={onAddCandidate}
-            >
-              <Plus className="h-3.5 w-3.5" strokeWidth={2} />
-              Add candidate
-            </Button>
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "h-9 w-9 rounded-[11px] border-white/[0.18] bg-white/[0.08] p-0 text-white backdrop-blur-sm",
-                    hiringTransition,
-                    "hover:border-white/[0.28] hover:bg-white/[0.14]",
-                  )}
-                  aria-label="More actions"
-                >
-                  <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="bottom" align="end" sideOffset={4} className={menuContentClass}>
-                <DropdownMenuItem className={menuItemClass}>
-                  <Pencil className="h-3 w-3 opacity-55" strokeWidth={1.75} />
-                  Edit job
-                </DropdownMenuItem>
-                <DropdownMenuItem className={menuItemClass}>
-                  <Copy className="h-3 w-3 opacity-55" strokeWidth={1.75} />
-                  Duplicate job
-                </DropdownMenuItem>
-                <DropdownMenuItem className={menuItemClass} onSelect={copyJobLink}>
-                  <Link2 className="h-3 w-3 opacity-55" strokeWidth={1.75} />
-                  Copy job link
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="my-0.5" />
-                <DropdownMenuItem className={menuItemClass}>
-                  <Pause className="h-3 w-3 opacity-55" strokeWidth={1.75} />
-                  Pause hiring
-                </DropdownMenuItem>
-                <DropdownMenuItem className={menuItemClass}>
-                  <XCircle className="h-3 w-3 opacity-55" strokeWidth={1.75} />
-                  Close job
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        </>
+      }
+      title={job.title}
+      subtitle={
+        <>
+          {job.department}
+          <span className="mx-2 text-white/20">·</span>
+          {job.location}
+          <span className="mx-2 text-white/20">·</span>
+          {job.workMode}
+        </>
+      }
+      meta={
+        <div className={hiringHeroStripMetaChips}>
+          <span className={glassMeta}>{job.employmentType}</span>
+          <span className={cn(glassMeta, "text-white/88")}>{job.status}</span>
+          <span className={glassMeta}>{hiringStage}</span>
+          <span className={glassMeta}>Updated {job.lastUpdatedLabel}</span>
         </div>
-
+      }
+      decorExtra={
+        <div
+          className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] opacity-[0.35] mix-blend-overlay [background-image:url('data:image/svg+xml;utf8,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%220.04%22/%3E%3C/svg%3E')]"
+          aria-hidden
+        />
+      }
+      actions={
+        <>
+          <HeroActionButton variant="secondary" onClick={copyJobLink}>
+            <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+            Share job
+          </HeroActionButton>
+          <HeroActionButton
+            ref={addCandidateButtonRef}
+            variant="primary"
+            onClick={onAddCandidate}
+          >
+            <Plus className="h-3.5 w-3.5" strokeWidth={2} />
+            Add candidate
+          </HeroActionButton>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className={cn(hiringHeroCollapsedIconBtn, hiringTransition)}
+                aria-label="More actions"
+              >
+                <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="bottom" align="end" sideOffset={4} className={menuContentClass}>
+              <DropdownMenuItem className={menuItemClass}>
+                <Pencil className="h-3 w-3 opacity-55" strokeWidth={1.75} />
+                Edit job
+              </DropdownMenuItem>
+              <DropdownMenuItem className={menuItemClass}>
+                <Copy className="h-3 w-3 opacity-55" strokeWidth={1.75} />
+                Duplicate job
+              </DropdownMenuItem>
+              <DropdownMenuItem className={menuItemClass} onSelect={copyJobLink}>
+                <Link2 className="h-3 w-3 opacity-55" strokeWidth={1.75} />
+                Copy job link
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="my-0.5" />
+              <DropdownMenuItem className={menuItemClass}>
+                <Pause className="h-3 w-3 opacity-55" strokeWidth={1.75} />
+                Pause hiring
+              </DropdownMenuItem>
+              <DropdownMenuItem className={menuItemClass}>
+                <XCircle className="h-3 w-3 opacity-55" strokeWidth={1.75} />
+                Close job
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
+      metricsStorageKey="job-workspace-hero-metrics-collapsed"
+      metrics={
         <HeroMetricsCollapsible
           id="job-workspace-hero-metrics"
           storageKey="job-workspace-hero-metrics-collapsed"
@@ -237,7 +217,7 @@ export function JobWorkspaceHero({
             />
           ))}
         </HeroMetricsCollapsible>
-      </div>
-    </section>
+      }
+    />
   );
 }

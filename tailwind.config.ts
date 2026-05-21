@@ -1,13 +1,41 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"],
+  darkMode: ["class", '[data-theme="dark"]'],
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
+        "token-base": "var(--bg-base)",
+        "surface-1": "var(--surface-1)",
+        "surface-2": "var(--surface-2)",
+        "surface-3": "var(--surface-3)",
+        "surface-4": "var(--surface-4)",
+        "fg-primary": "var(--text-primary)",
+        "fg-secondary": "var(--text-secondary)",
+        "fg-tertiary": "var(--text-tertiary)",
+        "fg-disabled": "var(--text-disabled)",
+        "fg-inverse": "var(--text-inverse)",
+        "border-subtle": "var(--border-subtle)",
+        "border-default": "var(--border-default)",
+        "border-strong": "var(--border-strong)",
+        brand: {
+          DEFAULT: "var(--brand-primary)",
+          secondary: "var(--brand-secondary)",
+          "text-on": "var(--brand-text-on)",
+        },
+        semantic: {
+          success: "var(--success)",
+          "success-bg": "var(--success-bg)",
+          warning: "var(--warning)",
+          "warning-bg": "var(--warning-bg)",
+          error: "var(--error)",
+          "error-bg": "var(--error-bg)",
+          info: "var(--info)",
+          "info-bg": "var(--info-bg)",
+        },
         "app-bg": "rgb(var(--app-bg-rgb) / <alpha-value>)",
         surface: "rgb(var(--surface-rgb) / <alpha-value>)",
         border: "rgb(var(--border-rgb) / <alpha-value>)",
@@ -52,7 +80,8 @@ const config: Config = {
       },
       maxWidth: {
         content: "1200px",
-        shell: "1400px",
+        shell: "var(--page-max-width)",
+        page: "var(--page-max-width)",
       },
       borderRadius: {
         sm: "8px",

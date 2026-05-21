@@ -24,22 +24,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { AssessmentCandidateRecord, AssessmentRecord } from "@/lib/hiring/assessments/types";
-import { HiringHeroTexture } from "../../HiringHeroTexture";
+import { HiringHeroDecor } from "../../HiringHeroDecor";
 import {
   hiringHeroPrimaryBtnSm,
-  hiringHeroRadialOverlay,
+  hiringHeroReportStripRow,
+  hiringHeroReportStripShell,
   hiringHeroSecondaryBtnSm,
-  hiringHeroShell,
+  hiringHeroStripActions,
+  hiringHeroStripMetaLine,
+  hiringHeroStripTitle,
   hiringTransition,
 } from "../../hiringTokens";
 import { AssessmentCandidateStatusPill } from "../AssessmentCandidateStatusPill";
 
-const reportHeroShell = cn(
-  hiringHeroShell,
-  "shrink-0 rounded-[16px] border-b-0 shadow-none",
-  "!px-7 !py-7 sm:!px-8 sm:!py-8 lg:!px-10 lg:!py-9",
-  "min-h-[11.5rem] sm:min-h-[12.5rem]",
-);
+const reportAvatar =
+  "flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] border border-white/[0.16] bg-white/[0.1] text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:h-14 sm:w-14 sm:text-base";
 
 const glassMeta =
   "inline-flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.08] px-3 py-1.5 text-[13px] font-medium text-white backdrop-blur-md [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0";
@@ -71,25 +70,16 @@ export function AssessmentReportHero({
     : null;
 
   return (
-    <header className={reportHeroShell}>
-      <HiringHeroTexture />
-      <div
-        className="pointer-events-none absolute -right-20 -top-16 h-56 w-56 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.14)] blur-3xl"
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute inset-0 rounded-[inherit]" style={hiringHeroRadialOverlay} aria-hidden />
+    <header className={hiringHeroReportStripShell}>
+      <HiringHeroDecor />
 
-      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-        <div className="flex min-w-0 gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] border border-white/[0.16] bg-white/[0.1] text-base font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:h-16 sm:w-16 sm:text-lg">
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-[1.5rem] font-semibold tracking-[-0.035em] text-white sm:text-[1.75rem]">
-              {candidate.name}
-            </h2>
-            <p className="mt-1.5 text-[14px] text-white/68 sm:text-[15px]">{assessment.name}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
+      <div className={cn(hiringHeroReportStripRow, "relative")}>
+        <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
+          <div className={reportAvatar}>{initials}</div>
+          <div className="min-w-0 space-y-2">
+            <h2 className={hiringHeroStripTitle}>{candidate.name}</h2>
+            <p className={hiringHeroStripMetaLine}>{assessment.name}</p>
+            <div className="flex flex-wrap gap-2">
               <span className={glassMeta}>
                 <Mail className="opacity-90" strokeWidth={1.5} />
                 {candidate.email}
@@ -107,7 +97,7 @@ export function AssessmentReportHero({
                 </span>
               ) : null}
             </div>
-            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {linkedinHref ? (
                 <a
                   href={linkedinHref}
@@ -139,7 +129,7 @@ export function AssessmentReportHero({
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
+        <div className={hiringHeroStripActions}>
           <Button type="button" size="sm" className={hiringHeroSecondaryBtnSm} onClick={() => toast.message("Share report (demo)")}>
             <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} />
             Share report
@@ -154,7 +144,7 @@ export function AssessmentReportHero({
                 type="button"
                 size="sm"
                 className={cn(
-                  "h-10 w-10 rounded-[10px] border-0 p-0 text-white shadow-none backdrop-blur-sm",
+                  "h-9 w-9 rounded-[11px] border-0 p-0 text-white shadow-none backdrop-blur-sm",
                   hiringTransition,
                   "bg-white/[0.14] hover:bg-white/[0.2]",
                 )}

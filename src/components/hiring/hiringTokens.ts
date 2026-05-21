@@ -17,7 +17,7 @@ export const hiringCard = cn(
 );
 
 export const hiringCanvas =
-  "relative min-h-full rounded-[20px] bg-[#F8FAFC] px-1 py-2 dark:bg-app-bg sm:px-2 sm:py-3";
+  "relative min-h-full w-full min-w-0 rounded-[20px] bg-white py-2 dark:bg-[#0E0E11] sm:py-3";
 
 export const hiringTransition = "transition-all duration-[180ms] ease-out";
 
@@ -37,12 +37,91 @@ export const hiringHeroGradient =
   "bg-[linear-gradient(to_bottom_right,rgb(var(--hero-gradient-from-rgb)),rgb(var(--hero-gradient-via-rgb)),rgb(var(--hero-gradient-to-rgb)))]";
 
 export const hiringHeroShell = cn(
-  "relative overflow-hidden rounded-[28px]",
+  "relative isolate overflow-hidden rounded-[28px]",
   "border border-[rgb(var(--hero-border-rgb)/0.28)]",
   "text-[rgb(var(--hero-fg-rgb))]",
   hiringHeroGradient,
-  "shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_24px_56px_-28px_rgb(var(--hero-shadow-rgb)/0.75)]",
+  "shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_24px_rgba(0,0,0,0.08)]",
+  "dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]",
   "px-8 py-8 sm:px-8 sm:py-8 lg:px-10 lg:py-9",
+);
+
+/** Compact page header strip — title + actions (~72–90px when metrics collapsed) */
+export const hiringHeroStripShell = cn(
+  hiringHeroShell,
+  "!px-6 !py-4 sm:!px-6 sm:!py-4 lg:!px-6 lg:!py-4",
+);
+
+/** Collapsed page hero — single-line strip (~36–40px) */
+export const hiringHeroCollapsedShell = cn(
+  hiringHeroShell,
+  "!rounded-xl !px-4 !py-2 sm:!px-4 sm:!py-2",
+  "transition-[padding] duration-200 ease-out motion-reduce:transition-none",
+);
+
+export const hiringHeroCollapseTransition =
+  "transition-[padding] duration-200 ease-out motion-reduce:transition-none";
+
+export const hiringHeroCollapsedTitle = "truncate text-sm font-semibold text-white";
+
+export const hiringHeroCollapsedMeta =
+  "hidden truncate text-xs text-white/60 md:inline";
+
+export const hiringHeroCollapsedRow = "relative flex min-w-0 items-center gap-2 sm:gap-3";
+
+export const hiringHeroCollapsedBackBtn = cn(
+  "h-7 w-7 shrink-0 rounded-full border border-white/[0.16] bg-white/[0.07] text-white/80",
+  "hover:border-white/[0.26] hover:bg-white/[0.11] hover:text-white",
+);
+
+export const hiringHeroCollapseToggleBtn = cn(
+  "h-7 w-7 shrink-0 text-white/70 hover:bg-white/[0.08] hover:text-white",
+);
+
+export const hiringHeroCollapsedIconBtn = cn(
+  "h-7 w-7 shrink-0 rounded-[10px] border-white/[0.18] bg-white/[0.08] text-white backdrop-blur-sm",
+  "hover:border-white/[0.28] hover:bg-white/[0.14]",
+);
+
+export const hiringHeroCollapsedActions = "flex shrink-0 items-center gap-1";
+
+export const hiringHeroStripRow =
+  "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4";
+
+export const hiringHeroStripHeader = "min-w-0";
+
+export const hiringHeroStripTitle =
+  "text-2xl font-semibold leading-tight tracking-[-0.025em] text-white";
+
+export const hiringHeroStripSubtitle = "mt-0.5 text-sm leading-snug text-white/70";
+
+export const hiringHeroStripActions = "flex shrink-0 flex-wrap items-center gap-2";
+
+export const hiringHeroStripBody = "relative space-y-4";
+
+/** Workspace / detail heroes — back link + strip row + optional metrics */
+export const hiringHeroStripWorkspaceBody = "relative space-y-3";
+
+export const hiringHeroBackLink = cn(
+  "inline-flex w-fit items-center gap-1.5 rounded-full border border-white/[0.16] bg-white/[0.07] px-3 py-1 text-[11px] font-medium text-white/72 backdrop-blur-sm",
+  hiringTransition,
+  "hover:border-white/[0.26] hover:bg-white/[0.11] hover:text-white",
+);
+
+export const hiringHeroStripMetaLine = "text-sm text-white/70";
+
+export const hiringHeroStripMetaChips = "flex flex-wrap items-center gap-2";
+
+/** Dialog / report headers — compact strip padding, no min-height */
+export const hiringHeroReportStripShell = cn(
+  hiringHeroStripShell,
+  "shrink-0 overflow-hidden rounded-[16px] border-b-0 shadow-none",
+);
+
+/** Report/modal heroes with avatar + meta chips */
+export const hiringHeroReportStripRow = cn(
+  hiringHeroStripRow,
+  "items-start sm:items-center",
 );
 
 /**
@@ -77,7 +156,7 @@ export const hiringHeroGlassKpi = cn(
   "shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_32px_-12px_rgba(0,0,0,0.25)]",
   "transition-all duration-[180ms] ease-out",
   "hover:-translate-y-0.5 hover:border-white/[0.32] hover:bg-white/[0.16]",
-  "hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_12px_40px_-10px_rgba(0,0,0,0.3),0_0_24px_-8px_rgb(var(--hero-glow-rgb)/0.18)]",
+  "hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_12px_40px_-10px_rgba(0,0,0,0.28)]",
 );
 
 export const hiringHeroRadialOverlay = {
@@ -108,6 +187,12 @@ export const hiringHeroSecondaryBtnSm = cn(
 export const hiringHeroPrimaryBtnMd = cn(
   hiringHeroPrimaryBtn,
   "h-10 shrink-0 gap-1.5 rounded-[12px] px-5 text-sm hover:-translate-y-px",
+);
+
+/** Primary CTA in compact strip — h-9 to align with `hiringHeroSecondaryBtnSm` */
+export const hiringHeroStripPrimaryBtn = cn(
+  hiringHeroPrimaryBtn,
+  "h-9 shrink-0 gap-1.5 rounded-[11px] px-4 text-[13px]",
 );
 
 /** Frosted overview modules — Linear / Ashby-inspired */

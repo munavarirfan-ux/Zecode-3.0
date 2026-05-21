@@ -25,7 +25,12 @@ import {
   FeedbackDueInsightPanel,
 } from "@/components/dashboard/DashboardPanels";
 import { dashboardGreeting } from "@/features/dashboard/data/dashboard.mock";
-import { dashboardCanvas, dashboardLabel, dashboardWorkspaceShell } from "./dashboardTokens";
+import {
+  dashboardCanvas,
+  dashboardLabel,
+  dashboardOperationalSection,
+  dashboardWorkspaceShell,
+} from "./dashboardTokens";
 import { NewUserDashboard } from "@/components/onboarding/NewUserDashboard";
 import { readOnboardingState } from "@/lib/onboarding/onboardingStore";
 
@@ -79,7 +84,7 @@ export function DashboardExperience() {
       />
 
       {!ready ? (
-        <div className="relative space-y-3 animate-pulse">
+        <div className="relative w-full space-y-3 animate-pulse">
           <div className="h-[min(280px,42vh)] rounded-[28px] bg-[rgba(15,23,42,0.05)] sm:h-72" />
           {!isEvaluator ? (
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
@@ -92,11 +97,11 @@ export function DashboardExperience() {
         </div>
       ) : null}
 
-      <div className={cn(!ready && "hidden", "relative mx-auto max-w-shell space-y-4 pb-1")}>
+      <div className={cn(!ready && "hidden", "relative w-full space-y-4 pb-1")}>
         <GreetingHero role={selectedRole} name={displayFirstName} organizationName={session?.user?.organizationName} />
 
         {showKpiStrip ? (
-          <section aria-labelledby="operational-kpis" className="space-y-2.5">
+          <section aria-labelledby="operational-kpis" className={cn(dashboardOperationalSection, "space-y-2.5")}>
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
                 <h2 id="operational-kpis" className="text-[13px] font-medium tracking-[-0.02em] text-[#18181B] dark:text-text">

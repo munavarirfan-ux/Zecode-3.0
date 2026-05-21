@@ -79,12 +79,15 @@ import {
 } from "@/components/dashboard/dashboardTokens";
 import {
   hiringHeroPrimaryBtn,
-  hiringHeroRadialOverlay,
   hiringHeroSecondaryBtnSm,
-  hiringHeroShell,
+  hiringHeroReportStripRow,
+  hiringHeroReportStripShell,
+  hiringHeroStripActions,
+  hiringHeroStripMetaLine,
+  hiringHeroStripTitle,
   hiringTransition,
 } from "../hiringTokens";
-import { HiringHeroTexture } from "../HiringHeroTexture";
+import { HiringHeroDecor } from "../HiringHeroDecor";
 import { AddTagsDialog } from "./AddTagsDialog";
 import { EditCandidateDialog } from "./EditCandidateDialog";
 import { MoveApplicantDialog } from "./MoveApplicantDialog";
@@ -136,31 +139,21 @@ const TABS_BY_SHELL: Record<CandidateReportShellMode, Array<(typeof REPORT_TABS)
 };
 
 /** Dashboard hero — contained card, aligned to report column */
-const reportHeroShell = cn(
-  hiringHeroShell,
-  "shrink-0 rounded-[16px] border-b-0 shadow-none",
-  "!px-7 !py-7 sm:!px-8 sm:!py-8 lg:!px-10 lg:!py-9",
-  "min-h-[11.5rem] sm:min-h-[12.5rem]",
+const reportAvatar =
+  "flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] border border-white/[0.16] bg-white/[0.1] text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:h-14 sm:w-14 sm:text-base";
+
+const heroPrimaryActionBtn = cn(hiringHeroPrimaryBtn, "h-9 gap-1.5 rounded-[11px] px-4 text-[13px]");
+
+const heroSecondaryActionBtn = hiringHeroSecondaryBtnSm;
+
+const heroKebabBtn = cn(
+  "h-9 w-9 rounded-[11px] border-0 p-0 text-white shadow-none backdrop-blur-sm",
+  hiringTransition,
+  "bg-white/[0.14] hover:bg-white/[0.2]",
 );
 
 const heroGlassMeta =
   "inline-flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.08] px-3 py-1.5 text-[13px] font-medium text-white backdrop-blur-md [&_svg]:text-white";
-
-const heroPrimaryActionBtn = cn(
-  hiringHeroPrimaryBtn,
-  "h-10 gap-1.5 rounded-[10px] px-3.5 text-[13px]",
-);
-
-const heroSecondaryActionBtn = cn(
-  hiringHeroSecondaryBtnSm,
-  "h-10 rounded-[10px] px-3.5",
-);
-
-const heroKebabBtn = cn(
-  "h-10 w-10 rounded-[10px] border-0 p-0 text-white shadow-none backdrop-blur-sm",
-  hiringTransition,
-  "bg-white/[0.14] hover:bg-white/[0.2]",
-);
 
 function Panel({
   title,
@@ -221,27 +214,19 @@ function CandidateReportHero({
   const location = candidate.location?.trim();
 
   return (
-    <header className={reportHeroShell}>
-      <HiringHeroTexture />
-      <div
-        className="pointer-events-none absolute -right-20 -top-16 h-56 w-56 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.14)] blur-3xl"
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute inset-0" aria-hidden style={hiringHeroRadialOverlay} />
+    <header className={hiringHeroReportStripShell}>
+      <HiringHeroDecor />
 
-      <div className="relative w-full">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-          <div className="flex min-w-0 gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] border border-white/[0.16] bg-white/[0.1] text-base font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:h-16 sm:w-16 sm:text-lg">
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <DialogTitle className="text-[1.5rem] font-semibold tracking-[-0.035em] text-white sm:text-[1.75rem]">
+      <div className={cn(hiringHeroReportStripRow, "relative w-full")}>
+        <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
+          <div className={reportAvatar}>{initials}</div>
+          <div className="min-w-0 space-y-2">
+              <DialogTitle className={cn(hiringHeroStripTitle, "text-left")}>
                 {displayCandidateName(profile, candidate.name)}
               </DialogTitle>
-              <p className="mt-1.5 text-[14px] text-white/68 sm:text-[15px]">{job.title}</p>
+              <p className={hiringHeroStripMetaLine}>{job.title}</p>
               <DialogDescription asChild>
-                <div className="mt-4 space-y-2">
+                <div className="space-y-2">
                   <div className="flex flex-wrap gap-2">
                     <span className={heroGlassMeta}>
                       <Mail className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -281,7 +266,7 @@ function CandidateReportHero({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:justify-end">
+          <div className={hiringHeroStripActions}>
             {canMoveApplicant ? (
               <Button type="button" size="sm" className={heroSecondaryActionBtn} onClick={onMoveApplicant}>
                 <MoveRight className="h-4 w-4" strokeWidth={1.5} />
@@ -363,7 +348,6 @@ function CandidateReportHero({
             </Tooltip>
           </div>
         </div>
-      </div>
     </header>
   );
 }
@@ -388,31 +372,23 @@ function InterviewerCandidateReportHero({
   return (
     <header
       className={cn(
-        reportHeroShell,
+        hiringHeroReportStripShell,
         "!overflow-visible",
         hasNotes && "pb-24 sm:pb-12 lg:pb-10",
       )}
     >
-      <HiringHeroTexture />
-      <div
-        className="pointer-events-none absolute -right-20 -top-16 h-56 w-56 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.14)] blur-3xl"
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute inset-0" aria-hidden style={hiringHeroRadialOverlay} />
+      <HiringHeroDecor />
 
-      <div className="relative w-full">
-        <div className="flex flex-col gap-5 pr-12 lg:flex-row lg:items-start lg:justify-between lg:gap-6 lg:pr-14">
-          <div className="flex min-w-0 gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] border border-white/[0.16] bg-white/[0.1] text-base font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:h-16 sm:w-16 sm:text-lg">
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <DialogTitle className="text-[1.5rem] font-semibold tracking-[-0.035em] text-white sm:text-[1.75rem]">
+      <div className={cn(hiringHeroReportStripRow, "relative w-full pr-12 lg:pr-14")}>
+        <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
+          <div className={reportAvatar}>{initials}</div>
+          <div className="min-w-0 space-y-2">
+              <DialogTitle className={cn(hiringHeroStripTitle, "text-left")}>
                 {displayCandidateName(profile, candidate.name)}
               </DialogTitle>
-              <p className="mt-1.5 text-[14px] text-white/68 sm:text-[15px]">{job.title}</p>
+              <p className={hiringHeroStripMetaLine}>{job.title}</p>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {ctx.assignedRound ? (
                   <span className={heroGlassMeta}>{ctx.assignedRound}</span>
                 ) : null}
@@ -429,7 +405,6 @@ function InterviewerCandidateReportHero({
             </div>
           </div>
         </div>
-      </div>
 
       {ctx.isAssignedCompleted ? (
         <InterviewerHeroInterviewNotes

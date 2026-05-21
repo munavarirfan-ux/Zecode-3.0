@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ThemeProvider as NextThemesProvider, useTheme as useNextThemes } from "next-themes";
 import {
   applyAccentPaletteToDocument,
   applyNavbarRgbToDocument,
@@ -11,28 +12,23 @@ import {
   chromeToneFromRgb,
   clearLegacyNavColorStorage,
   DEFAULT_PRIMARY_HEX,
-  persistThemePreference,
-  readStoredPrimary,
-  readStoredThemePreference,
-  resolveThemeMode,
-  resolvedNavbarRgb,
   normalizeHex,
   PRIMARY_STORAGE_KEY,
+  readStoredPrimary,
+  resolvedNavbarRgb,
   type ThemeMode,
   type ThemePreference,
   type ChromeTone,
 } from "@/lib/theme";
+import { STORAGE_KEYS } from "@/constants/app";
 
 type ThemeContextValue = {
-  /** Stored user preference (light / dark / system) */
   themePreference: ThemePreference;
-  /** Resolved mode applied to the UI */
   theme: ThemeMode;
   setTheme: (preference: ThemePreference) => void;
   toggleTheme: () => void;
   primaryHex: string;
   setPrimaryHex: (hex: string) => void;
-  /** Space-separated "R G B" for sidebar background (automatic) */
   navRgb: string;
   navTone: ChromeTone;
 };
@@ -47,13 +43,18 @@ function persistPrimary(hex: string) {
   }
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themePreference, setThemePreferenceState] = React.useState<ThemePreference>("light");
-  const [resolvedTheme, setResolvedTheme] = React.useState<ThemeMode>("light");
+function ThemeProviderInner({ children }: { children: React.ReactNode }) {
+  const { theme: nextPreference, setTheme: setNextTheme, resolvedTheme } = useNextThemes();
   const [primaryHex, setPrimaryHexState] = React.useState(DEFAULT_PRIMARY_HEX);
+  const [mounted, setMounted] = React.useState(false);
+
+  const resolvedMode: ThemeMode = resolvedTheme === "dark" ? "dark" : "light";
+  const themePreference: ThemePreference =
+    nextPreference === "light" || nextPreference === "dark" || nextPreference === "system"
+      ? nextPreference
+      : "system";
 
   const applyResolvedTheme = React.useCallback((mode: ThemeMode, accent: string) => {
-    setResolvedTheme(mode);
     applyThemeClassToDocument(mode);
     applyPrimaryToDocument(accent, mode);
     applyNavbarRgbToDocument(resolvedNavbarRgb(mode));
@@ -61,36 +62,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useLayoutEffect(() => {
+    setMounted(true);
     clearLegacyNavColorStorage();
-    const pref = readStoredThemePreference();
     const accent = readStoredPrimary();
-    const mode = resolveThemeMode(pref);
-    setThemePreferenceState(pref);
     setPrimaryHexState(accent);
-    applyResolvedTheme(mode, accent);
-  }, [applyResolvedTheme]);
+  }, []);
 
-  React.useEffect(() => {
-    if (themePreference !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyResolvedTheme(resolveThemeMode("system"), primaryHex);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, [themePreference, primaryHex, applyResolvedTheme]);
+  React.useLayoutEffect(() => {
+    if (!mounted || !resolvedTheme) return;
+    applyResolvedTheme(resolvedMode, primaryHex);
+  }, [mounted, resolvedTheme, resolvedMode, primaryHex, applyResolvedTheme]);
+
+  React.useLayoutEffect(() => {
+    if (!mounted) return;
+    applyAccentPaletteToDocument(buildAccentPalette(primaryHex, resolvedMode));
+  }, [primaryHex, resolvedMode, mounted]);
 
   const setTheme = React.useCallback(
     (preference: ThemePreference) => {
-      setThemePreferenceState(preference);
-      persistThemePreference(preference);
-      applyResolvedTheme(resolveThemeMode(preference), primaryHex);
+      setNextTheme(preference);
     },
-    [primaryHex, applyResolvedTheme],
+    [setNextTheme],
   );
 
   const toggleTheme = React.useCallback(() => {
-    const next: ThemeMode = resolvedTheme === "dark" ? "light" : "dark";
-    setTheme(next);
-  }, [resolvedTheme, setTheme]);
+    setTheme(resolvedMode === "dark" ? "light" : "dark");
+  }, [resolvedMode, setTheme]);
 
   const setPrimaryHex = React.useCallback(
     (hex: string) => {
@@ -98,26 +95,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (!n) return;
       setPrimaryHexState(n);
       persistPrimary(n);
-      applyAccentPaletteToDocument(buildAccentPalette(n, resolvedTheme));
+      applyAccentPaletteToDocument(buildAccentPalette(n, resolvedMode));
     },
-    [resolvedTheme],
+    [resolvedMode],
   );
 
-  React.useLayoutEffect(() => {
-    applyAccentPaletteToDocument(buildAccentPalette(primaryHex, resolvedTheme));
-  }, [primaryHex, resolvedTheme]);
-
-  const navRgb = React.useMemo(() => resolvedNavbarRgb(resolvedTheme), [resolvedTheme]);
+  const navRgb = React.useMemo(() => resolvedNavbarRgb(resolvedMode), [resolvedMode]);
   const navTone = React.useMemo(() => chromeToneFromRgb(navRgb), [navRgb]);
 
   React.useLayoutEffect(() => {
+    if (!mounted) return;
     applyNavbarRgbToDocument(navRgb);
-  }, [navRgb]);
+  }, [navRgb, mounted]);
 
   const value = React.useMemo(
     () => ({
       themePreference,
-      theme: resolvedTheme,
+      theme: resolvedMode,
       setTheme,
       toggleTheme,
       primaryHex,
@@ -125,7 +119,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       navRgb,
       navTone,
     }),
-    [themePreference, resolvedTheme, setTheme, toggleTheme, primaryHex, setPrimaryHex, navRgb, navTone],
+    [themePreference, resolvedMode, setTheme, toggleTheme, primaryHex, setPrimaryHex, navRgb, navTone],
   );
 
   return (
@@ -134,6 +128,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         {children}
       </div>
     </ThemeContext.Provider>
+  );
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <NextThemesProvider
+      attribute="data-theme"
+      defaultTheme="system"
+      enableSystem
+      enableColorScheme
+      storageKey={STORAGE_KEYS.theme}
+      disableTransitionOnChange={false}
+    >
+      <ThemeProviderInner>{children}</ThemeProviderInner>
+    </NextThemesProvider>
   );
 }
 

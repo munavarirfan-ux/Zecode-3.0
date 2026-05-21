@@ -139,7 +139,7 @@ export function JobsDashboard() {
         className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(ellipse_70%_55%_at_50%_-8%,rgba(15,61,46,0.04),transparent)] dark:bg-[radial-gradient(ellipse_70%_55%_at_50%_-8%,rgba(167,243,208,0.035),transparent)]"
         aria-hidden
       />
-      <div className="relative mx-auto max-w-shell space-y-5 pb-12">
+      <div className="relative w-full min-w-0 space-y-5 pb-12">
         {showNewUserPipelineEmpty ? (
           <NewUserModuleEmptyState module="jobs" onPrimaryAction={openCreateJob} />
         ) : (

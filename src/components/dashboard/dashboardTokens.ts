@@ -2,9 +2,13 @@ import { cn } from "@/lib/utils";
 
 /** Dashboard surface system — layered depth for enterprise hierarchy */
 
-/** Page canvas */
+/** Page canvas — neutral only; hero gradient stays inside hiringHeroShell */
 export const dashboardCanvas =
-  "relative min-h-full rounded-[20px] bg-[#F5F7FA] px-1 py-0 dark:bg-app-bg sm:px-2";
+  "relative min-h-full w-full min-w-0 rounded-[20px] bg-white py-0 dark:bg-[#0E0E11]";
+
+/** Section below hero — explicit surface so accent hero never tints the area beneath */
+export const dashboardOperationalSection =
+  "rounded-[18px] border border-[rgba(15,23,42,0.05)] bg-white p-4 dark:border-white/[0.06] dark:bg-[#18181C] sm:p-5";
 
 /** Primary workspace container — pure white */
 export const dashboardWorkspaceShell =

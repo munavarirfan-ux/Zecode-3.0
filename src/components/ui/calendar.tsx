@@ -39,10 +39,10 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         ),
         day_range_end: "day-range-end",
         day_selected:
-          "bg-forest text-white hover:bg-forest hover:text-white focus:bg-forest focus:text-white",
+          "bg-[rgb(var(--accent-rgb))] text-white hover:bg-[rgb(var(--accent-rgb))] hover:text-white focus:bg-[rgb(var(--accent-rgb))] focus:text-white",
         day_today: "bg-[rgba(15,23,42,0.06)] text-text font-medium dark:bg-white/[0.08]",
         day_outside:
-          "day-outside text-muted opacity-50 aria-selected:bg-forest/50 aria-selected:text-white aria-selected:opacity-80",
+          "day-outside text-muted opacity-50 aria-selected:bg-[rgb(var(--accent-rgb)/0.5)] aria-selected:text-white aria-selected:opacity-80",
         day_disabled: "text-muted opacity-50",
         day_range_middle: "aria-selected:bg-[rgba(15,23,42,0.06)] aria-selected:text-text",
         day_hidden: "invisible",

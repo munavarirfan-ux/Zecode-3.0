@@ -6,13 +6,22 @@ export const PRIMARY_STORAGE_KEY = STORAGE_KEYS.primary;
 export const NAVBAR_STORAGE_KEY = LEGACY_STORAGE_KEYS.navbar;
 export const NAVBAR_TEXT_STORAGE_KEY = LEGACY_STORAGE_KEYS.navbarText;
 
-function migrateStorageKey(current: string, legacy: string): string | null {
+function migrateStorageKey(current: string, ...legacyKeys: string[]): string | null {
   if (typeof window === "undefined") return null;
-  const value = localStorage.getItem(current) ?? localStorage.getItem(legacy);
+  let value = localStorage.getItem(current);
+  if (!value) {
+    for (const legacy of legacyKeys) {
+      const legacyValue = localStorage.getItem(legacy);
+      if (legacyValue) {
+        value = legacyValue;
+        break;
+      }
+    }
+  }
   if (value && !localStorage.getItem(current)) {
     try {
       localStorage.setItem(current, value);
-      localStorage.removeItem(legacy);
+      for (const legacy of legacyKeys) localStorage.removeItem(legacy);
     } catch {
       /* ignore */
     }
@@ -257,24 +266,31 @@ export function applyNavbarTextRgbToDocument(rgbSpace: string | null): void {
   else document.documentElement.style.setProperty("--nav-text-rgb", rgbSpace);
 }
 
-/** Sync Tailwind `dark` class + `globals.css` `.dark` token overrides on `<html>`. */
+/** Sync `data-theme`, Tailwind `dark` class, and color-scheme on `<html>`. */
 export function applyThemeClassToDocument(mode: ThemeMode): void {
   if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("dark", mode === "dark");
+  const root = document.documentElement;
+  root.setAttribute("data-theme", mode);
+  root.classList.toggle("dark", mode === "dark");
+  root.style.colorScheme = mode;
 }
 
 export function readStoredPrimary(): string {
   if (typeof window === "undefined") return DEFAULT_PRIMARY_HEX;
-  const s = migrateStorageKey(PRIMARY_STORAGE_KEY, LEGACY_STORAGE_KEYS.primary);
+  const s = migrateStorageKey(PRIMARY_STORAGE_KEY, LEGACY_STORAGE_KEYS.primary, "kerohire.primary");
   if (!s) return DEFAULT_PRIMARY_HEX;
   return normalizeHex(s) ?? DEFAULT_PRIMARY_HEX;
 }
 
 export function readStoredThemePreference(): ThemePreference {
-  if (typeof window === "undefined") return "light";
-  const stored = migrateStorageKey(THEME_STORAGE_KEY, LEGACY_STORAGE_KEYS.theme);
-  if (stored === "dark" || stored === "system") return stored;
-  return "light";
+  if (typeof window === "undefined") return "system";
+  const stored = migrateStorageKey(
+    THEME_STORAGE_KEY,
+    LEGACY_STORAGE_KEYS.theme,
+    LEGACY_STORAGE_KEYS.themeKerohire,
+  );
+  if (stored === "light" || stored === "dark" || stored === "system") return stored;
+  return "system";
 }
 
 export function systemPrefersDark(): boolean {
@@ -295,8 +311,7 @@ export function readStoredTheme(): ThemeMode {
 export function persistThemePreference(preference: ThemePreference): void {
   try {
     if (typeof window === "undefined") return;
-    if (preference === "light") localStorage.removeItem(THEME_STORAGE_KEY);
-    else localStorage.setItem(THEME_STORAGE_KEY, preference);
+    localStorage.setItem(THEME_STORAGE_KEY, preference);
   } catch {
     /* quota / private mode */
   }

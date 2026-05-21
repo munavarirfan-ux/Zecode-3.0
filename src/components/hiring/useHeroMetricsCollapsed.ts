@@ -8,8 +8,23 @@ export const HIRING_HERO_METRICS_COLLAPSED_KEY = "hiringHeroMetricsCollapsed";
 /** @deprecated Use HIRING_HERO_METRICS_COLLAPSED_KEY — still read for migration */
 export const JOB_HERO_METRICS_COLLAPSED_KEY = "jobHeroMetricsCollapsed";
 
+/** Page-level strip heroes — metrics hidden by default for a compact header bar */
+const STRIP_HERO_METRICS_KEYS = new Set([
+  "jobs-operational-hero-metrics-collapsed",
+  "candidates-directory-hero-metrics-collapsed",
+  "interviews-directory-hero-metrics-collapsed",
+  "assessmentsHeroMetricsCollapsed",
+  "assessment-schedules-hero-metrics-collapsed",
+  "interviewer-interviews-hero-metrics-collapsed",
+  "live-assessment-monitor-hero-metrics-collapsed",
+  "job-workspace-hero-metrics-collapsed",
+  "assessmentDetailMetricsCollapsed",
+]);
+
 function readCollapsedPreference(storageKey: string): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return STRIP_HERO_METRICS_KEYS.has(storageKey);
+  }
   try {
     const stored = localStorage.getItem(storageKey);
     if (stored !== null) return stored === "true";
@@ -17,7 +32,7 @@ function readCollapsedPreference(storageKey: string): boolean {
       const legacy = localStorage.getItem(JOB_HERO_METRICS_COLLAPSED_KEY);
       if (legacy !== null) return legacy === "true";
     }
-    return false;
+    return STRIP_HERO_METRICS_KEYS.has(storageKey);
   } catch {
     return false;
   }

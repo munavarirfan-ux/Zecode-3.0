@@ -7,8 +7,6 @@ import {
   GripVertical,
   MessageSquarePlus,
   MoveRight,
-  Timer,
-  UserRound,
   UserX,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -39,73 +37,8 @@ const ACTION_LABELS = {
   reject: "Reject candidate",
 } as const;
 
-const viewScheduleBtnClass =
-  "border-blue-200/90 bg-blue-50 text-blue-800 hover:bg-blue-100/90 dark:border-blue-500/25 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/15";
-
 const menuItemClass =
   "flex cursor-pointer items-center gap-2 rounded-[8px] px-2 py-1.5 text-[12px] font-medium outline-none";
-
-const feedbackToneClass = {
-  neutral: "text-[#71717A] dark:text-muted",
-  success: "text-emerald-700 dark:text-emerald-400",
-  warning: "text-amber-700 dark:text-amber-400",
-  danger: "text-red-600 dark:text-red-400",
-} as const;
-
-function ScheduledInterviewActionSplit({
-  onView,
-  onReschedule,
-  onCancel,
-}: {
-  onView: (e: React.MouseEvent) => void;
-  onReschedule: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className="flex w-full pt-0.5" onClick={(e) => e.stopPropagation()}>
-      <button
-        type="button"
-        onClick={onView}
-        className={cn(
-          "inline-flex h-8 min-w-0 flex-1 items-center justify-center rounded-l-[9px] border px-2 text-[11px] font-semibold",
-          "transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30",
-          viewScheduleBtnClass,
-        )}
-      >
-        {ACTION_LABELS.view}
-      </button>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label="More interview actions"
-            className={cn(
-              "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-r-[9px] border border-l-[rgba(59,130,246,0.2)]",
-              "transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30",
-              viewScheduleBtnClass,
-            )}
-          >
-            <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="z-[210] w-44 rounded-[10px] p-1">
-          <DropdownMenuItem
-            className={cn(menuItemClass, "text-amber-800 focus:bg-amber-50 dark:text-amber-300 dark:focus:bg-amber-500/10")}
-            onSelect={onReschedule}
-          >
-            {ACTION_LABELS.reschedule}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className={cn(menuItemClass, "text-red-700 focus:bg-red-50 dark:text-red-300 dark:focus:bg-red-500/10")}
-            onSelect={onCancel}
-          >
-            {ACTION_LABELS.cancel}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
-}
 
 export function InterviewKanbanCard({
   model,
@@ -124,12 +57,9 @@ export function InterviewKanbanCard({
   onClick: () => void;
   onAction?: (model: InterviewKanbanCardModel, action: InterviewCardAction) => void;
 }) {
-  const { candidate, status, roundTitle, schedulePreview, leadInterviewer, feedbackLabel, feedbackTone } =
-    model;
+  const { candidate, status, roundTitle } = model;
   const suppressClickRef = useRef(false);
   const showScheduledActions = hasScheduledInterviewActions(status);
-  const showOverdue =
-    (status === "Feedback Pending" && model.isOverdueFeedback) || model.isOverdueFeedback;
 
   function triggerAction(action: InterviewCardAction) {
     if (onAction) {
@@ -208,73 +138,6 @@ export function InterviewKanbanCard({
             </div>
             <InterviewStatusChip status={status} />
           </div>
-
-          <p className="line-clamp-1 text-[11px] leading-snug text-text-secondary/80">
-            {candidate.experience}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-md bg-[#F4F4F5] px-1.5 py-0.5 text-[10px] font-medium text-[#52525B] dark:bg-white/[0.06] dark:text-text-muted">
-              {roundTitle}
-            </span>
-          </div>
-
-          {status === "Ongoing" ? (
-            <p className="flex items-center gap-1.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
-              <span className="relative flex h-2 w-2" aria-hidden>
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-500/50" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
-              </span>
-              Ongoing now
-            </p>
-          ) : null}
-
-          {schedulePreview && status !== "Pending" ? (
-            <div className="rounded-[9px] border border-[rgba(15,23,42,0.05)] bg-[#FAFAFB]/90 px-2 py-1.5 dark:border-white/[0.05] dark:bg-white/[0.03]">
-              <p className="flex items-center gap-1 text-[10px] font-medium text-[#52525B] dark:text-text-secondary">
-                <Calendar className="h-3 w-3 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
-                <span className="line-clamp-2">{schedulePreview}</span>
-              </p>
-            </div>
-          ) : null}
-
-          {leadInterviewer ? (
-            <p className="flex items-center gap-1 text-[10px] text-[#71717A] dark:text-muted">
-              <UserRound className="h-3 w-3 shrink-0" strokeWidth={1.5} aria-hidden />
-              {leadInterviewer}
-            </p>
-          ) : null}
-
-          {status === "Feedback Pending" ? (
-            <div className="rounded-[9px] border border-amber-200/80 bg-amber-50/80 px-2 py-1.5 dark:border-amber-500/20 dark:bg-amber-500/10">
-              <p className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-800 dark:text-amber-300">
-                <Timer className="h-3 w-3 opacity-80" strokeWidth={2} aria-hidden />
-                Feedback pending
-                {showOverdue ? <span className="font-medium text-red-600 dark:text-red-300">· overdue</span> : null}
-              </p>
-              <p className="mt-0.5 text-[10px] text-amber-800/80 dark:text-amber-200/80">
-                {feedbackLabel}
-              </p>
-            </div>
-          ) : (
-            <p className="text-[10px]">
-              <span className="text-muted">Feedback: </span>
-              <span className={cn("font-medium", feedbackToneClass[feedbackTone])}>{feedbackLabel}</span>
-            </p>
-          )}
-
-          {candidate.skills.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {candidate.skills.slice(0, 2).map((s) => (
-                <span
-                  key={s}
-                  className="rounded bg-muted/15 px-1.5 py-0.5 text-[10px] text-muted"
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
-          ) : null}
 
           {showScheduledActions ? (
             <div className="flex w-full pt-0.5" onClick={(e) => e.stopPropagation()}>

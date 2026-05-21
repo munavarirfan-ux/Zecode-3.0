@@ -27,10 +27,15 @@ import {
 import type { DashboardHeroKpi } from "@/config/dashboardHeroByRole";
 import {
   hiringHeroGlassKpi,
-  hiringHeroRadialOverlay,
   hiringHeroShell,
 } from "@/components/hiring/hiringTokens";
-import { HiringHeroTexture } from "@/components/hiring/HiringHeroTexture";
+import { HiringHeroDecor } from "@/components/hiring/HiringHeroDecor";
+import { InterviewsTimeframeHeroKpi } from "@/components/dashboard/InterviewsTimeframeHeroKpi";
+import {
+  buildEvaluatorUpcomingInterviewsOverall,
+  getOrgUpcomingInterviewsOverall,
+  isInterviewsTimeframeKpiId,
+} from "@/lib/dashboard/interviewTimeframeKpi";
 
 function greetingLine(hour: number) {
   if (hour < 12) return "Good morning";
@@ -47,7 +52,6 @@ const HERO_KPI_ICONS: Record<string, LucideIcon> = {
   feedback: Inbox,
   upcoming: Mic2,
   done: Check,
-  ongoing: ClipboardList,
   timeSpent: Clock,
   pending: Inbox,
   flagged: Briefcase,
@@ -97,7 +101,7 @@ function WorkspaceSummaryCard({
       <p className="relative mt-1 text-[2rem] font-semibold tabular-nums leading-none tracking-[-0.03em] text-white">
         {activeTeams}
       </p>
-      <p className="relative mt-2 text-[11px] text-[rgb(var(--hero-glow-rgb)/0.85)]">{hiringHealth}</p>
+      <p className="relative mt-2 text-[11px] text-white/70">{hiringHealth}</p>
     </aside>
   );
 }
@@ -145,45 +149,56 @@ export function GreetingHero({
 
   const hero = useMemo(() => {
     const base = getDashboardHeroBlock(role, organizationName);
-    if (role !== "evaluator") return base;
 
-    const rows = buildInterviewerAssignedInterviews(role, session?.user?.name);
-    const minutes = computeInterviewTimeSpentMinutesThisWeek(rows);
-    const sessionCount = countInterviewsTimeSpentThisWeek(rows);
+    const patchUpcomingOverall = (kpi: DashboardHeroKpi, snapshot: { count: number; subStat: string }) =>
+      kpi.id === "upcomingInterviewsOverall"
+        ? {
+            ...kpi,
+            value: String(snapshot.count),
+            trend: snapshot.subStat,
+            trendUp: snapshot.count > 0,
+          }
+        : kpi;
 
-    return {
-      ...base,
-      kpis: base.kpis.map((kpi) =>
-        kpi.id === "timeSpent"
-          ? {
+    if (role === "evaluator") {
+      const rows = buildInterviewerAssignedInterviews(role, session?.user?.name);
+      const minutes = computeInterviewTimeSpentMinutesThisWeek(rows);
+      const sessionCount = countInterviewsTimeSpentThisWeek(rows);
+      const upcomingOverall = buildEvaluatorUpcomingInterviewsOverall(rows);
+
+      return {
+        ...base,
+        kpis: base.kpis.map((kpi) => {
+          if (kpi.id === "timeSpent") {
+            return {
               ...kpi,
               value: formatInterviewDuration(minutes),
               trend: sessionCount === 1 ? "1 session" : `${sessionCount} sessions`,
               trendUp: minutes > 0,
-            }
-          : kpi,
-      ),
-    };
+            };
+          }
+          return patchUpcomingOverall(kpi, upcomingOverall);
+        }),
+      };
+    }
+
+    if (role === "superAdmin" || role === "admin") {
+      const upcomingOverall = getOrgUpcomingInterviewsOverall();
+      return {
+        ...base,
+        kpis: base.kpis.map((kpi) => patchUpcomingOverall(kpi, upcomingOverall)),
+      };
+    }
+
+    return base;
   }, [role, organizationName, session?.user?.name]);
 
   const isWideExecutive = hero.layout === "workspace";
-  const kpiGridClass =
-    hero.kpis.length >= 5
-      ? "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 xl:grid-cols-5"
-      : "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-4";
+  const kpiGridClass = "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-4";
 
   return (
     <section className={hiringHeroShell} aria-label="Dashboard overview">
-      <HiringHeroTexture />
-      <div
-        className="pointer-events-none absolute -right-24 -top-20 h-72 w-72 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.14)] blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-[rgb(var(--hero-glow-rgb)/0.06)] blur-3xl"
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute inset-0" aria-hidden style={hiringHeroRadialOverlay} />
+      <HiringHeroDecor />
 
       <div
         className={cn(
@@ -206,9 +221,17 @@ export function GreetingHero({
           </header>
 
           <ul className={kpiGridClass}>
-            {hero.kpis.map((k) => (
-              <HeroGlassKpi key={k.id} k={k} />
-            ))}
+            {hero.kpis.map((k) =>
+              isInterviewsTimeframeKpiId(k.id) ? (
+                <InterviewsTimeframeHeroKpi
+                  key={k.id}
+                  role={role}
+                  sessionName={session?.user?.name}
+                />
+              ) : (
+                <HeroGlassKpi key={k.id} k={k} />
+              ),
+            )}
           </ul>
 
           {hero.chips.length > 0 ? (

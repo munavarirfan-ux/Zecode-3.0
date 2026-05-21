@@ -1,6 +1,6 @@
 import { AssessmentSchedulesPage } from "@/components/hiring/assessment-schedules/AssessmentSchedulesPage";
 
-/** Assessment schedules operational workspace — invitations, live monitoring, expiry control. */
+/** Live assessments dashboard — monitor exams in progress. */
 export default function SchedulesPage() {
   return <AssessmentSchedulesPage />;
 }

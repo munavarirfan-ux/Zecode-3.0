@@ -20,7 +20,7 @@ export function QuestionPoolWorkspace() {
 
   if (!showDemo) {
     return (
-      <div className="mx-auto max-w-shell">
+      <div className="w-full min-w-0">
         <NewUserModuleEmptyState module="questionPool" />
       </div>
     );

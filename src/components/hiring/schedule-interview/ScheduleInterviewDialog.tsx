@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { scheduleCandidateInterview } from "@/lib/hiring/mockData";
@@ -260,10 +261,10 @@ export function ScheduleInterviewDialog({
                       />
                     </Field>
                     <Field label="Time">
-                      <Input
-                        type="time"
+                      <TimePicker
                         value={form.time}
-                        onChange={(e) => patch({ time: e.target.value })}
+                        onChange={(time) => patch({ time })}
+                        placeholder="Pick interview time"
                         className={inputClass}
                         disabled={isView}
                       />

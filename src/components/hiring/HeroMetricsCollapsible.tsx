@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useHeroMetricsLink } from "./HeroMetricsLinkContext";
 import {
   HIRING_HERO_METRICS_COLLAPSED_KEY,
   useHeroMetricsCollapsed,
@@ -19,8 +20,11 @@ export function HeroMetricsCollapsible({
   withBorder?: boolean;
   storageKey?: string;
 }) {
+  const link = useHeroMetricsLink();
   const { collapsed, hydrated } = useHeroMetricsCollapsed(storageKey);
-  const isCollapsed = collapsed && hydrated;
+  const isCollapsed = link.enabled
+    ? link.heroCollapsed && link.hydrated
+    : collapsed && hydrated;
 
   return (
     <section

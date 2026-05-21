@@ -25,11 +25,8 @@ import {
   type CodeChallengeSyncPayload,
 } from "@/lib/zemeet/challengeSync";
 import { codeChallengeArtifactFromState, storeCodeChallengeArtifact } from "@/lib/zemeet/sync";
-import {
-  loadZeMeetTheme,
-  saveZeMeetTheme,
-  type ZeMeetTheme,
-} from "@/lib/zemeet/theme";
+import type { ZeMeetTheme } from "@/lib/zemeet/theme";
+import { useTheme as useHubTheme } from "@/components/ThemeProvider";
 import {
   DEFAULT_DEVICE_SETTINGS,
   DEFAULT_PERMISSIONS,
@@ -62,7 +59,7 @@ type ZeMeetContextValue = {
   theme: ZeMeetTheme;
   setTheme: (theme: ZeMeetTheme) => void;
   notes: ZeMeetNoteEntry[];
-  addNote: (body: string) => void;
+  addNote: (body: string, label?: string) => void;
   chat: ZeMeetChatMessage[];
   sendChat: (body: string) => void;
   codeChallenge: ZeMeetCodeChallenge;
@@ -119,19 +116,29 @@ export function ZeMeetProvider({
   children: ReactNode;
 }) {
   const [phase, setPhase] = useState<ZeMeetPhase>("lobby");
-  const [theme, setThemeState] = useState<ZeMeetTheme>(() => loadZeMeetTheme());
+  const { theme, setTheme: setHubTheme } = useHubTheme();
   const [devices, setDevices] = useState(DEFAULT_DEVICE_SETTINGS);
   const [permissions, setPermissions] = useState(DEFAULT_PERMISSIONS);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isRecording, setRecording] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<
+  const [sidebarTab, setSidebarTabState] = useState<
     "participants" | "chat" | "notes" | "instructions" | null
   >(null);
 
-  const setTheme = useCallback((next: ZeMeetTheme) => {
-    setThemeState(next);
-    saveZeMeetTheme(next);
-  }, []);
+  const setSidebarTab = useCallback(
+    (tab: "participants" | "chat" | "notes" | "instructions" | null) => {
+      if (tab === "notes" && session.viewerRole === "candidate") return;
+      setSidebarTabState(tab);
+    },
+    [session.viewerRole],
+  );
+
+  const setTheme = useCallback(
+    (next: ZeMeetTheme) => {
+      setHubTheme(next);
+    },
+    [setHubTheme],
+  );
   const [notes, setNotes] = useState<ZeMeetNoteEntry[]>([]);
   const [chat, setChat] = useState<ZeMeetChatMessage[]>([]);
   const [codeChallenge, setCodeChallenge] = useState<ZeMeetCodeChallenge>(() =>
@@ -184,17 +191,19 @@ export function ZeMeetProvider({
     }, 1000);
   }, [session.recordingEnabled]);
 
-  const addNote = useCallback((body: string) => {
+  const addNote = useCallback((body: string, label?: string) => {
     if (!body.trim()) return;
     const offset = sessionStartedAt.current
       ? Date.now() - sessionStartedAt.current
       : undefined;
+    const trimmedLabel = label?.trim();
     setNotes((prev) => [
       {
         id: `n-${Date.now()}`,
         body: body.trim(),
         createdAt: new Date().toISOString(),
         timestampMs: offset,
+        label: trimmedLabel || undefined,
       },
       ...prev,
     ]);

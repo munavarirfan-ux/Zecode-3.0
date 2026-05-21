@@ -135,7 +135,7 @@ export function JobWorkspace({ job }: { job: HiringJob }) {
 
   return (
     <div className={hiringCanvas}>
-      <div className="mx-auto max-w-shell space-y-5 pb-8 sm:space-y-6">
+      <div className="w-full min-w-0 space-y-5 pb-8 sm:space-y-6">
         <JobWorkspaceHero
           job={job}
           metrics={metrics}
@@ -187,16 +187,18 @@ export function JobWorkspace({ job }: { job: HiringJob }) {
                 Track candidates under review and those shortlisted for the next step.
               </p>
             </div>
-            <HiringKanban
-              columns={[...APPLICANTS_STATS_COLUMNS]}
-              candidates={screeningCandidates}
-              pipelineStage="Screening"
-              columnResolver={applicantsStatsColumnId}
-              jobId={job.id}
-              showMoveToInterview={showMoveToInterview}
-              onCardClick={openKanbanReport}
-              onCandidateMoved={refreshCandidates}
-            />
+            <div className="kanban-board-area--tall">
+              <HiringKanban
+                columns={[...APPLICANTS_STATS_COLUMNS]}
+                candidates={screeningCandidates}
+                pipelineStage="Screening"
+                columnResolver={applicantsStatsColumnId}
+                jobId={job.id}
+                showMoveToInterview={showMoveToInterview}
+                onCardClick={openKanbanReport}
+                onCandidateMoved={refreshCandidates}
+              />
+            </div>
           </TabsContent>
           ) : null}
 

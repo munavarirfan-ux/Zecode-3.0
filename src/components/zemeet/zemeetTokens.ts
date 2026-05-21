@@ -11,8 +11,8 @@ export function createZeMeetTokens(theme: ZeMeetTheme) {
     theme,
     isLight,
     shell: cn(
-      "relative min-h-dvh overflow-hidden",
-      isLight ? "bg-[#F4F6F9] text-[#18181B]" : "bg-[#0B0F14] text-[#E8EAED]",
+      "relative min-h-dvh overflow-hidden text-[var(--text-primary)]",
+      isLight ? "bg-[var(--zemeet-video-bg)]" : "bg-[var(--zemeet-video-bg)]",
     ),
     grain: cn(
       "pointer-events-none absolute inset-0",

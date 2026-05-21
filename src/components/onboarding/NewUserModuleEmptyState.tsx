@@ -48,7 +48,7 @@ export function NewUserModuleEmptyState({
 
   return (
     <div
-      className="mx-auto flex w-full max-w-shell min-h-[min(720px,calc(100svh-12rem))] items-center justify-center py-10 sm:py-14"
+      className="flex w-full min-w-0 min-h-[min(720px,calc(100svh-12rem))] items-center justify-center py-10 sm:py-14"
       role="region"
       aria-label={config.eyebrow}
     >
