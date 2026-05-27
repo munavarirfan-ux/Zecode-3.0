@@ -1,6 +1,6 @@
 "use client";
 
-import { Circle, FileText, Linkedin, Radio, Wifi } from "lucide-react";
+import { Circle, Radio, Video, Wifi } from "lucide-react";
 import { useZeMeet } from "@/components/zemeet/ZeMeetProvider";
 import { ZeMeetShareJoinLink } from "@/components/zemeet/room/ZeMeetShareJoinLink";
 import { ZeMeetThemeToggle } from "@/components/zemeet/ZeMeetThemeToggle";
@@ -14,65 +14,55 @@ function formatElapsed(seconds: number): string {
 }
 
 export function ZeMeetTopBar({ codeChallengeActive }: { codeChallengeActive?: boolean }) {
-  const { session, elapsedSeconds, isRecording, interviewerIntelPanel, toggleInterviewerIntel } =
-    useZeMeet();
+  const { session, elapsedSeconds, isRecording } = useZeMeet();
   const { context } = session;
   const t = useZeMeetTokens();
 
   const isInterviewer =
     session.viewerRole === "interviewer" || session.viewerRole === "observer";
 
-  const intelBtn = cn(
-    "inline-flex h-8 items-center gap-1.5 rounded-[9px] border px-2.5 text-[12px] font-medium transition-colors",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
-    t.isLight
-      ? "border-[rgba(15,23,42,0.1)] bg-white text-[#3F3F46] hover:bg-[#FAFAFB] focus-visible:ring-forest/25"
-      : "border-white/12 bg-white/[0.06] text-white/85 hover:bg-white/10 focus-visible:ring-white/25",
-  );
-
-  const intelBtnActive = cn(
-    intelBtn,
-    t.isLight
-      ? "border-forest/25 bg-forest/10 text-forest"
-      : "border-white/20 bg-white/12 text-white",
-  );
-
   return (
     <header className={t.topBar}>
-      <div className="min-w-0">
-        <p className={t.label}>{codeChallengeActive ? "ZeMeet · Code share" : "ZeMeet"}</p>
-        <p className={cn(t.title, "truncate text-[14px]")}>
-          {context.jobTitle} · {context.roundTitle}
-        </p>
-        <p className={cn(t.meta, "truncate")}>{context.candidateName}</p>
+      {/* Left — Google Meet branding + interview info */}
+      <div className="flex min-w-0 items-center gap-3">
+        <div
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+            t.isLight ? "bg-[#1A73E8]/12" : "bg-[#1A73E8]/20",
+          )}
+        >
+          <Video className="h-4 w-4 text-[#1A73E8]" strokeWidth={1.75} aria-hidden />
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className={cn("text-[13px] font-semibold", t.isLight ? "text-[#18181B]" : "text-white/95")}>
+              Google Meet
+            </p>
+            {codeChallengeActive ? (
+              <span className={cn(
+                "rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                t.isLight
+                  ? "border-violet-200 bg-violet-50 text-violet-700"
+                  : "border-violet-500/25 bg-violet-500/10 text-violet-300",
+              )}>
+                Code share
+              </span>
+            ) : null}
+          </div>
+          <p className={cn(t.meta, "truncate text-[11px]")}>
+            {context.jobTitle} · {context.roundTitle} · {context.candidateName}
+          </p>
+        </div>
       </div>
 
+      {/* Right — controls + status badges */}
       <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
         {isInterviewer ? (
-          <div className="flex items-center gap-1.5">
-            <ZeMeetShareJoinLink roomId={context.roomId} candidateName={context.candidateName} />
-            <button
-              type="button"
-              className={interviewerIntelPanel === "resume" ? intelBtnActive : intelBtn}
-              aria-pressed={interviewerIntelPanel === "resume"}
-              onClick={() => toggleInterviewerIntel("resume")}
-            >
-              <FileText className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-              <span className="hidden sm:inline">Resume</span>
-            </button>
-            <button
-              type="button"
-              className={interviewerIntelPanel === "linkedin" ? intelBtnActive : intelBtn}
-              aria-pressed={interviewerIntelPanel === "linkedin"}
-              onClick={() => toggleInterviewerIntel("linkedin")}
-            >
-              <Linkedin className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-              <span className="hidden sm:inline">LinkedIn</span>
-            </button>
-          </div>
+          <ZeMeetShareJoinLink roomId={context.roomId} candidateName={context.candidateName} />
         ) : null}
 
         <ZeMeetThemeToggle compact />
+
         <span
           className={cn(
             "hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium sm:inline-flex",
@@ -84,6 +74,7 @@ export function ZeMeetTopBar({ codeChallengeActive }: { codeChallengeActive?: bo
           <Wifi className="h-3.5 w-3.5 text-emerald-500" strokeWidth={1.5} />
           Excellent
         </span>
+
         <span
           className={cn(
             "tabular-nums rounded-full border px-3 py-1 text-[12px] font-semibold",
@@ -94,6 +85,7 @@ export function ZeMeetTopBar({ codeChallengeActive }: { codeChallengeActive?: bo
         >
           {formatElapsed(elapsedSeconds)}
         </span>
+
         {isRecording ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/15 px-2.5 py-1 text-[11px] font-semibold text-red-600 dark:text-red-300">
             <span className="relative flex h-2 w-2">
@@ -103,6 +95,7 @@ export function ZeMeetTopBar({ codeChallengeActive }: { codeChallengeActive?: bo
             REC
           </span>
         ) : null}
+
         <span
           className={cn(
             "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium",
@@ -113,6 +106,18 @@ export function ZeMeetTopBar({ codeChallengeActive }: { codeChallengeActive?: bo
         >
           <Radio className="h-3 w-3" strokeWidth={2} />
           Live
+        </span>
+
+        {/* ze[meet] intelligence badge */}
+        <span
+          className={cn(
+            "hidden items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] sm:inline-flex",
+            t.isLight
+              ? "border-violet-200/80 bg-violet-50/80 text-violet-600"
+              : "border-violet-500/20 bg-violet-500/8 text-violet-400",
+          )}
+        >
+          ze[meet]
         </span>
       </div>
     </header>

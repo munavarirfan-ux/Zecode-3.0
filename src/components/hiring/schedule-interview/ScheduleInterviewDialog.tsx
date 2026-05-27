@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,7 +26,6 @@ import {
   DURATION_PRESETS,
   INTERVIEW_TYPE_OPTIONS,
   MOCK_INTERVIEWERS,
-  PLATFORM_OPTIONS,
   type InterviewerAvailability,
   type ScheduleInterviewForm,
 } from "@/lib/hiring/scheduleInterview";
@@ -306,17 +305,18 @@ export function ScheduleInterviewDialog({
                     </div>
                   </Field>
 
-                  <Field label="Platform">
-                    <div className="flex flex-wrap gap-2">
-                      {PLATFORM_OPTIONS.map((p) => (
-                        <Chip
-                          key={p}
-                          active={form.platform === p}
-                          onClick={() => !isView && patch({ platform: p })}
-                        >
-                          {p}
-                        </Chip>
-                      ))}
+                  <Field label="Meeting platform">
+                    <div className="flex items-center gap-3 rounded-[12px] border border-[rgba(15,23,42,0.06)] bg-white px-3 py-2.5 dark:border-white/[0.06] dark:bg-surface">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#1A73E8]/10">
+                        <Video className="h-4 w-4 text-[#1A73E8]" strokeWidth={1.5} aria-hidden />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium text-text">Google Meet</p>
+                        <p className="text-[11px] text-text-secondary/70">Link generated automatically after scheduling</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-[#1A73E8]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#1A73E8]">
+                        Auto
+                      </span>
                     </div>
                   </Field>
                 </Section>

@@ -12,6 +12,7 @@ export type VideoTileParticipant = {
   isVideoOn: boolean;
   isSpeaking?: boolean;
   isObserver?: boolean;
+  avatarSrc?: string;
 };
 
 export function ZeMeetVideoTile({
@@ -44,19 +45,28 @@ export function ZeMeetVideoTile({
         )}
       />
       {participant.isVideoOn ? (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span
-            className={cn(
-              "font-semibold",
-              t.isLight ? "text-[#18181B]/20" : "text-white/25",
-              large && "text-[5rem]",
-              compact && "text-[1.75rem]",
-              !large && !compact && "text-[2.5rem]",
-            )}
-          >
-            {participant.initials}
-          </span>
-        </div>
+        participant.avatarSrc ? (
+          <img
+            src={participant.avatarSrc}
+            alt={participant.name}
+            className="absolute inset-0 h-full w-full object-cover object-top"
+            draggable={false}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span
+              className={cn(
+                "font-semibold",
+                t.isLight ? "text-[#18181B]/20" : "text-white/25",
+                large && "text-[5rem]",
+                compact && "text-[1.75rem]",
+                !large && !compact && "text-[2.5rem]",
+              )}
+            >
+              {participant.initials}
+            </span>
+          </div>
+        )
       ) : (
         <div
           className={cn(

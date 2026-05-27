@@ -41,6 +41,8 @@ export type ZeMeetParticipant = {
   isSpeaking?: boolean;
   /** Admin / superAdmin silent monitor */
   isObserver?: boolean;
+  /** Path to face photo — shown as video feed background */
+  avatarSrc?: string;
 };
 
 export type ZeMeetCandidateIntel = {

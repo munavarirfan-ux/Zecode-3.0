@@ -8,7 +8,6 @@ import {
   type ScheduleInterviewForm,
 } from "@/lib/hiring/scheduleInterview";
 import type { HiringCandidate } from "@/lib/hiring/types";
-import { buildZeMeetRoomId, zeMeetJoinUrl } from "@/lib/zemeet/rooms";
 import { cn } from "@/lib/utils";
 
 export function ScheduleInterviewPreview({
@@ -23,16 +22,7 @@ export function ScheduleInterviewPreview({
     .filter(Boolean);
 
   const round = form.title || "Interview";
-  const meetingLink =
-    form.includeMeetingLink && (form.platform === "ZeMeet" || form.platform === "Google Meet")
-      ? form.platform === "ZeMeet"
-        ? zeMeetJoinUrl(buildZeMeetRoomId(candidate.id, round))
-        : "meet.google.com/abc-defg-hij"
-      : form.includeMeetingLink && form.platform === "Zoom"
-        ? "zoom.us/j/123456789"
-        : form.includeMeetingLink && form.platform === "Microsoft Teams"
-          ? "teams.microsoft.com/l/meetup"
-          : null;
+  const meetingLink = form.includeMeetingLink ? "meet.google.com/abc-defg-hij" : null;
 
   return (
     <div className="flex h-full flex-col">

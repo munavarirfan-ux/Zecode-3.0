@@ -16,7 +16,6 @@ export const DURATION_PRESETS = [30, 45, 60, 90] as const;
 export type DurationPreset = (typeof DURATION_PRESETS)[number];
 
 export const PLATFORM_OPTIONS = [
-  "ZeMeet",
   "Google Meet",
   "Microsoft Teams",
   "Zoom",
@@ -120,7 +119,7 @@ export function createScheduleFormFromInterview(
     time: "14:00",
     durationMinutes: interview.durationMinutes ?? 45,
     durationPreset: preset,
-    platform: (PLATFORM_OPTIONS.find((p) => p === interview.platform) ?? "Google Meet") as PlatformOption,
+    platform: "Google Meet",
     interviewerIds: interview.interviewers
       .map((name) => MOCK_INTERVIEWERS.find((i) => i.name === name)?.id)
       .filter((id): id is string => Boolean(id)),
@@ -139,7 +138,7 @@ export function createDefaultScheduleForm(roundTitle: string): ScheduleInterview
     time: "14:00",
     durationMinutes: 45,
     durationPreset: 45,
-    platform: "ZeMeet",
+    platform: "Google Meet",
     interviewerIds: [],
     sendCalendarInvite: true,
     sendReminderEmail: true,
@@ -199,9 +198,10 @@ export function formToCandidateInterview(
     .map((id) => MOCK_INTERVIEWERS.find((i) => i.id === id)?.name)
     .filter((n): n is string => Boolean(n));
 
-  const useZeMeet = form.platform === "ZeMeet" || form.includeMeetingLink;
   const roomId =
-    useZeMeet && candidateId ? buildZeMeetRoomId(candidateId, roundTitle) : undefined;
+    form.includeMeetingLink && candidateId
+      ? buildZeMeetRoomId(candidateId, roundTitle)
+      : undefined;
 
   return {
     round: roundTitle,
@@ -211,7 +211,7 @@ export function formToCandidateInterview(
     feedbackStatus: "Pending",
     interviewType: form.interviewType,
     durationMinutes: form.durationMinutes,
-    platform: useZeMeet ? "ZeMeet" : form.platform,
+    platform: "Google Meet",
     roomId,
     meetUrl: roomId ? zeMeetJoinUrl(roomId) : undefined,
     feedbackPendingCount: interviewers.length,

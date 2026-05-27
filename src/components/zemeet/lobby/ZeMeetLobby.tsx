@@ -2,15 +2,18 @@
 
 import {
   Check,
+  Clock,
+  Hash,
   Mic,
   MicOff,
+  Settings,
   Shield,
+  Users,
   Video,
   VideoOff,
 } from "lucide-react";
+import { type ElementType } from "react";
 import { useZeMeet } from "@/components/zemeet/ZeMeetProvider";
-import { ZeMeetThemeToggle } from "@/components/zemeet/ZeMeetThemeToggle";
-import { useZeMeetTokens } from "@/components/zemeet/zemeetTokens";
 import { ZeMeetCandidateInstructions } from "./ZeMeetCandidateInstructions";
 import { cn } from "@/lib/utils";
 
@@ -23,216 +26,235 @@ const DEVICE_OPTIONS = {
 export function ZeMeetLobby() {
   const { session, devices, setDevices, permissions, setPermissions, startSession } = useZeMeet();
   const { context } = session;
-  const t = useZeMeetTokens();
   const isCandidate = session.viewerRole === "candidate";
-
-  const checklist = [
-    { key: "camera" as const, label: "Camera access", ok: permissions.camera },
-    { key: "microphone" as const, label: "Microphone access", ok: permissions.microphone },
-    { key: "notifications" as const, label: "Session notifications", ok: permissions.notifications },
-  ];
+  const viewer = session.participants.find((p) => p.id === session.viewerId);
+  const others = session.participants.filter((p) => p.id !== session.viewerId && !p.isObserver);
 
   return (
-    <div className="mx-auto grid w-full max-w-[1120px] gap-8 px-4 py-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10 lg:px-8">
-      <div className="space-y-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className={t.label}>ZeMeet · Pre-join</p>
-            <h1 className={cn(t.heading, "mt-2")}>Ready to join?</h1>
-            <p className={cn(t.meta, "mt-2 max-w-md")}>
-              Check your devices before entering the collaborative interview room.
-            </p>
-          </div>
-          <ZeMeetThemeToggle />
-        </div>
+    <div className="flex min-h-full w-full items-center justify-center bg-[#202124] px-4 py-10 text-[#e8eaed]">
+      <div className="flex w-full max-w-[900px] items-start gap-10">
 
-        <div className={cn(t.videoTile, "aspect-video max-h-[340px]")}>
-          <div className={cn("absolute inset-0", t.previewGradient)} />
-          {devices.blurBackground ? (
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" aria-hidden />
-          ) : null}
-          <div className="absolute inset-0 flex items-center justify-center">
+        {/* Left: camera preview + device controls */}
+        <div className="flex flex-1 flex-col gap-4">
+          {/* Camera preview */}
+          <div
+            className="relative w-full overflow-hidden rounded-2xl"
+            style={{ aspectRatio: "16/9" }}
+          >
             {devices.videoEnabled ? (
-              <div
-                className={cn(
-                  "flex h-24 w-24 items-center justify-center rounded-full text-[2rem] font-semibold",
-                  t.isLight ? "bg-[rgba(15,23,42,0.08)] text-[#52525B]" : "bg-white/10 text-white/90",
-                )}
-              >
-                {session.participants.find((p) => p.id === session.viewerId)?.initials ?? "You"}
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#2d1b5e] via-[#1a1040] to-[#0d0820]">
+                <span className="select-none text-[4.5rem] font-bold text-white/15">
+                  {viewer?.initials ?? "You"}
+                </span>
               </div>
             ) : (
-              <VideoOff
-                className={cn("h-10 w-10", t.isLight ? "text-[#A1A1AA]" : "text-white/40")}
-                strokeWidth={1.5}
-              />
+              <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#1a1a1a]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#3c4043]">
+                  <VideoOff className="h-6 w-6 text-[#9aa0a6]" strokeWidth={1.5} />
+                </div>
+                <p className="text-[14px] text-[#9aa0a6]">Camera is off</p>
+              </div>
             )}
+
+            {/* Mic / cam / settings overlay */}
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDevices((d) => ({ ...d, audioEnabled: !d.audioEnabled }))}
+                className={cn(
+                  "flex h-11 w-11 items-center justify-center rounded-full text-white transition-all",
+                  devices.audioEnabled
+                    ? "bg-[#3c4043] hover:bg-[#4a4f52]"
+                    : "bg-red-600/90 hover:bg-red-600",
+                )}
+              >
+                {devices.audioEnabled ? (
+                  <Mic className="h-5 w-5" strokeWidth={1.75} />
+                ) : (
+                  <MicOff className="h-5 w-5" strokeWidth={1.75} />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevices((d) => ({ ...d, videoEnabled: !d.videoEnabled }))}
+                className={cn(
+                  "flex h-11 w-11 items-center justify-center rounded-full text-white transition-all",
+                  devices.videoEnabled
+                    ? "bg-[#3c4043] hover:bg-[#4a4f52]"
+                    : "bg-red-600/90 hover:bg-red-600",
+                )}
+              >
+                {devices.videoEnabled ? (
+                  <Video className="h-5 w-5" strokeWidth={1.75} />
+                ) : (
+                  <VideoOff className="h-5 w-5" strokeWidth={1.75} />
+                )}
+              </button>
+              <button
+                type="button"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#3c4043] text-white transition-colors hover:bg-[#4a4f52]"
+              >
+                <Settings className="h-5 w-5" strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* Name label */}
+            <div className="absolute bottom-16 left-3">
+              <span className="rounded-md bg-black/55 px-2 py-0.5 text-[12px] font-medium text-white backdrop-blur-sm">
+                {viewer?.name ?? "You"}
+              </span>
+            </div>
           </div>
-          <div className="absolute bottom-3 left-3">
-            <span className={t.mutedBadge}>Preview</span>
+
+          <p className="text-center text-[13px] text-[#9aa0a6]">
+            {devices.audioEnabled && devices.videoEnabled
+              ? "Mic and camera are on"
+              : "Check your devices above"}
+          </p>
+
+          {/* Device dropdowns */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <DeviceSelect
+              label="Camera"
+              value={devices.cameraId}
+              options={DEVICE_OPTIONS.cameras}
+              onChange={(v) => setDevices((d) => ({ ...d, cameraId: v }))}
+            />
+            <DeviceSelect
+              label="Microphone"
+              value={devices.microphoneId}
+              options={DEVICE_OPTIONS.mics}
+              onChange={(v) => setDevices((d) => ({ ...d, microphoneId: v }))}
+            />
+            <DeviceSelect
+              label="Speaker"
+              value={devices.speakerId}
+              options={DEVICE_OPTIONS.speakers}
+              onChange={(v) => setDevices((d) => ({ ...d, speakerId: v }))}
+            />
           </div>
-        </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <DeviceSelect
-            label="Camera"
-            value={devices.cameraId}
-            options={DEVICE_OPTIONS.cameras}
-            onChange={(v) => setDevices((d) => ({ ...d, cameraId: v }))}
-            selectClass={t.select}
-            labelClass={t.label}
-          />
-          <DeviceSelect
-            label="Microphone"
-            value={devices.microphoneId}
-            options={DEVICE_OPTIONS.mics}
-            onChange={(v) => setDevices((d) => ({ ...d, microphoneId: v }))}
-            selectClass={t.select}
-            labelClass={t.label}
-          />
-          <DeviceSelect
-            label="Speaker"
-            value={devices.speakerId}
-            options={DEVICE_OPTIONS.speakers}
-            onChange={(v) => setDevices((d) => ({ ...d, speakerId: v }))}
-            selectClass={t.select}
-            labelClass={t.label}
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip
-            active={devices.blurBackground}
-            onClick={() => setDevices((d) => ({ ...d, blurBackground: !d.blurBackground }))}
-            tokens={t}
-          >
-            Blur background
-          </ToggleChip>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className={cn(
-              "inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-[10px] text-[13px] font-medium",
-              devices.videoEnabled
-                ? t.isLight
-                  ? "bg-[rgba(15,23,42,0.06)] text-[#18181B]"
-                  : "bg-white/10 text-white"
-                : "bg-red-500/20 text-red-600 dark:text-red-300",
-            )}
-            onClick={() => setDevices((d) => ({ ...d, videoEnabled: !d.videoEnabled }))}
-          >
-            {devices.videoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-            Camera
-          </button>
-          <button
-            type="button"
-            className={cn(
-              "inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-[10px] text-[13px] font-medium",
-              devices.audioEnabled
-                ? t.isLight
-                  ? "bg-[rgba(15,23,42,0.06)] text-[#18181B]"
-                  : "bg-white/10 text-white"
-                : "bg-red-500/20 text-red-600 dark:text-red-300",
-            )}
-            onClick={() => setDevices((d) => ({ ...d, audioEnabled: !d.audioEnabled }))}
-          >
-            {devices.audioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-            Mic
-          </button>
-        </div>
-
-        <div className={cn(t.glass, "p-4")}>
-          <p className={t.label}>Permissions</p>
-          <ul className="mt-3 space-y-2">
-            {checklist.map((item) => (
-              <li key={item.key} className="flex items-center justify-between gap-3">
-                <span className={t.meta}>{item.label}</span>
-                <button
-                  type="button"
-                  onClick={() => setPermissions((p) => ({ ...p, [item.key]: !p[item.key] }))}
-                  className={cn(
-                    "flex h-6 w-6 items-center justify-center rounded-full border",
-                    item.ok
-                      ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-600 dark:text-emerald-300"
-                      : t.isLight
-                        ? "border-[rgba(15,23,42,0.12)] bg-[rgba(15,23,42,0.04)] text-[#A1A1AA]"
+          {/* Permissions */}
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[#5f6368]">
+              Permissions
+            </p>
+            <ul className="space-y-2">
+              {(
+                [
+                  { key: "camera" as const, label: "Camera access", ok: permissions.camera },
+                  { key: "microphone" as const, label: "Microphone access", ok: permissions.microphone },
+                  { key: "notifications" as const, label: "Session notifications", ok: permissions.notifications },
+                ] as const
+              ).map((item) => (
+                <li key={item.key} className="flex items-center justify-between gap-3">
+                  <span className="text-[13px] text-[#9aa0a6]">{item.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPermissions((p) => ({ ...p, [item.key]: !p[item.key] }))}
+                    className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded-full border",
+                      item.ok
+                        ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
                         : "border-white/15 bg-white/5 text-white/40",
-                  )}
-                >
-                  {item.ok ? <Check className="h-3.5 w-3.5" /> : null}
-                </button>
-              </li>
-            ))}
-          </ul>
+                    )}
+                  >
+                    {item.ok ? <Check className="h-3.5 w-3.5" /> : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </div>
 
-      <aside className={cn(t.glassElevated, "flex flex-col p-6")}>
-        {isCandidate ? (
-          <ZeMeetCandidateInstructions />
-        ) : (
-          <InterviewerLobbySummary />
-        )}
+        {/* Right: join card */}
+        <div className="flex w-[300px] shrink-0 flex-col gap-5">
+          {/* Google Meet brand */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#1a73e8]/10">
+              <Video className="h-4 w-4 text-[#1a73e8]" strokeWidth={2} />
+            </div>
+            <p className="text-[13px] font-semibold text-[#9aa0a6]">Google Meet</p>
+          </div>
 
-        <div className="mt-auto space-y-3 pt-8">
-          {!isCandidate ? (
-            <div className={cn(t.subtlePanel, "flex items-start gap-2")}>
+          {/* Heading */}
+          <div>
+            <h1 className="text-[22px] font-semibold text-[#e8eaed]">Ready to join?</h1>
+            <p className="mt-1.5 text-[14px] leading-relaxed text-[#9aa0a6]">
+              {context.jobTitle}
+              <br />
+              {context.roundTitle}
+            </p>
+          </div>
+
+          {/* Meeting info */}
+          <div className="space-y-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <LobbyRow icon={Hash} text={context.roomId.slice(0, 16)} />
+            <LobbyRow
+              icon={Users}
+              text={`${session.participants.filter((p) => !p.isObserver).length} participants`}
+            />
+            <LobbyRow
+              icon={Clock}
+              text={`${context.durationMinutes} min · ${context.interviewType}`}
+            />
+          </div>
+
+          {/* Waiting participants */}
+          {others.slice(0, 2).map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-3"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1a3048] to-[#070f1a] text-[12px] font-bold text-white/70">
+                {p.initials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium text-[#e8eaed]">{p.name}</p>
+                <p className="text-[11px] text-[#9aa0a6]">Waiting in call</p>
+              </div>
+              <span className="ml-auto h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400 ring-2 ring-emerald-400/20" />
+            </div>
+          ))}
+
+          {/* Candidate instructions or interviewer note */}
+          {isCandidate ? (
+            <ZeMeetCandidateInstructions />
+          ) : (
+            <div className="flex items-start gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
               <Shield
-                className={cn("h-4 w-4 shrink-0", t.isLight ? "text-[#71717A]" : "text-white/50")}
+                className="mt-0.5 h-4 w-4 shrink-0 text-[#5f6368]"
                 strokeWidth={1.5}
               />
-              <p className={t.subtleText}>
-                Interviewer notes are private. Candidates never see evaluation notes or live code
-                annotations.
+              <p className="text-[12px] text-[#5f6368]">
+                Interviewer notes are private — candidates never see evaluation data.
               </p>
             </div>
-          ) : null}
-          <button type="button" className={cn(t.primaryBtn, "w-full")} onClick={startSession}>
+          )}
+
+          {/* Join button */}
+          <button
+            type="button"
+            onClick={startSession}
+            className="h-12 w-full rounded-full bg-[#1a73e8] text-[15px] font-semibold text-white shadow-lg shadow-[#1a73e8]/20 transition-all hover:bg-[#1557b0] active:scale-[0.98]"
+          >
             Join Interview
           </button>
-          <p className={cn("text-center text-[10px]", t.isLight ? "text-[#A1A1AA]" : "text-white/40")}>
-            By joining you agree to recording & data sync to the candidate report.
+
+          <p className="text-center text-[11px] text-[#5f6368]">
+            By joining you agree to recording &amp; data sync to the candidate report.
           </p>
         </div>
-      </aside>
+      </div>
     </div>
   );
 }
 
-function InterviewerLobbySummary() {
-  const { session } = useZeMeet();
-  const { context } = session;
-  const t = useZeMeetTokens();
-
+function LobbyRow({ icon: Icon, text }: { icon: ElementType; text: string }) {
   return (
-    <>
-      <p className={t.label}>Interview</p>
-      <h2 className={cn(t.title, "mt-2")}>{context.jobTitle}</h2>
-      <p className={cn(t.meta, "mt-1")}>{context.roundTitle}</p>
-
-      <dl className="mt-6 space-y-4">
-        <SummaryRow label="Candidate" value={context.candidateName} />
-        <SummaryRow
-          label="Interviewers"
-          value={session.participants.filter((p) => p.role === "interviewer").map((p) => p.name).join(", ")}
-        />
-        <SummaryRow label="When" value={context.scheduledAt} />
-        <SummaryRow label="Timezone" value={context.timezone} />
-        <SummaryRow label="Type" value={context.interviewType} />
-        <SummaryRow label="Duration" value={`${context.durationMinutes} min`} />
-      </dl>
-    </>
-  );
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  const t = useZeMeetTokens();
-  return (
-    <div>
-      <dt className={t.label}>{label}</dt>
-      <dd className={cn(t.bodyStrong, "mt-1")}>{value}</dd>
+    <div className="flex items-center gap-2.5 text-[13px]">
+      <Icon className="h-4 w-4 shrink-0 text-[#5f6368]" strokeWidth={1.5} />
+      <span className="text-[#c5c6c7]">{text}</span>
     </div>
   );
 }
@@ -242,55 +264,26 @@ function DeviceSelect({
   value,
   options,
   onChange,
-  selectClass,
-  labelClass,
 }: {
   label: string;
   value: string;
   options: string[];
   onChange: (v: string) => void;
-  selectClass: string;
-  labelClass: string;
 }) {
   return (
     <label className="block">
-      <span className={labelClass}>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={selectClass}>
+      <span className="mb-1 block text-[11px] font-medium text-[#9aa0a6]">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-2 text-[12px] text-[#e8eaed] outline-none focus:border-white/20"
+      >
         {options.map((o) => (
-          <option key={o} value={o}>
+          <option key={o} value={o} className="bg-[#202124]">
             {o}
           </option>
         ))}
       </select>
     </label>
-  );
-}
-
-function ToggleChip({
-  active,
-  onClick,
-  children,
-  tokens: t,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  tokens: ReturnType<typeof useZeMeetTokens>;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
-        active
-          ? "border-[rgb(var(--accent-rgb)/0.5)] bg-[rgb(var(--accent-rgb)/0.15)] text-[rgb(var(--accent-rgb))]"
-          : t.isLight
-            ? "border-[rgba(15,23,42,0.1)] bg-white text-[#71717A] hover:bg-[rgba(15,23,42,0.04)]"
-            : "border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/[0.08]",
-      )}
-    >
-      {children}
-    </button>
   );
 }

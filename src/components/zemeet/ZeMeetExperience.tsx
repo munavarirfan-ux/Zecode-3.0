@@ -11,29 +11,23 @@ import { ZeMeetPostInterviewFeedback } from "@/components/zemeet/feedback/ZeMeet
 import { ZeMeetLobby } from "@/components/zemeet/lobby/ZeMeetLobby";
 import { ZeMeetRoom } from "@/components/zemeet/room/ZeMeetRoom";
 import { ZeMeetProvider, useZeMeet } from "@/components/zemeet/ZeMeetProvider";
-import { useZeMeetTokens } from "@/components/zemeet/zemeetTokens";
 import type { ZeMeetSession } from "@/lib/zemeet/types";
-import { cn } from "@/lib/utils";
 
 function ZeMeetEndedScreen() {
   const { session } = useZeMeet();
-  const t = useZeMeetTokens();
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-4 text-center">
-      <p className={t.label}>ZeMeet</p>
-      <h1 className={cn(t.heading, "mt-2 text-[1.5rem]")}>Session ended</h1>
-      <p className={cn(t.meta, "mt-2 max-w-sm text-[14px]")}>
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-[#5f6368]">
+        ze[meet]
+      </p>
+      <h1 className="mt-2 text-[1.5rem] font-semibold text-[#e8eaed]">Session ended</h1>
+      <p className="mt-2 max-w-sm text-[14px] text-[#9aa0a6]">
         Interview artifacts have been synced to the candidate report in ze[hire].
       </p>
       <a
         href={`/hiring/jobs/${session.context.jobId}`}
-        className={cn(
-          "mt-8 inline-flex h-11 items-center rounded-[12px] px-5 text-[14px] font-medium",
-          t.isLight
-            ? "bg-[rgba(15,23,42,0.06)] text-[#18181B] hover:bg-[rgba(15,23,42,0.1)]"
-            : "bg-white/10 text-white hover:bg-white/15",
-        )}
+        className="mt-8 inline-flex h-11 items-center rounded-[12px] bg-white/10 px-5 text-[14px] font-medium text-white hover:bg-white/15"
       >
         Back to job workspace
       </a>
@@ -106,16 +100,14 @@ export function ZeMeetExperience({ session }: { session: ZeMeetSession }) {
 }
 
 function ZeMeetExperienceInner({ skipLobby }: { skipLobby: boolean }) {
-  const { phase, startSession, theme } = useZeMeet();
-  const t = useZeMeetTokens();
+  const { phase, startSession } = useZeMeet();
 
   useEffect(() => {
     if (skipLobby && phase === "lobby") startSession();
   }, [skipLobby, phase, startSession]);
 
   return (
-    <div className={cn(t.shell, "flex h-dvh flex-col overflow-hidden")} data-zemeet-theme={theme}>
-      <div className={t.grain} aria-hidden />
+    <div className="flex h-dvh flex-col overflow-hidden bg-[#202124] text-[#e8eaed]">
       <ZeMeetFlow />
     </div>
   );

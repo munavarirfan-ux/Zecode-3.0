@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useZeMeet } from "@/components/zemeet/ZeMeetProvider";
 import { formatChallengeTimer } from "@/lib/zemeet/codeChallenge";
-import { ZeMeetVideoPipRail } from "@/components/zemeet/room/ZeMeetVideoPipRail";
 import { cn } from "@/lib/utils";
 
 const shell = "bg-[#1e1e1e] text-[#d4d4d4]";
@@ -39,7 +38,7 @@ export function ZeMeetCodeChallengeWorkspace() {
   const canEdit = isCandidate && codeChallenge.candidateEditingEnabled;
 
   return (
-    <div className={cn(shell, "flex h-full min-h-0 flex-1 flex-col overflow-hidden pb-20")}>
+    <div className={cn(shell, "flex h-full min-h-0 flex-1 flex-col overflow-hidden")}>
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#2d2d30] bg-[#252526] px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#3c3c3c]">
@@ -119,9 +118,6 @@ export function ZeMeetCodeChallengeWorkspace() {
           <RightPanel isInterviewer={isInterviewer} />
         )}
 
-        <div className="pointer-events-none absolute bottom-4 right-4 z-20">
-          <ZeMeetVideoPipRail />
-        </div>
       </div>
 
       <footer className="relative z-10 flex shrink-0 items-center justify-between border-t border-[#2d2d30] bg-[#252526] px-4 py-2 text-[11px] text-[#858585]">
