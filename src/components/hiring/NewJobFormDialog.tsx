@@ -15,16 +15,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ROUTES } from "@/config/routes";
+import { createDefaultInterviewRoundsForNewJob } from "@/lib/hiring/customiseHiringProcess";
 import { createHiringJob, createHiringJobDraft } from "@/lib/hiring/createHiringJob";
-import { createDefaultHiringStages, type JobHiringStageConfig } from "@/lib/hiring/jobHiringStages";
 import { CUSTOM_FIELD_DEFS, DEPARTMENTS, LOCATIONS } from "@/lib/hiring/mockData";
 import { JOB_FORM_STEPS, hasJobWizardProgress, isJobFormStepValid } from "@/lib/hiring/jobFormSteps";
+import type { InterviewRound } from "@/lib/hiring/interviewRounds";
 import type { CustomFieldDef } from "@/lib/hiring/types";
 import { cn } from "@/lib/utils";
 import { dashboardCanvas } from "@/components/dashboard/dashboardTokens";
+import { HiringPipelineEditor } from "./HiringPipelineEditor";
 import { JobFormStepContent, type JobAdditionalDetails, type JobBasicDetails } from "./JobFormStepContent";
 import { JobFormStepCard, JobFormWizardHeader } from "./JobFormStepper";
-import { JobHiringStagesStep } from "./JobHiringStagesStep";
 import { WizardUnsavedCloseAlert } from "./WizardUnsavedCloseAlert";
 
 const footerBtnBase =
@@ -75,8 +76,8 @@ export function NewJobFormDialog({
   const [selectedCustomFieldIds, setSelectedCustomFieldIds] = useState<string[]>([]);
   const [basic, setBasic] = useState<JobBasicDetails>(INITIAL_BASIC);
   const [additional, setAdditional] = useState<JobAdditionalDetails>(INITIAL_ADDITIONAL);
-  const [hiringStages, setHiringStages] = useState<JobHiringStageConfig[]>(() =>
-    createDefaultHiringStages(),
+  const [interviewRounds, setInterviewRounds] = useState<InterviewRound[]>(() =>
+    createDefaultInterviewRoundsForNewJob(),
   );
   const [unsavedAlertOpen, setUnsavedAlertOpen] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
@@ -90,19 +91,19 @@ export function NewJobFormDialog({
     setSelectedCustomFieldIds([]);
     setBasic({ ...INITIAL_BASIC, department: DEPARTMENTS[0], location: LOCATIONS[0] });
     setAdditional({ ...INITIAL_ADDITIONAL });
-    setHiringStages(createDefaultHiringStages());
+    setInterviewRounds(createDefaultInterviewRoundsForNewJob());
   }, [open]);
 
   const isLastStep = stepIndex === JOB_FORM_STEPS.length - 1;
-  const isStepValid = isJobFormStepValid(stepIndex, basic, hiringStages);
+  const isStepValid = isJobFormStepValid(stepIndex, basic, interviewRounds);
   const maxReachableStepIndex = useMemo(() => {
     let max = 0;
     for (let i = 0; i < JOB_FORM_STEPS.length; i++) {
-      if (isJobFormStepValid(i, basic, hiringStages)) max = i;
+      if (isJobFormStepValid(i, basic, interviewRounds)) max = i;
       else break;
     }
     return max;
-  }, [basic, hiringStages]);
+  }, [basic, interviewRounds]);
 
   const titleError = showTitleError && !basic.title.trim() ? "Job title is required" : undefined;
   const currentStepKey = JOB_FORM_STEPS[stepIndex]?.key;
@@ -132,7 +133,7 @@ export function NewJobFormDialog({
     setSavingDraft(true);
     try {
       await new Promise((r) => setTimeout(r, 320));
-      createHiringJobDraft({ basic, additional, hiringStages });
+      createHiringJobDraft({ basic, additional, interviewRounds });
       toast.success("Job saved as draft");
       setUnsavedAlertOpen(false);
       onOpenChange(false);
@@ -143,12 +144,17 @@ export function NewJobFormDialog({
     }
   }
 
+  function quitJobWizard() {
+    setUnsavedAlertOpen(false);
+    onOpenChange(false);
+  }
+
   async function publishJob() {
-    if (!isJobFormStepValid(stepIndex, basic, hiringStages)) return;
+    if (!isJobFormStepValid(stepIndex, basic, interviewRounds)) return;
     setPublishing(true);
     try {
       await new Promise((r) => setTimeout(r, 480));
-      const job = createHiringJob({ basic, additional, hiringStages });
+      const job = createHiringJob({ basic, additional, interviewRounds });
       toast.success("Job published successfully");
       onCreated?.(job.id);
       onOpenChange(false);
@@ -162,6 +168,9 @@ export function NewJobFormDialog({
   function goNext() {
     if (!isStepValid) {
       if (stepIndex === 0) setShowTitleError(true);
+      if (currentStepKey === "hiring-stages") {
+        toast.error("Add at least one interview round with a unique name");
+      }
       return;
     }
     if (isLastStep) {
@@ -271,9 +280,13 @@ export function NewJobFormDialog({
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6">
                 <div className="mx-auto w-full max-w-[900px] pb-4">
                   {currentStepKey === "hiring-stages" ? (
-                    <div className="mx-auto w-full max-w-[640px] pt-2 sm:pt-4">
-                      <JobHiringStagesStep stages={hiringStages} onChange={setHiringStages} />
-                    </div>
+                    <JobFormStepCard stepIndex={stepIndex}>
+                      <HiringPipelineEditor
+                        interviewRounds={interviewRounds}
+                        onInterviewRoundsChange={setInterviewRounds}
+                        intro="Applicants stats and Hire and Offer are fixed for every job. Configure interview rounds for this role."
+                      />
+                    </JobFormStepCard>
                   ) : (
                     <JobFormStepCard stepIndex={stepIndex}>
                       <JobFormStepContent
@@ -360,6 +373,7 @@ export function NewJobFormDialog({
       onOpenChange={setUnsavedAlertOpen}
       entityLabel="job"
       onSaveDraft={saveDraftAndClose}
+      onQuit={quitJobWizard}
       savingDraft={savingDraft}
     />
     </>

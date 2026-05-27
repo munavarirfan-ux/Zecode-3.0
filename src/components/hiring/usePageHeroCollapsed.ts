@@ -16,6 +16,8 @@ const DEFAULT_COLLAPSED_PAGES = new Set([
   "assessments",
   "assessment-schedules",
   "my-schedule",
+  "question-pool",
+  "question-pool-editor",
 ]);
 
 function storageKeyFor(pageKey: string) {

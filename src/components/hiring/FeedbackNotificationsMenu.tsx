@@ -20,6 +20,7 @@ import {
   type TransferNotificationsSnapshot,
 } from "@/lib/hiring/transferNotifications";
 import { TransferRequestReviewDialog } from "@/components/hiring/applicants/TransferRequestReviewDialog";
+import { OwnershipTransferReviewDialog } from "@/components/hiring/kanban/OwnershipTransferReviewDialog";
 import { cn } from "@/lib/utils";
 
 const EMPTY_FEEDBACK: FeedbackNotificationsSnapshot = {
@@ -66,6 +67,17 @@ function TransferNotificationBody({ n }: { n: TransferNotification }) {
       </p>
     );
   }
+  if (n.kind === "ownership_transfer_request") {
+    return (
+      <p className="mt-1 text-[12px] leading-relaxed text-[#52525B]">
+        {n.body}
+        <br />
+        <span className="text-[#71717A]">
+          {n.fromJobTitle} → {n.toJobTitle}
+        </span>
+      </p>
+    );
+  }
   return <p className="mt-1 text-[12px] leading-relaxed text-[#52525B]">{n.body}</p>;
 }
 
@@ -75,12 +87,19 @@ export function FeedbackNotificationsMenu() {
   const transfer = useTransferNotifications(selectedRole);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewRequestId, setReviewRequestId] = useState<string | null>(null);
+  const [ownershipReviewOpen, setOwnershipReviewOpen] = useState(false);
+  const [ownershipReviewId, setOwnershipReviewId] = useState<string | null>(null);
 
   const unread = feedback.unread + transfer.unread;
   const hasAny = feedback.notifications.length > 0 || transfer.notifications.length > 0;
 
   function openTransferReview(n: TransferNotification) {
     markTransferNotificationRead(n.id);
+    if (n.kind === "ownership_transfer_request") {
+      setOwnershipReviewId(n.transferRequestId);
+      setOwnershipReviewOpen(true);
+      return;
+    }
     if (n.kind === "transfer_request") {
       setReviewRequestId(n.transferRequestId);
       setReviewOpen(true);
@@ -109,7 +128,7 @@ export function FeedbackNotificationsMenu() {
             <p className="text-[13px] font-semibold text-[#18181B]">Notifications</p>
             {selectedRole === "superAdmin" ? (
               <p className="mt-0.5 text-[11px] text-[#71717A]">
-                Transfer requests require your approval.
+                Job and ownership transfer requests appear here.
               </p>
             ) : null}
           </div>
@@ -130,7 +149,7 @@ export function FeedbackNotificationsMenu() {
                   >
                     <p className="text-[12px] font-semibold text-[#18181B]">{n.title}</p>
                     <TransferNotificationBody n={n} />
-                    {n.kind === "transfer_request" ? (
+                    {n.kind === "transfer_request" || n.kind === "ownership_transfer_request" ? (
                       <span className="mt-2 inline-flex text-[11px] font-medium text-forest">
                         Review request →
                       </span>
@@ -179,6 +198,12 @@ export function FeedbackNotificationsMenu() {
         onResolved={() => {
           setReviewRequestId(null);
         }}
+      />
+      <OwnershipTransferReviewDialog
+        open={ownershipReviewOpen}
+        onOpenChange={setOwnershipReviewOpen}
+        requestId={ownershipReviewId}
+        onResolved={() => setOwnershipReviewId(null)}
       />
     </>
   );

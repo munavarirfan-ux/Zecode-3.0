@@ -16,7 +16,6 @@ import {
   Pencil,
   Phone,
   Send,
-  Sparkles,
   Tag,
   User,
   UserX,

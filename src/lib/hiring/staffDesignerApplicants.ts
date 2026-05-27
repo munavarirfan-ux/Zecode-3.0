@@ -12,6 +12,7 @@ type ApplicantBucket = {
   kanbanColumn: string;
   withInterview?: boolean;
   withAssessment?: boolean;
+  interviewOutcome?: CandidateInterview["roundOutcome"];
 };
 
 const BULK_BUCKETS: ApplicantBucket[] = [
@@ -23,9 +24,19 @@ const BULK_BUCKETS: ApplicantBucket[] = [
   { stage: "Interviews", substage: "Portfolio Review", kanbanColumn: "portfolio", withInterview: true },
   { stage: "Interviews", substage: "Design Review", kanbanColumn: "design-review", withInterview: true },
   { stage: "Interviews", substage: "Technical Round 1", kanbanColumn: "tech-1", withInterview: true },
+  { stage: "Hire & Offers", substage: "Offer Draft", kanbanColumn: "offer-draft", withInterview: true },
   { stage: "Hire & Offers", substage: "Offer Sent", kanbanColumn: "offer-sent", withInterview: true },
-  { stage: "Hire & Offers", substage: "Rejected", kanbanColumn: "rejected" },
+  { stage: "Hire & Offers", substage: "Offer Accepted", kanbanColumn: "offer-accepted", withInterview: true },
+  { stage: "Hire & Offers", substage: "Hired", kanbanColumn: "hired", withInterview: true },
 ];
+
+const REJECTED_AT_ROUND_BUCKET: ApplicantBucket = {
+  stage: "Interviews",
+  substage: "Technical Round 2",
+  kanbanColumn: "tech-2",
+  withInterview: true,
+  interviewOutcome: "Rejected",
+};
 
 function canonicalRoundTitleForColumn(columnId: string, fallback: string): string {
   if (columnId === "tech-1" || columnId === "portfolio" || columnId === "assignment") return "Technical Round 1";
@@ -74,6 +85,8 @@ export function buildStaffDesignerApplicants(
       resumeUploadedAt: "2026-05-14",
       kanbanColumn: "resume-review",
       lastActivity: "3h ago",
+      unreadEmails: 1,
+      verdict: "pending",
       emails: [
         {
           id: "lv-e1",
@@ -338,6 +351,7 @@ export function buildStaffDesignerApplicants(
       resumeUploadedAt: "2026-05-08",
       kanbanColumn: "shortlisted",
       lastActivity: "5d ago",
+      verdict: "hire",
       recruiterNotes: "Shortlisted for design review batch next week.",
       timeline: [
         { id: "dk-t1", label: "Applied", detail: "LinkedIn", at: "May 8, 12:00" },
@@ -498,8 +512,8 @@ export function buildStaffDesignerApplicants(
       location: "Sydney, AU",
       source: "Careers",
       appliedAt: "2026-05-03",
-      currentStage: "Hire & Offers",
-      currentSubstage: "Rejected",
+      currentStage: "Interviews",
+      currentSubstage: "Technical Round 2",
       recruiterOwner: "Marcus Chen",
       experience: "6 years · Consumer HR apps",
       skills: ["Mobile UX", "Illustration", "Figma", "Usability testing"],
@@ -508,8 +522,22 @@ export function buildStaffDesignerApplicants(
       expectedSalary: "€82,000",
       resumeStatus: "Reviewed",
       resumeUploadedAt: "2026-05-03",
-      kanbanColumn: "rejected",
+      kanbanColumn: "tech-2",
       lastActivity: "5d ago",
+      interviews: [
+        {
+          id: "cw-i1",
+          round: "Technical Round 2",
+          interviewers: ["Elena Hoffmann"],
+          scheduledAt: "May 8, 14:00 CET",
+          status: "Completed",
+          feedbackStatus: "Submitted",
+          roundOutcome: "Rejected",
+          interviewType: "Video",
+          durationMinutes: 45,
+          platform: "ZeMeet",
+        },
+      ],
       emails: [
         {
           id: "cw-e1",
@@ -523,7 +551,12 @@ export function buildStaffDesignerApplicants(
       ],
       timeline: [
         { id: "cw-t1", label: "Applied", detail: "Careers website", at: "May 3, 22:00" },
-        { id: "cw-t2", label: "Rejected", detail: "Did not meet senior systems bar", at: "May 10, 11:00" },
+        {
+          id: "cw-t2",
+          label: "Rejected at Technical Round 2",
+          detail: "Did not meet senior systems bar",
+          at: "May 10, 11:00",
+        },
       ],
     },
   ];
@@ -549,7 +582,8 @@ function generateBulkStaffDesignerApplicants(
   const baseDate = new Date("2026-05-15");
 
   for (let i = 0; i < count; i++) {
-    const bucket = BULK_BUCKETS[i % BULK_BUCKETS.length];
+    const bucket =
+      i % 17 === 0 ? REJECTED_AT_ROUND_BUCKET : BULK_BUCKETS[i % BULK_BUCKETS.length];
     const source = SOURCES[i % SOURCES.length];
     const applied = new Date(baseDate);
     applied.setDate(applied.getDate() - (i % 90));
@@ -586,14 +620,18 @@ function generateBulkStaffDesignerApplicants(
             round: canonicalRoundTitle,
             interviewers: i % 2 === 0 ? ["Elena Hoffmann", "Marcus Chen"] : ["Marcus Chen"],
             scheduledAt: `May ${10 + (i % 8)}, ${9 + (i % 6)}:00 CET`,
-            status: isCancelled ? "Cancelled" : isFeedbackPending || isCompleted ? "Completed" : "Scheduled",
-            feedbackStatus: isCancelled
-              ? "Submitted"
-              : isFeedbackPending
-                ? "Pending"
-                : isCompleted
-                  ? "Submitted"
-                  : "Pending",
+            status: bucket.interviewOutcome
+              ? "Completed"
+              : isCancelled
+                ? "Cancelled"
+                : isFeedbackPending || isCompleted
+                  ? "Completed"
+                  : "Scheduled",
+            feedbackStatus:
+              bucket.interviewOutcome || isCancelled || isCompleted || isFeedbackPending
+                ? "Submitted"
+                : "Pending",
+            roundOutcome: bucket.interviewOutcome,
             feedbackRequestedAt: isFeedbackPending ? `${6 + (i % 4)}d ago` : undefined,
             interviewType: i % 3 === 0 ? "Panel" : "Video",
             durationMinutes: 45,

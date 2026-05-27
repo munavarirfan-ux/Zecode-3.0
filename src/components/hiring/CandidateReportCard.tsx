@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, Download, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import type { HiringCandidate } from "@/lib/hiring/types";
 
@@ -126,7 +127,7 @@ export function CandidateReportCard({ candidate }: { candidate: HiringCandidate 
 
         <Section title="Emails" defaultOpen={candidate.emails.length > 0}>
           {candidate.emails.length === 0 ? (
-            <p className="text-sm text-muted">No email activity logged.</p>
+            <LineArtEmptyState illustration="email" message="No email activity logged." size="compact" />
           ) : (
             <ul className="space-y-2">
               {candidate.emails.map((e) => (
@@ -175,7 +176,7 @@ export function CandidateReportCard({ candidate }: { candidate: HiringCandidate 
 
         <Section title="Interviews">
           {candidate.interviews.length === 0 ? (
-            <p className="text-sm text-muted">No interviews scheduled.</p>
+            <LineArtEmptyState illustration="interviews" message="No interviews scheduled." size="compact" />
           ) : (
             <ul className="space-y-2">
               {candidate.interviews.map((i) => (

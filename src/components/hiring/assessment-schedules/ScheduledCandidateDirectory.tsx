@@ -5,6 +5,7 @@ import { Search, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { ScheduledAssessmentCandidate } from "@/lib/hiring/assessments/scheduledAssessmentTypes";
 import { removeScheduledCandidate } from "@/lib/hiring/assessments/scheduledAssessmentsData";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { hiringCard, hiringTransition } from "../hiringTokens";
 import { ScheduledCandidateRow } from "./ScheduledCandidateRow";
@@ -84,8 +85,12 @@ export function ScheduledCandidateDirectory({
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-16 text-center text-[13px] text-muted">
-                  No candidates match your search.
+                <td colSpan={9} className="p-0">
+                  <LineArtEmptyState
+                    illustration="search"
+                    message="No candidates match your search."
+                    size="compact"
+                  />
                 </td>
               </tr>
             ) : (

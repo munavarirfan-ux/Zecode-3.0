@@ -1,4 +1,5 @@
 import type { HiringCandidate } from "./types";
+import { enrichCandidateOwnership } from "./candidateOwnership";
 
 export const HIRING_STAGES = [
   "Applied",
@@ -44,7 +45,7 @@ export type AddedBy = "external" | "admin" | "superAdmin";
 export const SCREENING_SUBSTAGES = ["Resume Review", "Applied", "Shortlisted"] as const;
 
 export const APPLICANTS_STATS_COLUMNS = [
-  { id: "applied", title: "Applied" },
+  { id: "applied", title: "Applicants" },
   { id: "shortlisted", title: "Shortlisted" },
 ] as const;
 
@@ -54,7 +55,7 @@ export const STAGE_SUBSTAGES: Record<HiringStageName, readonly string[]> = {
   Applied: APPLIED_SUBSTAGES,
   Screening: SCREENING_SUBSTAGES,
   Interviews: ["Technical Round 1", "Technical Round 2", "HR Round"],
-  "Hired & Offers": ["Offer Sent", "Hired"],
+  "Hired & Offers": ["Offer Draft", "Offer Sent", "Offer Accepted", "Hired"],
   Rejected: ["Rejected"],
 };
 
@@ -200,25 +201,39 @@ export function isApplicantsStatsShortlisted(candidate: HiringCandidate): boolea
   );
 }
 
-const LEGACY_OFFER_SENT_COLUMNS = new Set(["offer-draft", "offer-accepted", "offer-declined"]);
+/** Hire & Offers kanban columns (left → right) */
+export const HIRE_OFFERS_KANBAN_COLUMNS = [
+  { id: "offer-draft", title: "Draft offer" },
+  { id: "offer-sent", title: "Offer sent" },
+  { id: "offer-accepted", title: "Offer accepted" },
+  { id: "hired", title: "Hired" },
+] as const;
 
-/** Maps Hire & Offers candidates to the two-column board: offer-sent | hired */
-export function hireOffersKanbanColumnId(
-  candidate: HiringCandidate,
-): "offer-sent" | "hired" {
-  if (candidate.kanbanColumn === "hired" || candidate.currentSubstage === "Hired") {
-    return "hired";
+export type HireOffersKanbanColumnId = (typeof HIRE_OFFERS_KANBAN_COLUMNS)[number]["id"];
+
+/** Offer pipeline columns only (excludes Hired) */
+export const HIRE_OFFERS_PIPELINE_COLUMNS = HIRE_OFFERS_KANBAN_COLUMNS.filter(
+  (c) => c.id !== "hired",
+);
+
+/** Maps Hire & Offers candidates to the four-column board */
+export function hireOffersKanbanColumnId(candidate: HiringCandidate): HireOffersKanbanColumnId {
+  const col = candidate.kanbanColumn;
+  if (col === "hired" || candidate.currentSubstage === "Hired") return "hired";
+  if (col === "offer-accepted" || candidate.currentSubstage === "Offer Accepted") {
+    return "offer-accepted";
   }
-  if (candidate.kanbanColumn === "offer-sent" || candidate.currentSubstage === "Offer Sent") {
-    return "offer-sent";
-  }
-  if (candidate.kanbanColumn && LEGACY_OFFER_SENT_COLUMNS.has(candidate.kanbanColumn)) {
-    return "offer-sent";
-  }
+  if (col === "offer-sent" || candidate.currentSubstage === "Offer Sent") return "offer-sent";
+  if (col === "offer-draft" || candidate.currentSubstage === "Offer Draft") return "offer-draft";
+  if (col === "offer-declined") return "offer-sent";
+
   const sub = candidate.currentSubstage?.toLowerCase() ?? "";
   if (sub.includes("hired")) return "hired";
-  if (sub.includes("offer")) return "offer-sent";
-  return "offer-sent";
+  if (sub.includes("accepted")) return "offer-accepted";
+  if (sub.includes("sent")) return "offer-sent";
+  if (sub.includes("draft")) return "offer-draft";
+  if (sub.includes("offer")) return "offer-draft";
+  return "offer-draft";
 }
 
 /** Enrich legacy mock rows with canonical stage / source fields */
@@ -233,7 +248,7 @@ export function enrichCandidate(candidate: HiringCandidate): HiringCandidate {
   const defaultStageReason =
     candidate.defaultStageReason ?? getDefaultStageReason(addedBy);
 
-  return {
+  const base: HiringCandidate = {
     ...candidate,
     stage,
     currentStage: stage,
@@ -241,7 +256,9 @@ export function enrichCandidate(candidate: HiringCandidate): HiringCandidate {
     sourceCategory,
     addedBy,
     defaultStageReason,
+    verdict: candidate.verdict ?? "pending",
   };
+  return enrichCandidateOwnership(base);
 }
 
 export function getCandidateStage(candidate: HiringCandidate): HiringStageName {

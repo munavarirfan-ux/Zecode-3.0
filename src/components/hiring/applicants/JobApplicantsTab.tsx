@@ -19,6 +19,7 @@ import {
   type ApplicantsFilterState,
 } from "./ApplicantsFiltersPopover";
 import { normalizeSource } from "@/lib/hiring/stages";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { DirectoryPagination } from "../directories/DirectoryPagination";
 import { hiringCard } from "../hiringTokens";
@@ -178,9 +179,13 @@ export function JobApplicantsTab({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="rounded-[20px] border border-[rgba(15,23,42,0.04)] bg-surface/98 px-5 py-12 text-center text-[13px] text-[#71717A]">
-          {resolvedEmptyMessage}
-        </p>
+        <div className="rounded-[20px] border border-[rgba(15,23,42,0.04)] bg-surface/98">
+          <LineArtEmptyState
+            illustration="candidates"
+            message={resolvedEmptyMessage}
+            size="default"
+          />
+        </div>
       ) : (
         <div
           className={cn(

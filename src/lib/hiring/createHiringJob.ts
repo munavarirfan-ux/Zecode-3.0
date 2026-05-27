@@ -1,12 +1,13 @@
 import type { JobAdditionalDetails, JobBasicDetails } from "@/components/hiring/JobFormStepContent";
 import { DEFAULT_HIRING_STAGES } from "@/lib/hiring/types";
 import type { HiringJob, HiringStage, WorkMode, EmploymentType, JobVisibility, HiringPriority } from "@/lib/hiring/types";
+import { normalizeInterviewRoundOrder } from "./customiseHiringProcess";
 import {
-  hiringStagesToInterviewRounds,
+  interviewRoundsToHiringStageConfigs,
+  pipelinePreviewLabelsFromRounds,
   saveJobHiringStageConfigs,
-  pipelinePreviewLabels,
-  type JobHiringStageConfig,
 } from "./jobHiringStages";
+import type { InterviewRound } from "./interviewRounds";
 import { saveInterviewRounds } from "./interviewRounds";
 import { persistCreatedJob } from "./persistedJobs";
 import { HIRING_JOBS } from "./mockData";
@@ -35,9 +36,8 @@ function parseList(value: string): string[] {
     .filter(Boolean);
 }
 
-function buildInterviewSubstages(stages: JobHiringStageConfig[]) {
-  const rounds = hiringStagesToInterviewRounds(stages);
-  return rounds.map((r) => ({ id: r.id, name: r.title }));
+function buildInterviewSubstages(rounds: InterviewRound[]) {
+  return rounds.map((r) => ({ id: r.id, name: r.title.trim() || "Interview round" }));
 }
 
 function buildJobStages(interviewSubstages: { id: string; name: string }[]): HiringStage[] {
@@ -49,17 +49,21 @@ function buildJobStages(interviewSubstages: { id: string; name: string }[]): Hir
 export type CreateHiringJobInput = {
   basic: JobBasicDetails;
   additional: JobAdditionalDetails;
-  hiringStages: JobHiringStageConfig[];
+  interviewRounds: InterviewRound[];
 };
 
 function buildHiringJob(
   input: CreateHiringJobInput,
   status: HiringJob["status"],
 ): HiringJob {
-  const { basic, additional, hiringStages } = input;
+  const { basic, additional, interviewRounds } = input;
   const title = basic.title.trim() || "Untitled job";
   const id = slugifyJobId(title);
-  const interviewSubstages = buildInterviewSubstages(hiringStages);
+  const normalizedRounds = normalizeInterviewRoundOrder(interviewRounds).map((r) => ({
+    ...r,
+    title: r.title.trim() || "Interview round",
+  }));
+  const interviewSubstages = buildInterviewSubstages(normalizedRounds);
   const now = new Date().toISOString();
 
   const job: HiringJob = {
@@ -83,7 +87,7 @@ function buildHiringJob(
     interviewsToday: 0,
     feedbackPending: 0,
     sources: [],
-    flowPreview: pipelinePreviewLabels(hiringStages),
+    flowPreview: pipelinePreviewLabelsFromRounds(normalizedRounds),
     stages: buildJobStages(interviewSubstages),
     lastUpdated: now,
     lastUpdatedLabel: "Just now",
@@ -99,22 +103,25 @@ function buildHiringJob(
   return job;
 }
 
-function persistNewJob(job: HiringJob, hiringStages: JobHiringStageConfig[]) {
+function persistNewJob(job: HiringJob, interviewRounds: InterviewRound[]) {
+  const normalizedRounds = normalizeInterviewRoundOrder(interviewRounds).map((r) => ({
+    ...r,
+    title: r.title.trim() || "Interview round",
+  }));
   HIRING_JOBS.unshift(job);
   persistCreatedJob(job);
-  const rounds = hiringStagesToInterviewRounds(hiringStages);
-  saveInterviewRounds(job.id, rounds);
-  saveJobHiringStageConfigs(job.id, hiringStages);
+  saveInterviewRounds(job.id, normalizedRounds);
+  saveJobHiringStageConfigs(job.id, interviewRoundsToHiringStageConfigs(normalizedRounds));
 }
 
 export function createHiringJobDraft(input: CreateHiringJobInput): HiringJob {
   const job = buildHiringJob(input, "Draft");
-  persistNewJob(job, input.hiringStages);
+  persistNewJob(job, input.interviewRounds);
   return job;
 }
 
 export function createHiringJob(input: CreateHiringJobInput): HiringJob {
   const job = buildHiringJob(input, "Published");
-  persistNewJob(job, input.hiringStages);
+  persistNewJob(job, input.interviewRounds);
   return job;
 }

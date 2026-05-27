@@ -2,7 +2,13 @@
 
 import type { PreviewRole } from "@/config/previewRole";
 
-export type TransferNotificationKind = "transfer_request" | "transfer_approved" | "transfer_rejected";
+export type TransferNotificationKind =
+  | "transfer_request"
+  | "transfer_approved"
+  | "transfer_rejected"
+  | "ownership_transfer_request"
+  | "ownership_transfer_approved"
+  | "ownership_transfer_declined";
 
 export type TransferNotification = {
   id: string;
@@ -167,6 +173,69 @@ export type TransferEmailPayload = {
   subject: string;
   body: string;
 };
+
+/** Kanban ownership — notify current owner (typically Super Admin persona) */
+export function addOwnershipTransferRequestNotification(input: {
+  transferRequestId: string;
+  candidateId: string;
+  candidateName: string;
+  requestedBy: string;
+  ownerName: string;
+  targetStage: string;
+  targetSubstage?: string;
+  reason: string;
+  priority?: boolean;
+}): TransferNotification {
+  const entry: TransferNotification = {
+    id: `tn-own-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    kind: "ownership_transfer_request",
+    title: "Ownership transfer request",
+    body: `${input.requestedBy} requested to shortlist ${input.candidateName} (owned by ${input.ownerName}).`,
+    transferRequestId: input.transferRequestId,
+    candidateId: input.candidateId,
+    candidateName: input.candidateName,
+    fromJobTitle: input.targetStage,
+    toJobTitle: input.targetSubstage ?? "Shortlisted",
+    requestedBy: input.requestedBy,
+    read: false,
+    createdAt: new Date().toISOString(),
+    recipientRoles: ["superAdmin"],
+  };
+  getStore().items.unshift(entry);
+  notify();
+  return entry;
+}
+
+export function addOwnershipTransferResolvedNotification(input: {
+  transferRequestId: string;
+  candidateId: string;
+  candidateName: string;
+  requestedBy: string;
+  approved: boolean;
+  targetStage: string;
+  targetSubstage?: string;
+}): TransferNotification {
+  const entry: TransferNotification = {
+    id: `tn-own-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    kind: input.approved ? "ownership_transfer_approved" : "ownership_transfer_declined",
+    title: input.approved ? "Transfer approved" : "Transfer declined",
+    body: input.approved
+      ? `${input.candidateName} was moved to ${input.targetSubstage ?? "Shortlisted"}.`
+      : `Your request to shortlist ${input.candidateName} was declined.`,
+    transferRequestId: input.transferRequestId,
+    candidateId: input.candidateId,
+    candidateName: input.candidateName,
+    fromJobTitle: input.targetStage,
+    toJobTitle: input.targetSubstage ?? "Shortlisted",
+    requestedBy: input.requestedBy,
+    read: false,
+    createdAt: new Date().toISOString(),
+    recipientRoles: ["admin", "curator", "evaluator"],
+  };
+  getStore().items.unshift(entry);
+  notify();
+  return entry;
+}
 
 export async function sendTransferNotificationEmail(payload: TransferEmailPayload): Promise<{ ok: boolean }> {
   if (typeof window !== "undefined") {

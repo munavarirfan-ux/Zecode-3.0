@@ -7,15 +7,15 @@ import { markTeamInviteAcknowledged } from "@/lib/onboarding/newUserSetupProgres
 import { enableDemoWorkspace } from "@/lib/onboarding/workspaceMode";
 import { cn } from "@/lib/utils";
 import {
-  EmptyStateIllustration,
-  type EmptyStateIllustrationId,
-} from "./EmptyStateIllustrations";
+  LineArtIllustration,
+  type LineArtIllustrationId,
+} from "@/components/empty-states/line-art-illustrations";
 import { nuxAccentGlow, nuxGlassCard, nuxGlassCardHover } from "./newUserOnboardingTokens";
 
 type QuickStartAction = {
   label: string;
   description: string;
-  illustration: EmptyStateIllustrationId;
+  illustration: LineArtIllustrationId;
 } & ({ href: string } | { demo: true });
 
 const ACTIONS: QuickStartAction[] = [
@@ -61,7 +61,13 @@ function QuickStartCardBody({
           compact ? "h-[84px] sm:h-[92px]" : "h-[100px] rounded-[14px]",
         )}
       >
-        <EmptyStateIllustration id={action.illustration} size={compact ? "medium" : "default"} />
+        <LineArtIllustration
+          id={action.illustration}
+          className={cn(
+            "text-[rgb(var(--accent-rgb)/0.42)] dark:text-muted/65",
+            compact ? "h-14 w-[5.5rem]" : "h-[72px] w-[120px]",
+          )}
+        />
       </div>
       <div className={cn("relative flex items-start justify-between gap-2.5", compact ? "mt-2.5" : "mt-3")}>
         <div className="min-w-0">

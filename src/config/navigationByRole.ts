@@ -14,7 +14,6 @@ const HIRING_DESIGN: NavGroupConfig = {
   label: MODULE_HIRE,
   items: [
     { href: ROUTES.hiringJobs, label: "Jobs", icon: "briefcase" },
-    { href: ROUTES.interviews, label: "Interviews", icon: "mic2" },
     { href: ROUTES.candidates, label: "Candidates", icon: "users" },
     { href: ROUTES.mySchedule, label: "My schedule", icon: "calendar" },
   ],
@@ -41,10 +40,7 @@ const SYSTEM: NavGroupConfig = {
 
 const INTERVIEW_OPS: NavGroupConfig = {
   label: MODULE_HIRE,
-  items: [
-    { href: ROUTES.interviews, label: "Interviews", icon: "mic2" },
-    { href: ROUTES.mySchedule, label: "My schedule", icon: "calendar" },
-  ],
+  items: [{ href: ROUTES.mySchedule, label: "My schedule", icon: "calendar" }],
 };
 
 const CURATOR_CONTENT: NavGroupConfig = {

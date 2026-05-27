@@ -4,12 +4,18 @@ import { useCallback, useMemo, useState } from "react";
 import { ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { cancelCandidateInterview, moveCandidateToStage } from "@/lib/hiring/mockData";
+import {
+  cancelCandidateInterview,
+  moveCandidateToStage,
+  rejectCandidateAtRound,
+} from "@/lib/hiring/mockData";
 import {
   buildInterviewKanbanCardModel,
   collectInterviewFilterOptions,
   EMPTY_ADVANCED_FILTERS,
+  INTERVIEW_STATUS_FILTERS,
   getColumnMetrics,
+  mapPrimaryActionToInterviewAction,
   matchesAdvancedFilters,
   matchesStatusFilter,
   type InterviewCardAction,
@@ -17,14 +23,22 @@ import {
   type InterviewKanbanCardModel,
   type InterviewOperationalStatus,
 } from "@/lib/hiring/interviewKanbanOps";
+import type { KanbanMenuAction } from "@/lib/hiring/stage-actions";
+import { updateCandidateVerdict } from "@/lib/hiring/mockData";
+import type { CandidateVerdict } from "@/lib/hiring/types";
 import type { InterviewRound } from "@/lib/hiring/interviewRounds";
 import { resolveInterviewColumnId, substageForInterviewColumn } from "@/lib/hiring/interviewRounds";
-import type { HiringCandidate } from "@/lib/hiring/types";
+import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { KanbanMoveConfirmDialog } from "../KanbanMoveConfirmDialog";
 import { ScheduleInterviewDialog } from "../schedule-interview/ScheduleInterviewDialog";
 import { InterviewCancelConfirmDialog } from "./InterviewCancelConfirmDialog";
-import { InterviewKanbanCard } from "./InterviewKanbanCard";
+import { CandidateCard } from "../candidate-card/CandidateCard";
+import { KanbanBulkActionBar } from "../kanban/KanbanBulkActionBar";
+import { KanbanBulkTagsDialog } from "../kanban/KanbanBulkTagsDialog";
+import { KanbanColumnSelectAll } from "../kanban/KanbanColumnSelectAll";
+import { useKanbanBulkSelection } from "../kanban/useKanbanBulkSelection";
 import {
   InterviewKanbanToolbar,
   type InterviewRoundOption,
@@ -40,6 +54,9 @@ export function InterviewKanban({
   onCardClick,
   onCandidateMoved,
   onRequestFeedback,
+  onOpenEmails,
+  job,
+  enableBulkSelect = true,
 }: {
   rounds: InterviewRound[];
   candidates: HiringCandidate[];
@@ -50,6 +67,9 @@ export function InterviewKanban({
   onCardClick?: (candidate: HiringCandidate) => void;
   onCandidateMoved?: () => void;
   onRequestFeedback?: (candidate: HiringCandidate) => void;
+  onOpenEmails?: (candidate: HiringCandidate) => void;
+  job?: HiringJob;
+  enableBulkSelect?: boolean;
 }) {
   const [statusFilter, setStatusFilter] = useState<InterviewOperationalStatus | "All">("All");
   const [advanced, setAdvanced] = useState<InterviewKanbanAdvancedFilters>(EMPTY_ADVANCED_FILTERS);
@@ -79,6 +99,26 @@ export function InterviewKanban({
   );
   const canDrag = rounds.length > 1 && !activeRoundId;
 
+  const {
+    bulkEnabled,
+    selectedIds,
+    selectedCandidates,
+    bulkTagsOpen,
+    setBulkTagsOpen,
+    toggleSelected,
+    clearSelection,
+    toggleSelectAllInColumn,
+    handleBulkAction,
+    bulkDisabledActions,
+  } = useKanbanBulkSelection({
+    candidates,
+    enabled: enableBulkSelect,
+    job,
+    allowMoveToInterview: false,
+    onCandidateMoved,
+    onOpenEmails,
+  });
+
   const allModels = useMemo(
     () => candidates.map((c) => buildInterviewKanbanCardModel(c, rounds)),
     [candidates, rounds],
@@ -101,15 +141,10 @@ export function InterviewKanban({
       if (activeRoundId && m.columnId !== activeRoundId) return false;
       return true;
     });
-    const counts: Record<InterviewOperationalStatus | "All", number> = {
-      All: base.length,
-      Scheduled: 0,
-      Pending: 0,
-      Ongoing: 0,
-      Completed: 0,
-      "Feedback Pending": 0,
-      Cancelled: 0,
-    };
+    const counts = Object.fromEntries(
+      INTERVIEW_STATUS_FILTERS.map((f) => [f, 0]),
+    ) as Record<InterviewOperationalStatus | "All", number>;
+    counts.All = base.length;
     for (const k of Object.keys(counts) as Array<InterviewOperationalStatus | "All">) {
       if (k === "All") continue;
       counts[k] = base.filter((m) => matchesStatusFilter(m.status, k)).length;
@@ -134,6 +169,18 @@ export function InterviewKanban({
     if (fromId === toColumn.id) return;
     setPendingMove({ candidate, toColumn });
   }, [rounds]);
+
+  const handleVerdictChange = useCallback(
+    (candidateId: string, verdict: CandidateVerdict, reason?: string) => {
+      const result = updateCandidateVerdict(candidateId, verdict, reason);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      onCandidateMoved?.();
+    },
+    [onCandidateMoved],
+  );
 
   function handleCardAction(model: InterviewKanbanCardModel, action: InterviewCardAction) {
     if (action === "request-feedback") {
@@ -166,12 +213,14 @@ export function InterviewKanban({
     }
 
     if (action === "reject") {
-      const result = moveCandidateToStage(model.candidate.id, "Rejected");
+      const result = rejectCandidateAtRound(model.candidate.id, model.roundTitle);
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
-      toast.success("Candidate rejected", { description: model.candidate.name });
+      toast.success("Rejected at this round", {
+        description: `${model.candidate.name} · ${model.roundTitle}`,
+      });
       onCandidateMoved?.();
       return;
     }
@@ -198,6 +247,40 @@ export function InterviewKanban({
       roundTitle: model.roundTitle,
       mode,
     });
+  }
+
+  function runInterviewMenuAction(action: KanbanMenuAction, model: InterviewKanbanCardModel) {
+    switch (action) {
+      case "viewProfile":
+        onCardClick?.(model.candidate);
+        break;
+      case "schedule":
+        handleCardAction(model, "schedule");
+        break;
+      case "moveNext":
+        handleCardAction(model, "move-next");
+        break;
+      case "requestFeedback":
+        handleCardAction(model, "request-feedback");
+        break;
+      case "sendEmail":
+        onCardClick?.(model.candidate);
+        break;
+      case "addNote":
+        handleCardAction(model, "add-note");
+        break;
+      case "reschedule":
+        handleCardAction(model, "reschedule");
+        break;
+      case "cancelInterview":
+        handleCardAction(model, "cancel");
+        break;
+      case "reject":
+        handleCardAction(model, "reject");
+        break;
+      default:
+        break;
+    }
   }
 
   const confirmCancel = useCallback(() => {
@@ -251,9 +334,15 @@ export function InterviewKanban({
         interviewTypes={filterOptions.types}
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
+        onClearAllFilters={() => {
+          setStatusFilter("All");
+          setAdvanced(EMPTY_ADVANCED_FILTERS);
+          setSearchQuery("");
+        }}
       />
 
-      <div className="interview-kanban-board">
+      <div className="interview-kanban-board-area--tall">
+      <div className={cn("interview-kanban-board", bulkEnabled && "pb-14")}>
         <div className="interview-kanban-board-grain" aria-hidden />
         <div className="interview-kanban-track">
           {columns.map((col) => {
@@ -293,9 +382,18 @@ export function InterviewKanban({
                 }
               >
                 <header className="interview-kanban-column-header">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#71717A] dark:text-muted">
-                    {col.title}
-                  </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#71717A] dark:text-muted">
+                      {col.title}
+                    </p>
+                    {bulkEnabled ? (
+                      <KanbanColumnSelectAll
+                        columnCandidateIds={items.map((m) => m.candidate.id)}
+                        selectedIds={selectedIds}
+                        onToggle={toggleSelectAllInColumn}
+                      />
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-[12px] font-semibold tabular-nums text-text">
                     {metrics.total} candidate{metrics.total === 1 ? "" : "s"}
                   </p>
@@ -313,15 +411,17 @@ export function InterviewKanban({
 
                 <div className="interview-kanban-column-body">
                   {items.length === 0 ? (
-                    <div className="flex flex-col items-center px-2 py-6 text-center">
-                      <p className="text-[11px] leading-relaxed text-muted">
-                        No candidates in this round yet.
-                      </p>
+                    <LineArtEmptyState
+                      illustration="kanban"
+                      message="No candidates in this round yet."
+                      size="sm"
+                      className="px-2"
+                    >
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="mt-3 h-8 gap-1.5 rounded-[9px] text-[11px]"
+                        className="h-8 gap-1.5 rounded-[9px] text-[11px]"
                         onClick={() =>
                           toast.message("Drag a candidate here or move from another round")
                         }
@@ -329,21 +429,37 @@ export function InterviewKanban({
                         <ArrowRightLeft className="h-3 w-3" strokeWidth={1.5} aria-hidden />
                         Move candidate
                       </Button>
-                    </div>
+                    </LineArtEmptyState>
                   ) : (
                     items.map((model) => (
-                      <InterviewKanbanCard
+                      <CandidateCard
                         key={model.candidate.id}
-                        model={model}
-                        draggable={canDrag}
+                        candidate={model.candidate}
+                        pipelineStage="Interviews"
+                        interviewStatus={model.status}
+                        compact
+                        draggable={canDrag && selectedIds.size === 0}
+                        selectable={bulkEnabled}
+                        selected={selectedIds.has(model.candidate.id)}
+                        selectionActive={selectedIds.size > 0}
+                        onSelectedChange={(on) => toggleSelected(model.candidate.id, on)}
                         isDragging={draggingId === model.candidate.id}
                         onDragStart={() => setDraggingId(model.candidate.id)}
                         onDragEnd={() => {
                           setDraggingId(null);
                           setDropTargetId(null);
                         }}
-                        onClick={() => onCardClick?.(model.candidate)}
-                        onAction={handleCardAction}
+                        onCardClick={() => onCardClick?.(model.candidate)}
+                        onPrimaryAction={(action) =>
+                          handleCardAction(
+                            model,
+                            mapPrimaryActionToInterviewAction(action, model),
+                          )
+                        }
+                        onMenuAction={(action) => runInterviewMenuAction(action, model)}
+                        onVerdictChange={(verdict, reason) =>
+                          handleVerdictChange(model.candidate.id, verdict, reason)
+                        }
                       />
                     ))
                   )}
@@ -352,6 +468,7 @@ export function InterviewKanban({
             );
           })}
         </div>
+      </div>
       </div>
 
       <KanbanMoveConfirmDialog
@@ -386,6 +503,28 @@ export function InterviewKanban({
         onConfirm={confirmCancel}
         confirming={cancelling}
       />
+
+      {job ? (
+        <KanbanBulkTagsDialog
+          open={bulkTagsOpen}
+          onOpenChange={setBulkTagsOpen}
+          candidates={selectedCandidates}
+          job={job}
+          onSaved={() => {
+            clearSelection();
+            onCandidateMoved?.();
+          }}
+        />
+      ) : null}
+
+      {bulkEnabled ? (
+        <KanbanBulkActionBar
+          count={selectedIds.size}
+          onClear={clearSelection}
+          onAction={handleBulkAction}
+          disabledActions={bulkDisabledActions}
+        />
+      ) : null}
     </>
   );
 }

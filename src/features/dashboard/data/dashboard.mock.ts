@@ -103,7 +103,6 @@ export const malpracticeSignals = [
   { label: "Copy / paste attempts", pct: 9, note: "Median 2 events per session" },
   { label: "Tab visibility changes", pct: 21, note: "Often paired with research tasks" },
   { label: "Window minimize / blur", pct: 16, note: "Within expected range" },
-  { label: "AI-generated answer risk", pct: 6, note: "Style + timing heuristics" },
 ];
 
 export const evaluationQueue = [
@@ -358,14 +357,6 @@ export const recentOperationalActivity: OperationalActivityItem[] = [
     detail: "Staff Backend Engineer · Pipeline",
     timeLabel: "14m ago",
     tone: "accent",
-  },
-  {
-    id: "a3",
-    initials: "AI",
-    headline: "Assessment flagged for AI-risk review",
-    detail: "SQL + Analytics · Heuristic match",
-    timeLabel: "32m ago",
-    tone: "warning",
   },
   {
     id: "a4",

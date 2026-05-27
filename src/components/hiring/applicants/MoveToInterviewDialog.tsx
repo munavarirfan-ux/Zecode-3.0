@@ -16,9 +16,8 @@ import {
 import { cn } from "@/lib/utils";
 import { moveCandidateToInterview } from "@/lib/hiring/mockData";
 import {
-  getInterviewStagesForJob,
+  getMovableInterviewStagesForJob,
   resolveInterviewRoundForStage,
-  type JobHiringStageConfig,
 } from "@/lib/hiring/jobHiringStages";
 import type { HiringCandidate } from "@/lib/hiring/types";
 
@@ -26,18 +25,29 @@ export function MoveToInterviewDialog({
   open,
   onOpenChange,
   candidate,
+  candidates,
   jobId,
   onMoved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  candidate: HiringCandidate | null;
+  /** Single-candidate move (legacy) */
+  candidate?: HiringCandidate | null;
+  /** Bulk move — takes precedence when non-empty */
+  candidates?: HiringCandidate[];
   jobId: string;
   onMoved?: () => void;
 }) {
-  const stages = useMemo(() => getInterviewStagesForJob(jobId), [jobId]);
+  const list = useMemo(() => {
+    if (candidates && candidates.length > 0) return candidates;
+    if (candidate) return [candidate];
+    return [];
+  }, [candidate, candidates]);
+
+  const stages = useMemo(() => getMovableInterviewStagesForJob(jobId), [jobId]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const isBulk = list.length > 1;
 
   useEffect(() => {
     if (open) {
@@ -49,23 +59,35 @@ export function MoveToInterviewDialog({
   const selectedStage = stages.find((s) => s.id === selectedId);
 
   function handleConfirm() {
-    if (!candidate || !selectedStage) return;
+    if (list.length === 0 || !selectedStage) return;
     setSubmitting(true);
     const round = resolveInterviewRoundForStage(jobId, selectedStage);
-    const result = moveCandidateToInterview(candidate.id, jobId, round);
+    let ok = 0;
+    let failed = 0;
+    for (const c of list) {
+      const result = moveCandidateToInterview(c.id, jobId, round);
+      if (result.ok) ok += 1;
+      else failed += 1;
+    }
     setSubmitting(false);
 
-    if (!result.ok) {
-      toast.error(result.error);
+    if (ok === 0) {
+      toast.error("Could not move candidates");
       return;
     }
 
-    toast.success(`Candidate moved to ${selectedStage.stageName}.`);
+    if (isBulk) {
+      toast.success(
+        `Moved ${ok} candidate${ok === 1 ? "" : "s"} to ${selectedStage.stageName}${failed > 0 ? ` (${failed} skipped)` : ""}`,
+      );
+    } else {
+      toast.success(`Candidate moved to ${selectedStage.stageName}.`);
+    }
     onMoved?.();
     onOpenChange(false);
   }
 
-  if (!candidate) return null;
+  if (list.length === 0) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,25 +97,35 @@ export function MoveToInterviewDialog({
       >
         <DialogHeader className="shrink-0 border-b border-[rgba(15,23,42,0.06)] px-5 pb-4 pt-5">
           <DialogTitle className="text-[1rem] font-semibold tracking-[-0.02em] text-text">
-            Move candidate to interview stage
+            {isBulk ? `Move ${list.length} candidates to interview` : "Move candidate to interview stage"}
           </DialogTitle>
           <DialogDescription className="text-[13px] leading-relaxed text-text-secondary/90">
-            Choose which interview stage this shortlisted candidate should move into.
+            Choose which interview stage {isBulk ? "these shortlisted candidates" : "this shortlisted candidate"} should move into. HR round is not available here — schedule that separately after technical rounds.
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           <div className="rounded-[12px] border border-[rgba(15,23,42,0.06)] bg-[#FAFAFB]/90 px-3.5 py-3 dark:bg-white/[0.03]">
-            <dl className="space-y-2 text-[12px]">
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted">Candidate</dt>
-                <dd className="font-semibold text-text">{candidate.name}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted">Current stage</dt>
-                <dd className="text-right font-medium text-text">Screening → Shortlisted</dd>
-              </div>
-            </dl>
+            {isBulk ? (
+              <ul className="max-h-32 space-y-1 overflow-y-auto text-[12px]">
+                {list.map((c) => (
+                  <li key={c.id} className="truncate font-medium text-text">
+                    {c.name}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <dl className="space-y-2 text-[12px]">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted">Candidate</dt>
+                  <dd className="font-semibold text-text">{list[0].name}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted">Current stage</dt>
+                  <dd className="text-right font-medium text-text">Screening → Shortlisted</dd>
+                </div>
+              </dl>
+            )}
           </div>
 
           {stages.length === 0 ? (
@@ -175,7 +207,7 @@ export function MoveToInterviewDialog({
             disabled={submitting || !selectedStage || stages.length === 0}
             onClick={handleConfirm}
           >
-            {submitting ? "Moving…" : "Move to Interview"}
+            {submitting ? "Moving…" : isBulk ? `Move ${list.length} to Interview` : "Move to Interview"}
           </Button>
         </DialogFooter>
       </DialogContent>

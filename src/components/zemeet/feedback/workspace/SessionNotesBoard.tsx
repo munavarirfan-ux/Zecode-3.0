@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Pin, StickyNote, X } from "lucide-react";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import type { ZeMeetNoteEntry } from "@/lib/zemeet/types";
 import { formatSessionNoteTime, heroStickyNote } from "./feedbackWorkspaceTokens";
@@ -82,7 +83,7 @@ export function SessionNotesBoard({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
         {notes.length === 0 ? (
-          <p className="py-12 text-center text-[13px] text-[#92400E]/70">No session notes captured.</p>
+          <LineArtEmptyState illustration="notes" message="No session notes captured." size="compact" />
         ) : (
           <div className="flex flex-col gap-3">
             {notes.map((note, index) => (

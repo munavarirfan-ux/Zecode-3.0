@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Briefcase, LayoutDashboard, Mic2, Search, Users, type LucideIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { filterGlobalSearchItems, groupGlobalSearchItems } from "@/lib/globalSearch";
 import { useRole } from "@/context/RoleContext";
@@ -107,7 +108,12 @@ export function GlobalSearch({ className }: { className?: string }) {
         >
           <div className="max-h-[min(320px,45vh)] overflow-y-auto p-1">
             {grouped.length === 0 ? (
-              <p className="px-2 py-4 text-center text-sm text-muted">No results for &ldquo;{query}&rdquo;</p>
+              <LineArtEmptyState
+                illustration="search"
+                message={`No results for "${query}"`}
+                size="compact"
+                className="py-4"
+              />
             ) : (
               grouped.map(([group, groupItems]) => (
                 <div key={group} className="mb-1 last:mb-0">

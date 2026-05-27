@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Ban,
   Calendar,
+  CalendarClock,
   CheckCircle2,
   Clock,
   FileText,
@@ -25,6 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getPipelineTenure } from "@/lib/hiring/stage-actions";
+import { getCandidateStage } from "@/lib/hiring/stages";
 import type { HiringCandidate } from "@/lib/hiring/types";
 import {
   ACTIVITY_FILTERS,
@@ -36,6 +39,7 @@ import {
   type CandidateActivityItem,
   type CandidateActivityKind,
 } from "@/lib/hiring/candidateActivity";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { dashboardPanelInteractive } from "@/components/dashboard/dashboardTokens";
 
@@ -119,6 +123,56 @@ const KIND_CONFIG: Record<
     tint: "bg-emerald-50/70 dark:bg-emerald-500/[0.1]",
   },
 };
+
+function PipelineTenureCard({ candidate }: { candidate: HiringCandidate }) {
+  const tenure = getPipelineTenure(candidate.appliedAt);
+  if (!tenure) return null;
+
+  const stage = getCandidateStage(candidate);
+
+  return (
+    <div
+      className={cn(
+        dashboardPanelInteractive,
+        "grid gap-3 border border-[rgba(15,23,42,0.06)] bg-[#FAFAFB]/90 p-4 sm:grid-cols-2 dark:border-white/[0.06] dark:bg-white/[0.03]",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-violet-100/80 dark:bg-violet-500/15">
+          <Calendar className="h-4 w-4 text-violet-700 dark:text-violet-300" strokeWidth={1.5} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#A1A1AA]">
+            Applied
+          </p>
+          <p className="mt-1 text-[14px] font-semibold text-[#18181B] dark:text-text">
+            {tenure.appliedLabel}
+          </p>
+          <p className="mt-0.5 text-[12px] text-[#71717A] dark:text-text-muted">
+            {candidate.source ? `via ${String(candidate.source)}` : "Application received"}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-start gap-3 sm:border-l sm:border-[rgba(15,23,42,0.06)] sm:pl-4 dark:sm:border-white/[0.06]">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-indigo-100/80 dark:bg-indigo-500/15">
+          <CalendarClock className="h-4 w-4 text-indigo-700 dark:text-indigo-300" strokeWidth={1.5} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#A1A1AA]">
+            Time in pipeline
+          </p>
+          <p className="mt-1 text-[14px] font-semibold tabular-nums text-[#18181B] dark:text-text">
+            {tenure.daysLabel}
+          </p>
+          <p className="mt-0.5 text-[12px] text-[#71717A] dark:text-text-muted">
+            Current stage: {stage}
+            {candidate.currentSubstage ? ` · ${candidate.currentSubstage}` : ""}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function NextActionCard({ title, detail }: { title: string; detail: string }) {
   return (
@@ -209,17 +263,13 @@ function ActivityCard({
 function TimelineEmpty({ filter }: { filter: ActivityFilterId }) {
   const label = ACTIVITY_FILTERS.find((f) => f.id === filter)?.label ?? "activity";
   return (
-    <div
-      className={cn(
-        dashboardPanelInteractive,
-        "flex flex-col items-center justify-center px-6 py-12 text-center",
-      )}
-    >
-      <Clock className="mb-3 h-8 w-8 text-[#D4D4D8]" strokeWidth={1.5} aria-hidden />
-      <p className="text-[14px] font-medium text-[#18181B] dark:text-text">No {label.toLowerCase()} yet</p>
-      <p className="mt-1 max-w-xs text-[12px] text-[#71717A] dark:text-text-muted">
-        Try another filter or check back as the candidate progresses.
-      </p>
+    <div className={cn(dashboardPanelInteractive)}>
+      <LineArtEmptyState
+        illustration="generic"
+        message={`No ${label.toLowerCase()} yet`}
+        description="Try another filter or check back as the candidate progresses."
+        size="compact"
+      />
     </div>
   );
 }
@@ -262,6 +312,8 @@ export function CandidateTimelineTab({ candidate }: { candidate: HiringCandidate
           </Select>
         </div>
       </header>
+
+      <PipelineTenureCard candidate={candidate} />
 
       {nextAction ? <NextActionCard title={nextAction.title} detail={nextAction.detail} /> : null}
 

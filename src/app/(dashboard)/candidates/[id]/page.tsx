@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { getAppOrgId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getRoleFitForCandidate } from "@/lib/scoring-server";
-import { parseJson } from "@/lib/json";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -165,15 +164,12 @@ export default async function CandidateDetailPage({
         </CardContent>
       </Card>
 
-      {/* 8) Content submissions + AI signals */}
+      {/* 8) Content submissions */}
       <Card>
         <CardHeader>
-          <CardTitle>Content submissions & AI signals</CardTitle>
+          <CardTitle>Content submissions</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-muted mb-3">
-            AI-generated content signals are heuristics only, not proof of origin.
-          </p>
           {candidate.contentSubmissions.length === 0 ? (
             <p className="text-sm text-muted">No submissions yet.</p>
           ) : (
@@ -182,23 +178,6 @@ export default async function CandidateDetailPage({
                 <li key={sub.id} className="border border-border rounded-2xl p-4">
                   <p className="text-xs text-muted mb-1">{sub.type}</p>
                   <p className="text-sm text-text-secondary whitespace-pre-wrap">{sub.text.slice(0, 200)}{sub.text.length > 200 ? "…" : ""}</p>
-                  {sub.aiSignals.map((sig) => (
-                    <div key={sig.id} className="mt-2 p-2 bg-parchment rounded-xl">
-                      <p className="text-xs font-medium text-primary">
-                        Band: {sig.band} · Score: {(sig.score * 100).toFixed(0)}%
-                      </p>
-                      <ul className="text-xs text-text-secondary list-disc list-inside mt-1">
-                        {parseJson<string[]>(sig.reasons, []).map((r, i) => (
-                          <li key={i}>{r}</li>
-                        ))}
-                      </ul>
-                      {sig.disclaimerShown && (
-                        <p className="text-xs text-muted mt-2 italic">
-                          This is a heuristic signal, not definitive proof.
-                        </p>
-                      )}
-                    </div>
-                  ))}
                 </li>
               ))}
             </ul>

@@ -18,7 +18,7 @@ import { APP_NAME } from "@/constants/app";
 import { ROUTES } from "@/config/routes";
 import { completeOnboarding } from "@/lib/onboarding/onboardingStore";
 import type { OnboardingIntent, OnboardingProfile } from "@/lib/onboarding/types";
-import { EmptyStateIllustration } from "./EmptyStateIllustrations";
+import { LineArtIllustration } from "@/components/empty-states/line-art-illustrations";
 
 const INTENTS: { id: OnboardingIntent; label: string; description: string; icon: typeof Briefcase }[] = [
   { id: "hire", label: "Hire Candidates", description: "Run pipelines from job creation to offer.", icon: Briefcase },
@@ -94,7 +94,10 @@ export function OnboardingExperience({ onComplete }: { onComplete: () => void })
         {step === 0 && (
           <div className="nux-fade-up text-center">
             <div className="mx-auto mb-8">
-              <EmptyStateIllustration id="welcome" />
+              <LineArtIllustration
+                id="welcome"
+                className="mx-auto text-[rgb(var(--accent-rgb)/0.42)] dark:text-muted/65"
+              />
             </div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Welcome to {APP_NAME}</p>
             <h1 className="mt-3 text-[2rem] font-semibold leading-[1.08] tracking-[-0.04em] sm:text-[2.75rem]">
@@ -178,7 +181,7 @@ export function OnboardingExperience({ onComplete }: { onComplete: () => void })
         {step === 2 && (
           <div className="nux-fade-up mx-auto max-w-md">
             <h2 className="text-center text-[1.5rem] font-semibold tracking-[-0.035em]">Personalize your setup</h2>
-            <p className="mt-2 text-center text-[14px] text-muted">Helps us tune recommendations and quick actions.</p>
+            <p className="mt-2 text-center text-[14px] text-muted">Tell us about your team so we can tailor your workspace.</p>
             <div className="mt-8 space-y-4">
               <label className="block text-[12px] font-medium text-muted">Your role</label>
               <Input

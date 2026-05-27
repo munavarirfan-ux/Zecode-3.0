@@ -6,6 +6,7 @@ import { useZeMeet } from "@/components/zemeet/ZeMeetProvider";
 import { ZeMeetCandidateInstructions } from "@/components/zemeet/lobby/ZeMeetCandidateInstructions";
 import { ZeMeetPrivateNotesPanel } from "@/components/zemeet/room/ZeMeetPrivateNotesPanel";
 import { useZeMeetTokens } from "@/components/zemeet/zemeetTokens";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 
 export function ZeMeetSidebar() {
@@ -100,9 +101,12 @@ export function ZeMeetSidebar() {
         <>
           <ul className="flex-1 space-y-2 overflow-y-auto p-3">
             {chat.length === 0 ? (
-              <p className={cn("text-center text-[12px]", t.isLight ? "text-[#A1A1AA]" : "text-white/40")}>
-                No messages yet
-              </p>
+              <LineArtEmptyState
+                illustration="chat"
+                message="No messages yet"
+                size="sm"
+                className={cn(t.isLight ? "text-muted/70" : "text-white/50")}
+              />
             ) : (
               chat.map((m) => (
                 <li

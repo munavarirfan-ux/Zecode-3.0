@@ -19,6 +19,7 @@ const STRIP_HERO_METRICS_KEYS = new Set([
   "live-assessment-monitor-hero-metrics-collapsed",
   "job-workspace-hero-metrics-collapsed",
   "assessmentDetailMetricsCollapsed",
+  "question-pool-hero-metrics-collapsed",
 ]);
 
 function readCollapsedPreference(storageKey: string): boolean {

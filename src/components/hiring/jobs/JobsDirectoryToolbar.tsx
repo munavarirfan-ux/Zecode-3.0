@@ -52,8 +52,14 @@ export function JobsDirectoryToolbar({
   const sortLabel = SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "Recently updated";
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex flex-wrap gap-1.5">
+    <div
+      className={cn(
+        "flex flex-col gap-3 rounded-[14px] border border-[rgba(15,23,42,0.06)]",
+        "bg-white/90 px-2.5 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between",
+        "dark:bg-surface/95",
+      )}
+    >
+      <div className="flex min-w-0 flex-wrap gap-1.5">
         {JOBS_STATUS_TABS.map((tab) => {
           const active = statusTab === tab.id;
           const count = statusCounts[tab.id];
@@ -84,12 +90,7 @@ export function JobsDirectoryToolbar({
         })}
       </div>
 
-      <div
-        className={cn(
-          "flex flex-wrap items-center gap-2 rounded-[14px] border border-[rgba(15,23,42,0.06)]",
-          "bg-white/90 px-2.5 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur-sm dark:bg-surface/95",
-        )}
-      >
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
         <JobsFiltersPopover filters={filters} onApply={onFiltersChange} />
 
         <DropdownMenu>
@@ -107,7 +108,7 @@ export function JobsDirectoryToolbar({
               <ChevronDown className="h-3 w-3 text-muted/70" strokeWidth={2} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
               Sort by
             </DropdownMenuLabel>
@@ -122,16 +123,14 @@ export function JobsDirectoryToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="ml-auto">
-          <DirectoryViewSwitcher
-            value={view}
-            onChange={onViewChange}
-            options={[
-              { value: "list", label: "List", icon: "list" },
-              { value: "grid", label: "Grid", icon: "grid" },
-            ]}
-          />
-        </div>
+        <DirectoryViewSwitcher
+          value={view}
+          onChange={onViewChange}
+          options={[
+            { value: "list", label: "List", icon: "list" },
+            { value: "grid", label: "Grid", icon: "grid" },
+          ]}
+        />
       </div>
     </div>
   );

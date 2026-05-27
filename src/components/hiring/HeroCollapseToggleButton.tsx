@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { hiringHeroCollapseToggleBtn } from "./hiringTokens";
 
@@ -15,11 +14,13 @@ export function HeroCollapseToggleButton({
   className?: string;
 }) {
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      size="icon"
-      className={cn(hiringHeroCollapseToggleBtn, className)}
+      className={cn(
+        "inline-flex items-center justify-center",
+        hiringHeroCollapseToggleBtn,
+        className,
+      )}
       onClick={onToggle}
       aria-expanded={!collapsed}
       aria-label={
@@ -31,6 +32,6 @@ export function HeroCollapseToggleButton({
       ) : (
         <ChevronUp className="h-4 w-4" strokeWidth={2} aria-hidden />
       )}
-    </Button>
+    </button>
   );
 }

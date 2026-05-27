@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import {
   getCandidateEditProfile,
@@ -91,7 +92,7 @@ export function AddTagsDialog({
               </span>
             ))}
             {tags.length === 0 ? (
-              <p className="text-[12px] text-muted">No tags selected yet.</p>
+              <LineArtEmptyState illustration="tags" message="No tags selected yet." size="sm" className="py-3" />
             ) : null}
           </div>
 

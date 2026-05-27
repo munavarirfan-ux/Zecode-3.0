@@ -1,4 +1,10 @@
-import type { CandidateInterview, CustomFieldDef, HiringCandidate, HiringJob } from "./types";
+import type {
+  CandidateInterview,
+  CandidateVerdict,
+  CustomFieldDef,
+  HiringCandidate,
+  HiringJob,
+} from "./types";
 import {
   formToCandidateInterview,
   type ScheduleInterviewPayload,
@@ -6,6 +12,7 @@ import {
 import { DEFAULT_HIRING_STAGES } from "./types";
 import { buildStaffDesignerApplicants } from "./staffDesignerApplicants";
 import { mergePersistedJobs } from "./persistedJobs";
+import { isHrInterviewRound } from "./customiseHiringProcess";
 import {
   enrichCandidate,
   getCandidateStage,
@@ -614,6 +621,7 @@ Marcus Chen`,
     appliedAt: "2026-05-06",
     currentStage: "Hire & Offers",
     currentSubstage: "Offer Sent",
+    stage: "Hired & Offers",
     recruiterOwner: "Ava Patel",
     experience: "14 years · Staff+ engineering",
     skills: ["Java", "Kubernetes", "System design", "Mentorship"],
@@ -683,6 +691,67 @@ Marcus Chen`,
     timeline: [
       { id: "t7", label: "Applied", detail: "Agency — Vertex Talent", at: "May 6, 11:00" },
       { id: "t8", label: "Offer Sent", detail: "Band B · London remote", at: "May 13, 17:00" },
+    ],
+  }),
+  /** Applicants pool · owned by Marcus — Alex engaged; test transfer when shortlisting from Applicants */
+  baseCandidate({
+    id: "c-transfer-demo",
+    jobId: "staff-product-designer",
+    name: "Samira Okonkwo · transfer demo",
+    email: "samira.okonkwo@example.com",
+    phone: "+49 171 555 0198",
+    location: "Berlin, DE",
+    source: "Referral",
+    appliedAt: "2026-05-09",
+    stage: "Screening",
+    currentStage: "Screening",
+    currentSubstage: "Applied",
+    kanbanColumn: "applied",
+    recruiterOwner: "Marcus Chen",
+    ownerId: "rec-marcus",
+    ownerName: "Marcus Chen",
+    engagedBy: [
+      {
+        recruiterId: "rec-marcus",
+        recruiterName: "Marcus Chen",
+        firstEngagedAt: "2026-05-09",
+        lastEngagedAt: "2026-05-14T09:00:00.000Z",
+        engagementType: "emailed",
+      },
+      {
+        recruiterId: "rec-alex",
+        recruiterName: "Alex Rivera",
+        firstEngagedAt: "2026-05-12",
+        lastEngagedAt: "2026-05-14T11:30:00.000Z",
+        engagementType: "viewed",
+      },
+    ],
+    experience: "8 years · Product design · Design systems",
+    skills: ["Figma", "Research", "Prototyping", "Workshop facilitation"],
+    education: "B.A. Industrial Design — UDK Berlin",
+    noticePeriod: "1 month",
+    expectedSalary: "€98,000",
+    resumeStatus: "Reviewed",
+    resumeUploadedAt: "2026-05-09",
+    lastActivity: "1d ago",
+    recruiterNotes:
+      "Transfer demo (Applicants pool): View as Admin, drag to Shortlisted or use actions → collision. Marcus owns; Alex engaged. Approve transfer as Super Admin.",
+    hiringManagerNotes: "",
+    interviewerNotes: "",
+    emails: [
+      {
+        id: "e-transfer-demo",
+        subject: "Ze[code] — Portfolio follow-up",
+        sender: "Marcus Chen",
+        timestamp: "May 12, 10:00",
+        type: "Follow-up",
+        preview: "Thanks for your application — we'd like to see two case studies…",
+      },
+    ],
+    interviews: [],
+    timeline: [
+      { id: "td-t1", label: "Applied", detail: "Employee referral", at: "May 9, 09:00" },
+      { id: "td-t2", label: "Contacted", detail: "Marcus emailed portfolio request", at: "May 11, 15:20" },
     ],
   }),
   ...buildStaffDesignerApplicants(baseCandidate),
@@ -904,6 +973,13 @@ export function moveCandidateToInterview(
   jobId: string,
   round: { id: string; title: string },
 ): MoveStageResult {
+  if (isHrInterviewRound(round)) {
+    return {
+      ok: false,
+      error: "HR round cannot be assigned from Applicant Stats. Use technical rounds first.",
+    };
+  }
+
   const candidate = HIRING_CANDIDATES.find((c) => c.id === candidateId);
   if (!candidate) return { ok: false, error: "Candidate not found" };
 
@@ -1033,6 +1109,58 @@ export function cancelCandidateInterview(
   return { ok: true, candidate: enrichCandidate(candidate) };
 }
 
+export type RejectAtRoundResult =
+  | { ok: true; candidate: HiringCandidate }
+  | { ok: false; error: string };
+
+/** Reject at the current interview round — candidate stays in Interviews pipeline for traceability */
+export function rejectCandidateAtRound(
+  candidateId: string,
+  roundTitle: string,
+): RejectAtRoundResult {
+  const candidate = HIRING_CANDIDATES.find((c) => c.id === candidateId);
+  if (!candidate) return { ok: false, error: "Candidate not found" };
+
+  const idx = candidate.interviews.findIndex(
+    (i) => i.round.toLowerCase() === roundTitle.toLowerCase(),
+  );
+
+  if (idx >= 0) {
+    candidate.interviews[idx] = {
+      ...candidate.interviews[idx],
+      status: "Completed",
+      feedbackStatus: "Submitted",
+      roundOutcome: "Rejected",
+    };
+  } else {
+    candidate.interviews.push({
+      id: `i-reject-${Date.now()}`,
+      round: roundTitle,
+      interviewers: [candidate.recruiterOwner],
+      scheduledAt: "—",
+      status: "Completed",
+      feedbackStatus: "Submitted",
+      roundOutcome: "Rejected",
+    });
+  }
+
+  if (candidate.currentStage !== "Interviews") {
+    syncCandidateStageFields(candidate, "Interviews", roundTitle);
+  }
+
+  candidate.timeline = [
+    {
+      id: `t-reject-${Date.now()}`,
+      label: "Rejected at interview round",
+      detail: `${roundTitle} · ${candidate.name}`,
+      at: "Just now",
+    },
+    ...candidate.timeline,
+  ];
+
+  return { ok: true, candidate: enrichCandidate(candidate) };
+}
+
 /** Register a new candidate with default stage based on how they were added */
 export function registerCandidate(
   partial: Omit<
@@ -1069,6 +1197,49 @@ export function registerCandidate(
   HIRING_CANDIDATES.push(candidate);
   syncJobCandidateCount(candidate.jobId);
   return enrichCandidate(candidate);
+}
+
+export type UpdateVerdictResult =
+  | { ok: true; candidate: HiringCandidate }
+  | { ok: false; error: string };
+
+export function updateCandidateVerdict(
+  candidateId: string,
+  verdict: CandidateVerdict,
+  reason?: string,
+): UpdateVerdictResult {
+  const candidate = HIRING_CANDIDATES.find((c) => c.id === candidateId);
+  if (!candidate) return { ok: false, error: "Candidate not found" };
+
+  candidate.verdict = verdict;
+  if (reason?.trim()) {
+    candidate.verdictReason = reason.trim();
+  } else if (verdict === "pending" || verdict === "neutral") {
+    candidate.verdictReason = undefined;
+  }
+
+  const verdictLabel =
+    verdict === "hire"
+      ? "Hire"
+      : verdict === "no_hire"
+        ? "No Hire"
+        : verdict === "neutral"
+          ? "Neutral"
+          : "Pending";
+
+  candidate.timeline = [
+    {
+      id: `t-verdict-${Date.now()}`,
+      label: "Verdict updated",
+      detail: reason?.trim()
+        ? `Marked as ${verdictLabel}: ${reason.trim()}`
+        : `Marked as ${verdictLabel}`,
+      at: formatTimelineAt(),
+    },
+    ...candidate.timeline,
+  ];
+
+  return { ok: true, candidate: enrichCandidate(candidate) };
 }
 
 export const DEPARTMENTS = [

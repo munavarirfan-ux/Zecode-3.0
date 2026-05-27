@@ -28,7 +28,6 @@ import { JobsDirectoryToolbar } from "./jobs/JobsDirectoryToolbar";
 import { hiringCanvas } from "./hiringTokens";
 import { PremiumEmptyState } from "@/components/onboarding/PremiumEmptyState";
 import { NewUserModuleEmptyState } from "@/components/onboarding/NewUserModuleEmptyState";
-import { SmartGuidanceBanner } from "@/components/onboarding/SmartGuidanceBanner";
 import { EMPTY_STATE_PRESETS } from "@/lib/onboarding/emptyStatePresets";
 
 const EMPTY_STATS = {
@@ -152,8 +151,6 @@ export function JobsDashboard() {
           }}
           addJobButtonRef={addJobButtonRef}
         />
-
-        <SmartGuidanceBanner className="mb-1" />
 
         {showJobsToolbar ? (
           <JobsDirectoryToolbar

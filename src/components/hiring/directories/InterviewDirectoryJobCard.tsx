@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   Clock,
   MessageSquare,
-  Sparkles,
+  MessageSquare,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -136,7 +136,7 @@ export function InterviewDirectoryJobCard({ job }: { job: InterviewDirectoryJob 
             </span>
             {stats.feedbackPending > 0 ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(234,88,12,0.20)] bg-[rgba(234,88,12,0.10)] px-2.5 py-1 text-[11px] font-semibold text-[#9A3412] dark:text-[#FDBA74]">
-                <Sparkles className="h-3.5 w-3.5 opacity-90" strokeWidth={2} aria-hidden />
+                <MessageSquare className="h-3.5 w-3.5 opacity-90" strokeWidth={2} aria-hidden />
                 <span className="tabular-nums">{stats.feedbackPending}</span>
                 needs feedback
               </span>

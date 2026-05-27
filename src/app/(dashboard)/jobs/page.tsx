@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAppOrgId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +27,11 @@ export default async function JobsPage() {
         </CardHeader>
         <CardContent>
           {jobs.length === 0 ? (
-            <p className="text-sm text-text-secondary">No jobs yet. Create one to get started.</p>
+            <LineArtEmptyState
+              illustration="jobs"
+              message="No jobs yet."
+              description="Create one to get started."
+            />
           ) : (
             <ul className="space-y-2">
               {jobs.map((j) => (

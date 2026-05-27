@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { getNavigationForRole } from "@/config/navigationByRole";
 import { useRole } from "@/context/RoleContext";
@@ -110,7 +111,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
         </DialogHeader>
         <div className="max-h-[min(360px,50vh)] overflow-y-auto p-2" role="listbox">
           {grouped.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-muted">No results</p>
+            <LineArtEmptyState illustration="search" message="No results" size="compact" className="py-4" />
           ) : (
             grouped.map(([group, groupItems]) => (
               <div key={group} className="mb-2 last:mb-0">

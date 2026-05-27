@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { isValidElement } from "react";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
@@ -45,7 +44,7 @@ function parseActionChildren(children: React.ReactNode): {
   return { icon, label };
 }
 
-type HeroActionButtonProps = React.ComponentProps<typeof Button> & {
+type HeroActionButtonProps = React.ComponentProps<"button"> & {
   /** Icon node — optional if the first child is a Lucide/icon element */
   icon?: React.ReactNode;
   /** Visible label when expanded; tooltip when collapsed */
@@ -73,17 +72,19 @@ export const HeroActionButton = React.forwardRef<HTMLButtonElement, HeroActionBu
       return (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
+            <button
               ref={ref}
               type="button"
-              variant="outline"
-              size="icon"
-              className={cn(hiringHeroCollapsedIconBtn, className)}
+              className={cn(
+                "inline-flex items-center justify-center",
+                hiringHeroCollapsedIconBtn,
+                className,
+              )}
               aria-label={labelText}
               {...props}
             >
               {parsed.icon}
-            </Button>
+            </button>
           </TooltipTrigger>
           {labelText ? <TooltipContent side="bottom">{labelText}</TooltipContent> : null}
         </Tooltip>
@@ -93,16 +94,20 @@ export const HeroActionButton = React.forwardRef<HTMLButtonElement, HeroActionBu
     const styleClass = variant === "primary" ? hiringHeroPrimaryBtnSm : hiringHeroSecondaryBtnSm;
 
     return (
-      <Button
+      <button
         ref={ref}
         type="button"
-        size={size ?? "sm"}
-        className={cn(styleClass, className)}
+        className={cn(
+          "inline-flex items-center justify-center",
+          styleClass,
+          "disabled:pointer-events-none",
+          className,
+        )}
         {...props}
       >
         {parsed.icon}
         {parsed.label}
-      </Button>
+      </button>
     );
   },
 );

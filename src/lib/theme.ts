@@ -200,6 +200,8 @@ export function applyAccentPaletteToDocument(palette: AccentPalette): void {
 
   set("--accent-rgb", palette.accentRgb);
   set("--accent-hover-rgb", palette.accentHoverRgb);
+  set("--btn-schedule-bg", `rgb(${palette.accentRgb})`);
+  set("--btn-schedule-bg-hover", `rgb(${palette.accentHoverRgb})`);
   set("--accent-ring-rgb", palette.accentRingRgb);
   set("--accent-deep-rgb", palette.accentDeepRgb);
   set("--accent-soft-rgb", palette.accentSoftRgb);

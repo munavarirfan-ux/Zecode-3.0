@@ -128,7 +128,7 @@ export function CandidatesDirectory() {
             />
           ) : (
             <PremiumEmptyState
-              illustration="candidates"
+              illustration="filters"
               headline="No candidates match"
               subtext="Adjust filters or search to explore your hiring pipeline."
             />

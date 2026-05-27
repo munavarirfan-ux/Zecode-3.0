@@ -10,6 +10,7 @@ import {
   type CandidateSortKey,
 } from "@/lib/hiring/assessments/assessmentCandidates";
 import { hiringCard, hiringTransition } from "../hiringTokens";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { AssessmentCandidateRow } from "./AssessmentCandidateRow";
 
@@ -133,8 +134,12 @@ export function AssessmentCandidateDirectory({
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-16 text-center text-[13px] text-muted">
-                  No candidates match your filters.
+                <td colSpan={8} className="p-0">
+                  <LineArtEmptyState
+                    illustration="filters"
+                    message="No candidates match your filters."
+                    size="compact"
+                  />
                 </td>
               </tr>
             ) : (

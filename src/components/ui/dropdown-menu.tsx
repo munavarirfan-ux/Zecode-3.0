@@ -19,11 +19,16 @@ const DropdownMenuSubTrigger = React.forwardRef<
 >(({ className, inset, children, ...props }, ref) => (
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
-    className={cn(radixItem, "cursor-default select-none", inset && "pl-8", className)}
+    className={cn(
+      radixItem,
+      "flex cursor-default select-none items-center gap-2",
+      inset && "pl-8",
+      className,
+    )}
     {...props}
   >
     {children}
-    <ChevronRight className="ml-auto h-4 w-4 text-muted" />
+    <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted" />
   </DropdownMenuPrimitive.SubTrigger>
 ));
 DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
@@ -34,7 +39,7 @@ const DropdownMenuSubContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.SubContent
     ref={ref}
-    className={cn("z-50 min-w-[8rem] overflow-hidden p-1", radixSurface, radixContent, className)}
+    className={cn("z-[250] min-w-[8rem] overflow-hidden p-1", radixSurface, radixContent, className)}
     {...props}
   />
 ));
@@ -49,7 +54,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[10rem] overflow-y-auto overflow-x-hidden p-1",
+        "z-[250] max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[10rem] overflow-y-auto overflow-x-hidden p-1",
         radixSurface,
         radixContent,
         className,
@@ -66,7 +71,12 @@ const DropdownMenuItem = React.forwardRef<
 >(({ className, inset, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
-    className={cn(radixItem, "cursor-default select-none", inset && "pl-8", className)}
+    className={cn(
+      radixItem,
+      "flex cursor-default select-none items-center gap-2",
+      inset && "pl-8",
+      className,
+    )}
     {...props}
   />
 ));

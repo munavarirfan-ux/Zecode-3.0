@@ -27,6 +27,7 @@ import {
   submitFeedbackRequest,
   type InterviewFeedbackBundle,
 } from "@/lib/hiring/interviewFeedback";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { RequestFeedbackModal } from "./feedback/RequestFeedbackModal";
 import { dashboardPanelInteractive } from "@/components/dashboard/dashboardTokens";
@@ -318,27 +319,23 @@ function InterviewsEmptyState({
   onSchedule: () => void;
 }) {
   return (
-    <div
-      className={cn(
-        dashboardPanelInteractive,
-        "flex flex-col items-center justify-center px-6 py-14 text-center",
-      )}
-    >
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#F4F4F5] dark:bg-white/[0.06]">
-        <Calendar className="h-6 w-6 text-[#A1A1AA]" strokeWidth={1.5} aria-hidden />
-      </div>
-      <p className="text-[15px] font-semibold text-[#18181B] dark:text-text">No interviews scheduled yet</p>
-      <p className="mt-1 max-w-sm text-[13px] text-[#71717A] dark:text-text-muted">
-        {canSchedule
-          ? "Schedule the first conversation to start tracking this candidate's interview journey."
-          : "No interviews have been scheduled for this candidate yet."}
-      </p>
-      {canSchedule ? (
-        <Button type="button" size="sm" className="mt-5 h-9 gap-1.5 rounded-[9px] px-4" onClick={onSchedule}>
-          <CalendarPlus className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-          Schedule first interview
-        </Button>
-      ) : null}
+    <div className={cn(dashboardPanelInteractive)}>
+      <LineArtEmptyState
+        illustration="interviews"
+        message="No interviews scheduled yet"
+        description={
+          canSchedule
+            ? "Schedule the first conversation to start tracking this candidate's interview journey."
+            : "No interviews have been scheduled for this candidate yet."
+        }
+      >
+        {canSchedule ? (
+          <Button type="button" size="sm" className="h-9 gap-1.5 rounded-[9px] px-4" onClick={onSchedule}>
+            <CalendarPlus className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+            Schedule first interview
+          </Button>
+        ) : null}
+      </LineArtEmptyState>
     </div>
   );
 }

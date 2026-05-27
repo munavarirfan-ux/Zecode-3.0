@@ -9,7 +9,10 @@ import {
   NEW_USER_EMPTY_MODULES,
   type NewUserEmptyModuleId,
 } from "@/lib/onboarding/newUserEmptyModules";
-import { EmptyStateIllustration } from "./EmptyStateIllustrations";
+import {
+  LineArtIllustration,
+  toLineArtIllustrationId,
+} from "@/components/empty-states/line-art-illustrations";
 import { QuickGuide } from "./QuickGuide";
 
 export function NewUserModuleEmptyState({
@@ -66,7 +69,10 @@ export function NewUserModuleEmptyState({
 
       <div className="relative grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
         <div className="text-center lg:text-left">
-          <EmptyStateIllustration id={config.illustration} />
+          <LineArtIllustration
+            id={toLineArtIllustrationId(config.illustration)}
+            className="mx-auto text-[rgb(var(--accent-rgb)/0.42)] dark:text-muted/65"
+          />
           <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
             {config.eyebrow}
           </p>

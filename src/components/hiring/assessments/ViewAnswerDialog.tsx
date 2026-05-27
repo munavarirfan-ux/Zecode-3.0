@@ -233,12 +233,6 @@ export function ViewAnswerDialog({
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
               <AnswerBody question={question} />
-              {question.aiSummary ? (
-                <div className="mt-4 rounded-[14px] border border-[rgb(var(--accent-rgb)/0.15)] bg-[rgb(var(--accent-rgb)/0.04)] p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-accent">AI evaluation</p>
-                  <p className="mt-2 text-[13px] leading-relaxed text-[#52525B]">{question.aiSummary}</p>
-                </div>
-              ) : null}
             </div>
           </DialogPanel>
         </div>

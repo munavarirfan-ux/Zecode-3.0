@@ -60,6 +60,7 @@ import {
   type InterviewerWorkloadStatus,
 } from "@/features/dashboard/data/dashboard.mock";
 import type { ScheduleRow } from "@/features/dashboard/data/dashboard.mock";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { useChartAccentColors } from "@/lib/useChartAccentColors";
 import type {
@@ -304,25 +305,25 @@ function AssignedInterviewSchedule({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate font-medium text-text">{row.candidate}</p>
+                  <p className="text-xs font-semibold tabular-nums text-text">
+                    <span>{row.timeLabel}</span>
+                    <span className="text-text-secondary"> {row.timezone}</span>
+                  </p>
                   {showStatusChip ? (
                     <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium", statusChip(row.status))}>
                       {row.status}
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-0.5 truncate text-[11px] text-text-secondary">{row.role}</p>
                 <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.06em] text-muted">
                   <span className="text-text-secondary">{row.stage}</span>
                   <span className="text-muted"> · </span>
                   <span>{row.durationMin} min</span>
-                  <span className="text-muted"> · </span>
-                  <span className="font-medium text-text-secondary">{row.timezone}</span>
                 </p>
-                <p className="mt-1 text-xs text-text">
-                  <span className="font-medium tabular-nums">{row.timeLabel}</span>
-                  <span className="text-muted"> local · </span>
-                  <span className="text-text-secondary">{row.interviewer}</span>
+                <p className="mt-2 truncate font-medium text-text">{row.candidate}</p>
+                <p className="mt-0.5 truncate text-[11px] text-text-secondary">{row.role}</p>
+                <p className="mt-1 text-[11px] text-text-secondary">
+                  <span className="font-medium text-text-secondary/85">{row.interviewer}</span>
                 </p>
               </div>
               <Button
@@ -463,8 +464,12 @@ function GlobalInterviewPanelCard({
               ) : null}
 
               <div className="relative flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold tracking-[-0.02em] tabular-nums text-text">
+                    {r.scheduledTime}
+                  </p>
+
+                  <div className="mt-2.5 flex items-start gap-2">
                     <span
                       className={cn(
                         "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px]",
@@ -482,14 +487,11 @@ function GlobalInterviewPanelCard({
                       <p className="mt-0.5 truncate text-[11px] text-text-secondary">
                         {r.jobRole} · <span className="font-medium text-text-secondary/85">{r.stage}</span>
                       </p>
+                      <p className="mt-1 text-[11px] text-text-secondary">
+                        <span className="font-medium text-text-secondary/85">{r.panelMembers.join(" • ")}</span>
+                      </p>
                     </div>
                   </div>
-
-                  <p className="mt-2 text-[11px] text-text-secondary">
-                    <span className="font-medium text-text-secondary/85">{r.panelMembers.join(" • ")}</span>
-                    <span className="text-muted"> · </span>
-                    <span className="font-medium tabular-nums text-text-secondary/85">{r.scheduledTime}</span>
-                  </p>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
@@ -566,15 +568,18 @@ function YourUpcomingInterviewsCard() {
         <div className="rounded-[16px] border border-[rgba(15,23,42,0.06)] bg-gradient-to-br from-white to-[#F8FAFC] p-3 dark:border-white/[0.06] dark:from-white/[0.05] dark:to-white/[0.02]">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold tracking-[-0.02em] text-text">{next.candidate}</p>
-              <p className="mt-0.5 truncate text-[11px] text-text-secondary">{next.role}</p>
+              <p className="text-[13px] font-semibold tracking-[-0.02em] tabular-nums text-text">
+                {next.timeLabel} <span className="text-text-secondary">{next.timezone}</span>
+              </p>
               <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
                 {next.stage}
                 <span className="text-muted"> · </span>
                 {next.durationMin}m
               </p>
-              <p className="mt-1 text-[12px] font-medium text-text">
-                {next.timeLabel} <span className="text-text-secondary">{next.timezone}</span>
+              <p className="mt-2 truncate text-[13px] font-semibold tracking-[-0.02em] text-text">{next.candidate}</p>
+              <p className="mt-0.5 truncate text-[11px] text-text-secondary">{next.role}</p>
+              <p className="mt-1 text-[11px] text-text-secondary">
+                <span className="font-medium text-text-secondary/85">{next.interviewer}</span>
               </p>
             </div>
             <Button
@@ -594,15 +599,17 @@ function YourUpcomingInterviewsCard() {
             key={`${r.candidate}-${r.timeLabel}`}
             className="flex items-start justify-between gap-2 rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white/60 px-3 py-2.5 text-[12px] dark:border-white/[0.06] dark:bg-white/[0.03]"
           >
-            <div className="min-w-0">
-              <p className="truncate font-medium text-text">{r.candidate}</p>
+            <div className="min-w-0 flex-1">
+              <p className="tabular-nums text-[12px] font-semibold text-text">
+                {r.timeLabel} <span className="text-text-secondary">{r.timezone}</span>
+              </p>
+              <p className="mt-1.5 truncate font-medium text-text">{r.candidate}</p>
               <p className="mt-0.5 truncate text-[11px] text-text-secondary">
                 {r.role} · <span className="font-medium text-text-secondary/80">{r.stage}</span>
               </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="tabular-nums text-[12px] font-semibold text-text">{r.timeLabel}</p>
-              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted">{r.timezone}</p>
+              <p className="mt-1 text-[11px] text-text-secondary">
+                <span className="font-medium text-text-secondary/85">{r.interviewer}</span>
+              </p>
             </div>
           </div>
         ))}
@@ -1070,9 +1077,11 @@ function InterviewerWorkloadAvailabilityCard({
             })}
 
             {sorted.length === 0 ? (
-              <div className="px-4 py-10 text-center text-[12px] text-text-secondary">
-                No interviewers match your filters.
-              </div>
+              <LineArtEmptyState
+                illustration="filters"
+                message="No interviewers match your filters."
+                size="compact"
+              />
             ) : null}
           </div>
         </div>
@@ -1230,8 +1239,12 @@ function FeedbackDueCenter() {
         ))}
 
         {filtered.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[rgba(15,23,42,0.12)] bg-white/50 px-4 py-10 text-center text-[12px] text-text-secondary dark:border-white/[0.12] dark:bg-white/[0.03]">
-            No feedback items match your filters.
+          <div className="rounded-[16px] border border-dashed border-[rgba(15,23,42,0.12)] bg-white/50 dark:border-white/[0.12] dark:bg-white/[0.03]">
+            <LineArtEmptyState
+              illustration="filters"
+              message="No feedback items match your filters."
+              size="compact"
+            />
           </div>
         ) : null}
       </div>
@@ -1274,8 +1287,13 @@ function MyFeedbackDuePanelPersonal() {
       </header>
       <ul className="space-y-2">
         {items.length === 0 ? (
-          <li className="rounded-[12px] border border-dashed border-[rgba(15,23,42,0.1)] px-4 py-10 text-center text-[12px] text-text-secondary dark:border-white/[0.1]">
-            You&apos;re caught up — no pending feedback.
+          <li className="list-none">
+            <LineArtEmptyState
+              illustration="feedback"
+              message="You're caught up — no pending feedback."
+              size="compact"
+              className="rounded-[12px] border border-dashed border-[rgba(15,23,42,0.1)] dark:border-white/[0.1]"
+            />
           </li>
         ) : (
           items.map((i) => (
@@ -1427,9 +1445,7 @@ export function AssessmentsInsightPanel({ mode = "enterprise" }: { mode?: Assess
           <p className="text-xs font-normal text-text-secondary">{malpracticeSub}</p>
         </CardHeader>
         <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto pt-3">
-          {malpracticeSignals.map((m) => {
-            const accent = m.label.includes("AI");
-            return (
+          {malpracticeSignals.map((m) => (
             <div key={m.label}>
               <div className="flex items-center justify-between gap-2 text-sm">
                 <span className="font-medium text-text">{m.label}</span>
@@ -1437,17 +1453,13 @@ export function AssessmentsInsightPanel({ mode = "enterprise" }: { mode?: Assess
               </div>
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted/40">
                 <div
-                  className={cn(
-                    "h-full rounded-full transition-[width] duration-500 ease-out",
-                    accent ? "bg-accent" : "bg-[#A1A1AA]",
-                  )}
+                  className="h-full rounded-full bg-[#A1A1AA] transition-[width] duration-500 ease-out"
                   style={{ width: `${Math.min(100, m.pct)}%` }}
                 />
               </div>
               <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{m.note}</p>
             </div>
-            );
-          })}
+          ))}
         </CardContent>
       </Card>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
 import {
@@ -12,10 +12,10 @@ import {
   overviewSectionTitle,
 } from "../hiringTokens";
 import {
-  getHiringTeam,
   getPipelineSnapshot,
   getRoleExpectations,
 } from "./jobWorkspaceUtils";
+import { JobWorkspaceHiringSetup } from "./JobWorkspaceHiringSetup";
 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
@@ -48,13 +48,14 @@ export function JobWorkspaceOverview({
   job: HiringJob;
   candidates: HiringCandidate[];
 }) {
-  const team = getHiringTeam(job);
   const pipeline = getPipelineSnapshot(candidates);
   const expectations = getRoleExpectations(job);
   const maxPipeline = Math.max(...pipeline.map((s) => s.count), 1);
 
   return (
     <div className="space-y-4" role="region" aria-label="Job overview">
+      <JobWorkspaceHiringSetup job={job} />
+
       {/* About role — editorial + elevated side panel */}
       <section className={cn(overviewGlassCard, "grid gap-4 lg:grid-cols-[1fr_260px] lg:gap-5")}>
         <div className="min-w-0 space-y-4">
@@ -178,35 +179,6 @@ export function JobWorkspaceOverview({
           </div>
       </section>
 
-      {/* Hiring team */}
-      <section className={overviewGlassCard}>
-        <div className="mb-4 flex items-start gap-2">
-          <Users className="mt-0.5 h-4 w-4 shrink-0 text-accent-deep/70 dark:text-accent/80" strokeWidth={1.5} />
-          <SectionHeader title="Hiring team" sub="Owners and coordination for this role" />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {team.map((member) => (
-            <article
-              key={member.id}
-              className="rounded-[18px] border border-[rgba(16,24,40,0.05)] bg-white/80 p-3.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)] transition-all duration-[180ms] hover:-translate-y-px hover:shadow-[0_8px_24px_-10px_rgba(15,23,42,0.1)] dark:border-white/[0.06] dark:bg-white/[0.03]"
-            >
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/15 to-accent-deep/10 text-[12px] font-medium text-accent-deep dark:text-accent">
-                  {member.initials}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-medium text-[#18181B] dark:text-text">{member.name}</p>
-                  <p className={overviewMuted}>{member.role}</p>
-                  <p className="mt-2 text-[11px] text-[#A1A1AA]">{member.timezone}</p>
-                  <p className="mt-0.5 text-[11px] font-medium text-[#52525B] dark:text-text-secondary/80">
-                    {member.workload}
-                  </p>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

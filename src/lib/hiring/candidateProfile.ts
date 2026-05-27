@@ -92,7 +92,7 @@ export const PREDEFINED_EDUCATION_DEGREES = [
   { degree: "10th", required: true },
   { degree: "12th", required: true },
   { degree: "Bachelors", required: true },
-  { degree: "Master's", required: true },
+  { degree: "Master's", required: false },
 ] as const;
 
 const DEFAULT_EDUCATION_DEGREES = PREDEFINED_EDUCATION_DEGREES;
@@ -230,7 +230,9 @@ function defaultEducationEntries(candidate: HiringCandidate): EducationEntry[] {
   const highestIdx = entries.findIndex((e) => e.degree === "Master's" && e.details.trim());
   const fallbackHighest = entries.findIndex((e) => e.degree === "Bachelors");
   const highestIndex = highestIdx >= 0 ? highestIdx : fallbackHighest >= 0 ? fallbackHighest : 0;
-  return entries.map((entry, index) => ({ ...entry, isHighest: index === highestIndex }));
+  return entries.map((entry, index) =>
+    applyMastersOptional({ ...entry, isHighest: index === highestIndex }),
+  );
 }
 
 function isLegacyEducation(value: unknown): value is LegacyEducationDetails {
@@ -242,10 +244,14 @@ function isLegacyEducation(value: unknown): value is LegacyEducationDetails {
   );
 }
 
+function applyMastersOptional(entry: EducationEntry): EducationEntry {
+  return entry.degree === "Master's" ? { ...entry, required: false } : entry;
+}
+
 function migrateEducation(value: unknown): EducationEntry[] {
   if (Array.isArray(value)) {
     return (value as (EducationEntry & LegacyEducationFields)[]).map((entry) =>
-      normalizeEducationEntry(entry),
+      applyMastersOptional(normalizeEducationEntry(entry)),
     );
   }
 
@@ -265,10 +271,12 @@ function migrateEducation(value: unknown): EducationEntry[] {
       }),
     );
     const highestIdx = entries.findIndex((e) => e.details.trim());
-    return entries.map((entry, index) => ({
-      ...entry,
-      isHighest: index === (highestIdx >= 0 ? highestIdx : 1),
-    }));
+    return entries.map((entry, index) =>
+      applyMastersOptional({
+        ...entry,
+        isHighest: index === (highestIdx >= 0 ? highestIdx : 1),
+      }),
+    );
   }
 
   return defaultEducationEntries({ education: "" } as HiringCandidate);
@@ -295,10 +303,12 @@ export function createEmptyCandidateProfile(_job: HiringJob, addedBy: AddedBy): 
   const stage = getDefaultStageForAddedBy(addedBy);
   const substage = getDefaultSubstageForAddedBy(addedBy);
   const education = DEFAULT_EDUCATION_DEGREES.map(({ degree, required }) =>
-    createEducationEntry(degree, {
-      required,
-      isHighest: degree === "Master's",
-    }),
+    applyMastersOptional(
+      createEducationEntry(degree, {
+        required,
+        isHighest: degree === "Master's",
+      }),
+    ),
   );
 
   return {

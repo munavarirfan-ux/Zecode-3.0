@@ -3,6 +3,7 @@
 import { Users } from "lucide-react";
 import type { SchedulesViewMode } from "@/lib/hiring/assessments/scheduledAssessmentTypes";
 import type { LiveCandidateSession, LiveMonitorFilter } from "@/lib/hiring/assessments/liveMonitoringTypes";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { DirectoryViewSwitcher } from "../directories/DirectoryViewSwitcher";
 import { hiringCard, hiringTransition } from "../hiringTokens";
@@ -78,9 +79,9 @@ export function LiveCandidatesPanel({
       </div>
 
       {candidates.length === 0 ? (
-        <p className="rounded-[16px] border border-dashed border-[rgba(15,23,42,0.1)] bg-white px-6 py-12 text-center text-[13px] text-muted">
-          No candidates in this view.
-        </p>
+        <div className="rounded-[16px] border border-dashed border-[rgba(15,23,42,0.1)] bg-white">
+          <LineArtEmptyState illustration="candidates" message="No candidates in this view." size="default" />
+        </div>
       ) : view === "grid" ? (
         <div
           className={cn(

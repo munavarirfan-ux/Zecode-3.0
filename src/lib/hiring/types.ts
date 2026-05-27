@@ -23,6 +23,46 @@ export const SOURCE_LABELS: Record<SourceChannel, string> = {
   Campus: "Campus",
 };
 
+export type CandidateVerdict = "hire" | "no_hire" | "neutral" | "pending";
+
+export type EngagementType =
+  | "viewed"
+  | "emailed"
+  | "commented"
+  | "scheduled"
+  | "voted";
+
+export interface EngagementRecord {
+  recruiterId: string;
+  recruiterName: string;
+  recruiterAvatarUrl?: string;
+  firstEngagedAt: string;
+  lastEngagedAt: string;
+  engagementType: EngagementType;
+}
+
+export type OwnershipTransferStatus = "pending" | "approved" | "declined" | "discussing";
+
+export interface OwnershipTransferRequest {
+  id: string;
+  candidateId: string;
+  candidateName: string;
+  fromRecruiterId: string;
+  fromRecruiterName: string;
+  toRecruiterId: string;
+  toRecruiterName: string;
+  reason: string;
+  targetStage: import("./stages").HiringStageName;
+  targetSubstage?: string;
+  priority?: boolean;
+  status: OwnershipTransferStatus;
+  createdAt: string;
+  respondedAt?: string;
+  responseNote?: string;
+}
+
+export type KanbanViewMode = "all" | "mine" | "team";
+
 export type {
   HiringStageName,
   CandidateSource,
@@ -105,6 +145,14 @@ export interface InterviewPipelineStep {
   state: InterviewJourneyState;
 }
 
+/** Stage-level outcome — candidate stays in the interview round column */
+export type InterviewRoundOutcome =
+  | "Rejected"
+  | "Rescheduled"
+  | "No Show"
+  | "Qualified"
+  | "Moved to Next Stage";
+
 export interface CandidateInterview {
   id: string;
   round: string;
@@ -112,6 +160,8 @@ export interface CandidateInterview {
   scheduledAt: string;
   status: "Scheduled" | "Completed" | "Cancelled";
   feedbackStatus: "Pending" | "Submitted";
+  /** Operational outcome for this round (rejection, no-show, etc.) */
+  roundOutcome?: InterviewRoundOutcome;
   result?: "Strong Hire" | "Hire" | "Hold" | "No Hire";
   interviewType?: string;
   durationMinutes?: number;
@@ -162,6 +212,12 @@ export interface HiringCandidate {
   currentStage: string;
   currentSubstage: string;
   recruiterOwner: string;
+  /** Recruiter who first took a meaningful action — canonical owner id */
+  ownerId?: string;
+  ownerName?: string;
+  ownerAvatarUrl?: string;
+  /** All recruiters who engaged, ordered by first engagement */
+  engagedBy?: EngagementRecord[];
   experience: string;
   skills: string[];
   education: string;
@@ -184,6 +240,13 @@ export interface HiringCandidate {
   kanbanColumn?: string;
   /** Human-readable last touch e.g. "2h ago" */
   lastActivity?: string;
+  /** Recruiter screening verdict — inline on kanban cards */
+  verdict?: CandidateVerdict;
+  /** Optional note when verdict is hire / no_hire */
+  verdictReason?: string;
+  /** Unread email thread count for card badge */
+  unreadEmails?: number;
+  avatarUrl?: string;
 }
 
 export type CustomFieldType =
@@ -234,7 +297,9 @@ export const DEFAULT_HIRING_STAGES: HiringStage[] = [
     id: "offers",
     name: "Hire & Offers",
     substages: [
+      { id: "offer-draft", name: "Offer Draft" },
       { id: "offer-sent", name: "Offer Sent" },
+      { id: "offer-accepted", name: "Offer Accepted" },
       { id: "hired", name: "Hired" },
     ],
   },

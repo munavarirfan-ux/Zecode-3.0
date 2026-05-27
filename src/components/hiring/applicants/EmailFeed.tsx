@@ -16,7 +16,8 @@ import {
 import { cn } from "@/lib/utils";
 import { resolveEmailBody } from "@/lib/hiring/resolveEmailBody";
 import type { CandidateEmail, HiringCandidate } from "@/lib/hiring/types";
-import { dashboardRowSurface, dashboardSectionSub } from "@/components/dashboard/dashboardTokens";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
+import { dashboardRowSurface } from "@/components/dashboard/dashboardTokens";
 
 function EmailViewDialog({
   email,
@@ -94,7 +95,11 @@ export function EmailFeed({ emails }: { emails: HiringCandidate["emails"] }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = emails.find((e) => e.id === selectedId) ?? null;
 
-  if (emails.length === 0) return <p className={dashboardSectionSub}>No email activity.</p>;
+  if (emails.length === 0) {
+    return (
+      <LineArtEmptyState illustration="email" message="No email activity." size="compact" className="py-6" />
+    );
+  }
 
   return (
     <>

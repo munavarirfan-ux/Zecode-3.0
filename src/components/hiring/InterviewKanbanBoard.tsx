@@ -20,16 +20,16 @@ export function InterviewKanbanBoard({
   candidates,
   onCardClick,
   onCandidateMoved,
-  onScheduleCandidate,
   onRequestFeedback,
+  onOpenEmails,
 }: {
   job: HiringJob;
   jobId: string;
   candidates: HiringCandidate[];
   onCardClick?: (candidate: HiringCandidate) => void;
   onCandidateMoved?: () => void;
-  onScheduleCandidate?: (candidate: HiringCandidate) => void;
   onRequestFeedback?: (candidate: HiringCandidate) => void;
+  onOpenEmails?: (candidate: HiringCandidate) => void;
 }) {
   const { selectedRole } = useRole();
   const canManage = canManageInterviewRounds(selectedRole);
@@ -77,7 +77,6 @@ export function InterviewKanbanBoard({
     [rounds, candidates, columnResolver],
   );
 
-  const handleSchedule = onScheduleCandidate ?? onCardClick;
   const handleFeedback = onRequestFeedback ?? onCardClick;
 
   return (
@@ -91,10 +90,11 @@ export function InterviewKanbanBoard({
         const round = rounds.find((r) => r.id === id);
         if (round) handleDeleteRound(round);
       }}
+      job={job}
       onCardClick={onCardClick}
       onCandidateMoved={onCandidateMoved}
       onRequestFeedback={(c) => handleFeedback?.(c)}
-      onScheduleCandidate={handleSchedule}
+      onOpenEmails={onOpenEmails}
     />
   );
 }

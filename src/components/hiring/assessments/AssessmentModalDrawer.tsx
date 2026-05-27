@@ -20,6 +20,7 @@ export function AssessmentModalDrawer({
   children,
   footer,
   className,
+  placement = "drawer",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -28,20 +29,29 @@ export function AssessmentModalDrawer({
   children: React.ReactNode;
   footer: React.ReactNode;
   className?: string;
+  /** Right drawer (default) or centered modal */
+  placement?: "drawer" | "center";
 }) {
+  const isCentered = placement === "center";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
         <DialogOverlay className="z-[120]" />
-        <div className="fixed inset-0 z-[120] flex items-stretch justify-end p-3 sm:p-5">
+        <div
+          className={cn(
+            "fixed inset-0 z-[120] flex p-3 sm:p-5",
+            isCentered ? "items-center justify-center" : "items-stretch justify-end",
+          )}
+        >
           <DialogPanel
             className={cn(
-              "flex h-full w-full max-w-[440px] flex-col overflow-hidden rounded-[20px]",
+              "flex w-full flex-col overflow-hidden rounded-[20px]",
               "border border-white/60 bg-white/90 shadow-[0_24px_80px_-24px_rgba(var(--accent-rgb),0.35)]",
-              "backdrop-blur-[24px]",
-              "data-[state=open]:animate-in data-[state=open]:slide-in-from-right-8 data-[state=open]:fade-in-0 data-[state=open]:duration-300",
-              "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right-8 data-[state=closed]:fade-out-0 data-[state=closed]:duration-200",
-              "dark:border-white/10 dark:bg-[#141416]/95",
+              "backdrop-blur-[24px] dark:border-white/10 dark:bg-[#141416]/95",
+              isCentered
+                ? "max-h-[min(90dvh,720px)] max-w-[480px] data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out-0"
+                : "h-full max-w-[440px] data-[state=open]:animate-in data-[state=open]:slide-in-from-right-8 data-[state=open]:fade-in-0 data-[state=open]:duration-300 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right-8 data-[state=closed]:fade-out-0 data-[state=closed]:duration-200",
               className,
             )}
           >

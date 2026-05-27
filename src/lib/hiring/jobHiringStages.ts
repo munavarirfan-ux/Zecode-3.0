@@ -1,3 +1,4 @@
+import { isHrInterviewRound } from "./customiseHiringProcess";
 import type { InterviewRound } from "./interviewRounds";
 import { getInterviewRounds, slugifyInterviewRoundId } from "./interviewRounds";
 
@@ -84,6 +85,23 @@ export function createEmptyHiringStage(): JobHiringStageConfig {
   };
 }
 
+export function interviewRoundsToHiringStageConfigs(rounds: InterviewRound[]): JobHiringStageConfig[] {
+  return rounds.map((round) => ({
+    id: round.id,
+    stageName: round.title.trim() || "Interview round",
+    interviewType: "Video Interview",
+    durationMinutes: 45,
+    interviewerNames: [],
+    evaluationType: "Feedback Form",
+    notes: "",
+  }));
+}
+
+export function pipelinePreviewLabelsFromRounds(rounds: InterviewRound[]): string[] {
+  const names = rounds.map((r) => r.title.trim()).filter(Boolean);
+  return ["Applied", "Screening", ...names, "Hired"];
+}
+
 export function hiringStagesToInterviewRounds(stages: JobHiringStageConfig[]): InterviewRound[] {
   const existingIds = new Set<string>();
   return stages.map((s) => {
@@ -106,6 +124,16 @@ const NON_INTERVIEW_STAGE_NAMES = new Set([
   "new application",
   "resume review",
 ]);
+
+export function isHrInterviewStage(stage: JobHiringStageConfig): boolean {
+  if (isHrInterviewRound({ id: stage.id, title: stage.stageName })) return true;
+  return stage.interviewType === "HR Interview";
+}
+
+/** Interview stages available when moving from Applicant Stats (excludes HR round). */
+export function getMovableInterviewStagesForJob(jobId: string): JobHiringStageConfig[] {
+  return getInterviewStagesForJob(jobId).filter((stage) => !isHrInterviewStage(stage));
+}
 
 /** Interview stages configured for a job (hiring-stage configs, else interview rounds). */
 export function getInterviewStagesForJob(jobId: string): JobHiringStageConfig[] {

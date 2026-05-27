@@ -309,7 +309,7 @@ export function CandidateForm({
         </div>
 
         <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
-          <BentoCard title="Education" description="10th, 12th, Bachelors, and Master's are required. Add other qualifications if needed.">
+          <BentoCard title="Education" description="10th, 12th, and Bachelors are required. Master's is optional — add other qualifications if needed.">
             <div className="space-y-4">
               {profile.education.map((entry, index) => (
                 <EducationBlock

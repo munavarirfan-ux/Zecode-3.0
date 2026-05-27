@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { getPreviewActorLabel } from "@/lib/hiring/feedbackPermissions";
 import { getActiveJobsForMove } from "@/lib/hiring/mockData";
@@ -137,8 +138,13 @@ export function RequestApplicantTransferDialog({
             </div>
             <ul className="max-h-[180px] space-y-1 overflow-y-auto pr-0.5" role="listbox" aria-label="Destination jobs">
               {filteredJobs.length === 0 ? (
-                <li className="rounded-[10px] border border-dashed border-[rgba(15,23,42,0.08)] px-3 py-5 text-center text-[12px] text-muted">
-                  No jobs match your search.
+                <li className="list-none">
+                  <LineArtEmptyState
+                    illustration="transfer"
+                    message="No jobs match your search."
+                    size="compact"
+                    className="rounded-[10px] border border-dashed border-[rgba(15,23,42,0.08)]"
+                  />
                 </li>
               ) : (
                 filteredJobs.map((j) => {

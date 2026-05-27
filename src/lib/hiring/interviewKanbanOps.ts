@@ -1,4 +1,5 @@
 import { enrichInterviewDefaults, getFeedbackCounts } from "./candidateInterviews";
+import type { PrimaryActionId } from "./stage-actions";
 import type { CandidateInterview, HiringCandidate } from "./types";
 import type { InterviewRound } from "./interviewRounds";
 import { resolveInterviewColumnId } from "./interviewRounds";
@@ -9,16 +10,25 @@ export type InterviewOperationalStatus =
   | "Ongoing"
   | "Completed"
   | "Feedback Pending"
-  | "Cancelled";
+  | "Rescheduled"
+  | "Rejected"
+  | "No Show"
+  | "Cancelled"
+  | "Qualified"
+  | "Moved to Next Stage";
 
 export const INTERVIEW_STATUS_FILTERS: Array<InterviewOperationalStatus | "All"> = [
   "All",
   "Scheduled",
-  "Pending",
   "Ongoing",
   "Completed",
   "Feedback Pending",
+  "Rescheduled",
+  "Rejected",
+  "No Show",
   "Cancelled",
+  "Qualified",
+  "Moved to Next Stage",
 ];
 
 export type InterviewKanbanCardModel = {
@@ -70,7 +80,7 @@ export const EMPTY_ADVANCED_FILTERS: InterviewKanbanAdvancedFilters = {
   feedbackStatus: "",
 };
 
-/** Shown inline on the compact interview toolbar; remainder go in +N more */
+/** @deprecated Status filters use the Status dropdown — kept for toolbar overflow compat */
 export const INTERVIEW_STATUS_CHIPS_PRIMARY: Array<InterviewOperationalStatus | "All"> = [
   "All",
   "Scheduled",
@@ -81,7 +91,12 @@ export const INTERVIEW_STATUS_CHIPS_PRIMARY: Array<InterviewOperationalStatus | 
 export const INTERVIEW_STATUS_CHIPS_OVERFLOW: InterviewOperationalStatus[] = [
   "Completed",
   "Feedback Pending",
+  "Rescheduled",
+  "Rejected",
+  "No Show",
   "Cancelled",
+  "Qualified",
+  "Moved to Next Stage",
 ];
 
 export function countActiveAdvancedFilters(advanced: InterviewKanbanAdvancedFilters): number {
@@ -91,6 +106,22 @@ export function countActiveAdvancedFilters(advanced: InterviewKanbanAdvancedFilt
   if (advanced.date) count += 1;
   if (advanced.feedbackStatus) count += 1;
   return count;
+}
+
+export function getInterviewCardVisualClass(status: InterviewOperationalStatus): string {
+  switch (status) {
+    case "Rejected":
+      return "border-l-[3px] border-l-red-500/70 bg-red-500/[0.03] dark:bg-red-500/[0.06]";
+    case "No Show":
+      return "border-l-[3px] border-l-zinc-400/80 bg-zinc-500/[0.04] opacity-90 dark:bg-zinc-400/[0.06]";
+    case "Rescheduled":
+      return "border-l-[3px] border-l-amber-500/70 bg-amber-500/[0.03]";
+    case "Completed":
+    case "Qualified":
+      return "border-l-[3px] border-l-emerald-500/60";
+    default:
+      return "";
+  }
 }
 
 function interviewMatchesRound(interview: CandidateInterview, roundTitle: string): boolean {
@@ -115,11 +146,11 @@ export function getPrimaryInterviewForRound(
   if (scheduled) return scheduled;
 
   const feedbackPending = inRound.find(
-    (i) => i.status === "Completed" && i.feedbackStatus === "Pending",
+    (i) => i.status === "Completed" && i.feedbackStatus === "Pending" && !i.roundOutcome,
   );
   if (feedbackPending) return feedbackPending;
 
-  const completed = inRound.find((i) => i.status === "Completed");
+  const completed = inRound.find((i) => i.status === "Completed" && !i.roundOutcome);
   if (completed) return completed;
 
   const cancelled = inRound.find((i) => i.status === "Cancelled");
@@ -134,12 +165,24 @@ export function isInterviewOngoing(interview: CandidateInterview): boolean {
   return /\bMay\s+15\b/i.test(interview.scheduledAt);
 }
 
+function outcomeFromInterview(interview: CandidateInterview): InterviewOperationalStatus | null {
+  if (interview.roundOutcome === "Rejected") return "Rejected";
+  if (interview.roundOutcome === "Rescheduled") return "Rescheduled";
+  if (interview.roundOutcome === "No Show") return "No Show";
+  if (interview.roundOutcome === "Qualified") return "Qualified";
+  if (interview.roundOutcome === "Moved to Next Stage") return "Moved to Next Stage";
+  return null;
+}
+
 export function deriveOperationalStatus(
   candidate: HiringCandidate,
   roundTitle: string,
   primaryInterview: CandidateInterview | null,
 ): InterviewOperationalStatus {
   if (!primaryInterview) return "Pending";
+
+  const outcome = outcomeFromInterview(primaryInterview);
+  if (outcome) return outcome;
 
   if (primaryInterview.status === "Cancelled") return "Cancelled";
 
@@ -176,6 +219,10 @@ function buildFeedbackState(interview: CandidateInterview | null): {
     return { label: "No feedback yet", tone: "neutral", isOverdue: false };
   }
 
+  if (interview.roundOutcome === "Rejected") {
+    return { label: "Rejected at this round", tone: "danger", isOverdue: false };
+  }
+
   const { submitted, pending, total } = getFeedbackCounts(interview);
 
   if (interview.status === "Completed" && interview.feedbackStatus === "Pending") {
@@ -209,11 +256,12 @@ function resolvePrimaryAction(
   status: InterviewOperationalStatus,
   interview: CandidateInterview | null,
 ): InterviewKanbanCardModel["primaryAction"] {
+  if (status === "Rejected" || status === "No Show" || status === "Cancelled") return "view";
   if (status === "Pending") return "schedule";
   if ((status === "Scheduled" || status === "Ongoing") && interview?.meetUrl) return "join";
-  if (status === "Scheduled" || status === "Ongoing") return "view";
+  if (status === "Scheduled" || status === "Ongoing" || status === "Rescheduled") return "view";
   if (status === "Feedback Pending") return "request-feedback";
-  if (status === "Completed") return "move-next";
+  if (status === "Completed" || status === "Qualified") return "move-next";
   return "schedule";
 }
 
@@ -276,6 +324,33 @@ export function matchesStatusFilter(
   filter: InterviewOperationalStatus | "All",
 ): boolean {
   return filter === "All" || status === filter;
+}
+
+/** Map unified card primary action to interview kanban handler */
+export function mapPrimaryActionToInterviewAction(
+  action: PrimaryActionId,
+  model: InterviewKanbanCardModel,
+): InterviewCardAction {
+  switch (action) {
+    case "schedule":
+      return "schedule";
+    case "requestFeedback":
+      return "request-feedback";
+    case "moveNext":
+      return "move-next";
+    case "view":
+      if (
+        (model.status === "Scheduled" || model.status === "Ongoing") &&
+        model.primaryInterview?.meetUrl
+      ) {
+        return "join";
+      }
+      return model.primaryInterview ? "view" : "schedule";
+    case "viewProfile":
+      return "view";
+    default:
+      return model.primaryAction;
+  }
 }
 
 export function matchesAdvancedFilters(

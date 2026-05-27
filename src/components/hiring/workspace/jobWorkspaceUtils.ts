@@ -1,4 +1,6 @@
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
+export type { JobHiringTeamGroups, JobTeamAssignee } from "@/lib/hiring/jobHiringTeam";
+export { getDefaultJobHiringTeamGroups as getJobHiringTeamGroups } from "@/lib/hiring/jobHiringTeam";
 
 const SCREENING_COLUMNS = new Set([
   "resume-review",
@@ -76,7 +78,7 @@ export function getJobWorkspaceMetrics(
 export function getPipelineSnapshot(candidates: HiringCandidate[]): PipelineStageSnapshot[] {
   const metrics = getJobWorkspaceMetrics({ candidateCount: candidates.length } as HiringJob, candidates);
   return [
-    { id: "applicants", label: "Applicants", count: metrics.totalApplicants },
+    { id: "applicants", label: "Directory", count: metrics.totalApplicants },
     { id: "screening", label: "Screening", count: metrics.screening },
     { id: "interviews", label: "Interviews", count: metrics.interviews },
     { id: "offers", label: "Offer", count: metrics.offers },
@@ -91,11 +93,7 @@ export function getHiringTeam(job: HiringJob): HiringTeamMember[] {
       role: "Hiring Manager",
       timezone: "CET · Berlin",
       workload: "6 active roles",
-      initials: job.hiringManager
-        .split(" ")
-        .map((p) => p[0])
-        .join("")
-        .slice(0, 2),
+      initials: initialsFromName(job.hiringManager),
     },
     {
       id: "rec",
@@ -103,11 +101,7 @@ export function getHiringTeam(job: HiringJob): HiringTeamMember[] {
       role: "Recruiter",
       timezone: "GMT · London",
       workload: "12 active candidates",
-      initials: job.recruiterOwner
-        .split(" ")
-        .map((p) => p[0])
-        .join("")
-        .slice(0, 2),
+      initials: initialsFromName(job.recruiterOwner),
     },
     {
       id: "coord",

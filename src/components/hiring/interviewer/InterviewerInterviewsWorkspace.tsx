@@ -21,6 +21,7 @@ import { HiringHeroSelectableKpiCard } from "@/components/hiring/HiringHeroSelec
 import { HiringPageHero } from "@/components/hiring/HiringPageHero";
 import { hiringCanvas, hiringCard } from "@/components/hiring/hiringTokens";
 import { dashboardIntelligenceBorder } from "@/components/dashboard/dashboardTokens";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/config/routes";
 import {
@@ -165,19 +166,21 @@ export function InterviewerInterviewsWorkspace() {
                 className={cn(
                   hiringCard,
                   dashboardIntelligenceBorder,
-                  "border-dashed px-6 py-16 text-center",
+                  "border-dashed",
                 )}
               >
-                <p className="text-[15px] font-semibold text-text">No interviews assigned this week.</p>
-                <p className="mt-2 text-[12px] text-text-secondary">
-                  When panels are assigned to you, they appear here for prep, conduct, and feedback.
-                </p>
-                <Button asChild className="mt-5 h-9 rounded-[10px] bg-accent text-white hover:bg-accent-hover">
-                  <Link href={ROUTES.mySchedule}>
-                    <Calendar className="mr-1.5 h-4 w-4" strokeWidth={1.75} aria-hidden />
-                    View upcoming schedule
-                  </Link>
-                </Button>
+                <LineArtEmptyState
+                  illustration="interviews"
+                  message="No interviews assigned this week."
+                  description="When panels are assigned to you, they appear here for prep, conduct, and feedback."
+                >
+                  <Button asChild className="h-9 rounded-[10px] bg-accent text-white hover:bg-accent-hover">
+                    <Link href={ROUTES.mySchedule}>
+                      <Calendar className="mr-1.5 h-4 w-4" strokeWidth={1.75} aria-hidden />
+                      View upcoming schedule
+                    </Link>
+                  </Button>
+                </LineArtEmptyState>
               </div>
             ) : (
               <div

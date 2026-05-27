@@ -2,11 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import * as Switch from "@radix-ui/react-switch";
+import { cn } from "@/lib/utils";
+import {
+  settingsField,
+  settingsFieldLabel,
+  settingsPanel,
+  settingsPrimaryBtn,
+  settingsSectionDesc,
+  settingsSectionTitle,
+} from "@/features/settings/settingsTokens";
 
 export function SettingsClient({
   orgId,
@@ -55,63 +60,63 @@ export function SettingsClient({
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Data retention (mock)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-3 text-sm text-text-secondary">
-            Auto-delete candidate data after X months. No cron runs in MVP; UI only.
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="retention-months">Retention period</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="retention-months"
-                  type="number"
-                  min="0"
-                  placeholder="No auto-delete"
-                  value={retention}
-                  onChange={(e) => setRetention(e.target.value)}
-                  className="w-32"
-                />
-                <span className="text-sm text-muted">months</span>
-              </div>
+    <div className="space-y-4">
+      <section className={cn(settingsPanel, "p-5")}>
+        <h2 className={settingsSectionTitle}>Data retention</h2>
+        <p className={cn(settingsSectionDesc, "mt-1")}>
+          Auto-delete candidate data after a set period. No cron runs in MVP; UI only.
+        </p>
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <label className="space-y-1.5">
+            <span className={settingsFieldLabel}>Retention period</span>
+            <div className="flex items-center gap-2">
+              <input
+                id="retention-months"
+                type="number"
+                min={0}
+                placeholder="No auto-delete"
+                value={retention}
+                onChange={(e) => setRetention(e.target.value)}
+                className={cn(settingsField, "w-32")}
+              />
+              <span className="text-[12px] text-muted">months</span>
             </div>
-            <Button onClick={saveRetention} disabled={saving} className="mt-6">
-              {saving ? "Saving…" : "Save"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </label>
+          <button
+            type="button"
+            onClick={saveRetention}
+            disabled={saving}
+            className={settingsPrimaryBtn}
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </section>
 
       {isHr ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Anonymized screening</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-sm text-text-secondary">
-              When enabled, candidate name and email are hidden in the candidates list for HR users.
-            </p>
-            <div className="flex items-center gap-3">
-              <Switch
-                id="anonymized-screening"
-                checked={anonymized}
-                onCheckedChange={async (next) => {
-                  setAnonymized(next);
-                  await saveAnonymized(next);
-                }}
-                disabled={saving}
-              />
-              <Label htmlFor="anonymized-screening" className="cursor-pointer font-normal text-sm text-text">
-                Hide candidate name/email in list
-              </Label>
-            </div>
-          </CardContent>
-        </Card>
+        <section className={cn(settingsPanel, "p-5")}>
+          <h2 className={settingsSectionTitle}>Anonymized screening</h2>
+          <p className={cn(settingsSectionDesc, "mt-1")}>
+            When enabled, candidate name and email are hidden in the candidates list for HR users.
+          </p>
+          <label className="mt-4 flex cursor-pointer items-center gap-3">
+            <Switch.Root
+              id="anonymized-screening"
+              checked={anonymized}
+              onCheckedChange={async (next) => {
+                setAnonymized(next);
+                await saveAnonymized(next);
+              }}
+              disabled={saving}
+              className="relative h-5 w-9 rounded-full bg-[rgba(15,23,42,0.12)] data-[state=checked]:bg-accent"
+            >
+              <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white transition-transform data-[state=checked]:translate-x-4" />
+            </Switch.Root>
+            <span className="text-[13px] font-medium text-text">
+              Hide candidate name/email in list
+            </span>
+          </label>
+        </section>
       ) : null}
     </div>
   );

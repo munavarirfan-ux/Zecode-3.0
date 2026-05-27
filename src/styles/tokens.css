@@ -46,6 +46,20 @@
   --info: #2563eb;
   --info-bg: #dbeafe;
 
+  /* Primary action categories (candidate cards + hiring CTAs) */
+  --btn-review-bg: #2563eb;
+  --btn-review-bg-hover: #1d4ed8;
+  --btn-review-text: #ffffff;
+
+  /* Schedule CTAs — alias appearance accent (see globals.css --accent-rgb, lib/theme.ts) */
+  --btn-schedule-bg: rgb(var(--accent-rgb));
+  --btn-schedule-bg-hover: rgb(var(--accent-hover-rgb));
+  --btn-schedule-text: #ffffff;
+
+  --btn-advance-bg: #16a34a;
+  --btn-advance-bg-hover: #15803d;
+  --btn-advance-text: #ffffff;
+
   /* Glass */
   --glass-bg: rgba(255, 255, 255, 0.6);
   --glass-border: rgba(255, 255, 255, 0.4);
@@ -76,6 +90,27 @@
   --muted-rgb: 156 163 175;
   --brand-primary-rgb: 124 58 237;
   --brand-secondary-rgb: 236 72 153;
+
+  /* Question Pool — curator module (maps to Ze[code] brand + type accents) */
+  --qp-brand: #7c3aed;
+  --qp-brand-soft: #f3effe;
+  --qp-ink: #1a1626;
+  --qp-ink-2: #5b5670;
+  --qp-ink-3: #9994a8;
+  --qp-bg: #fafafb;
+  --qp-surface: #ffffff;
+  --qp-surface-2: #f6f4fb;
+  --qp-border: #eceaf2;
+  --qp-border-strong: #d9d5e4;
+  --qp-type-coding: #7c3aed;
+  --qp-type-database: #06b6d4;
+  --qp-type-mcq: #ec4899;
+  --qp-type-comprehension: #f97316;
+  --qp-type-open-ended: #84cc16;
+  --qp-type-fill-blank: #f59e0b;
+  --qp-type-debug: #6366f1;
+  --qp-shadow: 0 1px 2px rgba(26, 22, 38, 0.04), 0 4px 12px rgba(26, 22, 38, 0.06);
+
   --success-rgb: 22 163 74;
   --warning-rgb: 234 179 8;
   --error-rgb: 220 38 38;
@@ -115,6 +150,18 @@ html.dark {
   --error-bg: #3a1f1f;
   --info: #60a5fa;
   --info-bg: #1f2a3a;
+
+  --btn-review-bg: #3b82f6;
+  --btn-review-bg-hover: #60a5fa;
+  --btn-review-text: #0e0e11;
+
+  --btn-schedule-bg: rgb(var(--accent-rgb));
+  --btn-schedule-bg-hover: rgb(var(--accent-hover-rgb));
+  --btn-schedule-text: #ffffff;
+
+  --btn-advance-bg: #4ade80;
+  --btn-advance-bg-hover: #86efac;
+  --btn-advance-text: #0e2e1a;
 
   --glass-bg: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.08);

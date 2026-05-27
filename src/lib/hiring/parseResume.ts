@@ -46,7 +46,7 @@ export async function parseResumeFile(_fileName: string): Promise<ParsedResumePa
         },
       }),
       createEducationEntry("Master's", {
-        required: true,
+        required: false,
         isHighest: true,
         seed: {
           details: "UdK Berlin, Berlin, DE\n2018 · Grade 1.4",

@@ -135,7 +135,7 @@ export default function SeniorProductDesignerJobPage() {
               <div className="col-span-4">CANDIDATE</div>
               <div className="col-span-2">CURRENT STAGE</div>
               <div className="col-span-2">EVIDENCE SCORE</div>
-              <div className="col-span-2">AI SIGNAL</div>
+              <div className="col-span-2">SIGNAL</div>
               <div className="col-span-2">LAST ACTIVITY</div>
             </div>
 

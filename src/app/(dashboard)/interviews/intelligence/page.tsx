@@ -92,7 +92,6 @@ export default function InterviewIntelligencePage() {
           <Card className="border-chrome-border">
             <CardHeader>
               <CardTitle className="text-chrome-active">Competency Scorecard</CardTitle>
-              <p className="text-xs text-muted -mt-1">AI-Generated</p>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">

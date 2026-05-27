@@ -261,10 +261,9 @@ export function ApplicantTabs({ candidate, fit }: { candidate: Candidate; fit: F
 
       <Card className="mt-6 border-chrome-border">
         <CardHeader>
-          <CardTitle className="text-forest">Content submissions & AI signals</CardTitle>
+          <CardTitle className="text-forest">Content submissions</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="mb-2 text-xs text-muted">Heuristic signal, not proof.</p>
           {candidate.contentSubmissions.length === 0 ? (
             <p className="text-sm text-text-secondary">No submissions.</p>
           ) : (
@@ -272,16 +271,6 @@ export function ApplicantTabs({ candidate, fit }: { candidate: Candidate; fit: F
               <div key={sub.id} className="mb-3 rounded-xl border border-chrome-border bg-parchment p-3">
                 <p className="text-xs text-muted">{sub.type}</p>
                 <p className="text-sm text-text-secondary">{sub.text.slice(0, 150)}…</p>
-                {sub.aiSignals.map((sig) => (
-                  <div key={sig.id} className="mt-2">
-                    <span className="text-xs font-medium text-forest">{sig.band}</span>
-                    <ul className="list-inside list-disc text-xs text-text-secondary">
-                      {parseJson<string[]>(sig.reasons, []).map((r, i) => (
-                        <li key={i}>{r}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
               </div>
             ))
           )}

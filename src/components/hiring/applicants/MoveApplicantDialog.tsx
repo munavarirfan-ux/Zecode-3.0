@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { getActiveJobsForMove, moveApplicantToJob } from "@/lib/hiring/mockData";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
@@ -136,8 +137,13 @@ export function MoveApplicantDialog({
 
               <ul className="max-h-[240px] space-y-1.5 overflow-y-auto pr-0.5" role="listbox" aria-label="Available jobs">
                 {filteredJobs.length === 0 ? (
-                  <li className="rounded-[10px] border border-dashed border-[rgba(15,23,42,0.08)] px-3 py-6 text-center text-[13px] text-muted">
-                    No active jobs match your search.
+                  <li className="list-none">
+                    <LineArtEmptyState
+                      illustration="search"
+                      message="No active jobs match your search."
+                      size="compact"
+                      className="rounded-[10px] border border-dashed border-[rgba(15,23,42,0.08)]"
+                    />
                   </li>
                 ) : (
                   filteredJobs.map((j) => {

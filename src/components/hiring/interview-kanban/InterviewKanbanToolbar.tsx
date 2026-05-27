@@ -35,8 +35,7 @@ import {
 import {
   countActiveAdvancedFilters,
   EMPTY_ADVANCED_FILTERS,
-  INTERVIEW_STATUS_CHIPS_OVERFLOW,
-  INTERVIEW_STATUS_CHIPS_PRIMARY,
+  INTERVIEW_STATUS_FILTERS,
   type InterviewKanbanAdvancedFilters,
   type InterviewOperationalStatus,
 } from "@/lib/hiring/interviewKanbanOps";
@@ -49,39 +48,6 @@ export type InterviewRoundOption = {
   count: number;
 };
 
-const chipBase =
-  "inline-flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-xs font-semibold transition-colors";
-
-function StatusChip({
-  label,
-  count,
-  active,
-  onClick,
-}: {
-  label: string;
-  count: number;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={cn(
-        chipBase,
-        active
-          ? "border-forest/25 bg-forest/10 text-forest"
-          : "border-[rgba(15,23,42,0.08)] bg-white/90 text-[#71717A] hover:border-[rgba(15,23,42,0.12)] dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-muted",
-      )}
-    >
-      <span>{label}</span>
-      <span className={cn("tabular-nums opacity-60", active && "text-forest/90")}>{count}</span>
-    </button>
-  );
-}
-
 function countBadge(count: number) {
   return (
     <span className="ml-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[rgba(15,23,42,0.06)] px-1.5 text-[10px] font-semibold tabular-nums text-text-secondary dark:bg-white/[0.08]">
@@ -89,6 +55,13 @@ function countBadge(count: number) {
     </span>
   );
 }
+
+/** Radix-style soft outline for toolbar triggers (matches search field) */
+const toolbarTriggerClass =
+  "border-border-subtle bg-surface shadow-none hover:bg-surface-2 dark:border-border-subtle dark:hover:bg-white/[0.04]";
+
+const toolbarTriggerActiveClass =
+  "border-[rgb(var(--accent-rgb)/0.22)] bg-[rgb(var(--accent-soft-rgb)/0.55)] hover:bg-[rgb(var(--accent-soft-rgb)/0.72)] dark:border-[rgb(var(--accent-rgb)/0.28)]";
 
 export function InterviewKanbanToolbar({
   rounds,
@@ -107,6 +80,7 @@ export function InterviewKanbanToolbar({
   interviewTypes,
   searchQuery,
   onSearchQueryChange,
+  onClearAllFilters,
 }: {
   rounds: InterviewRound[];
   roundOptions: InterviewRoundOption[];
@@ -124,16 +98,16 @@ export function InterviewKanbanToolbar({
   interviewTypes: string[];
   searchQuery: string;
   onSearchQueryChange: (q: string) => void;
+  onClearAllFilters?: () => void;
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftAdvanced, setDraftAdvanced] = useState(advanced);
   const [showAddRoundForm, setShowAddRoundForm] = useState(false);
   const [newRoundTitle, setNewRoundTitle] = useState("");
-  const overflowActive = INTERVIEW_STATUS_CHIPS_OVERFLOW.includes(
-    statusFilter as InterviewOperationalStatus,
-  );
 
   const activeFilterCount = countActiveAdvancedFilters(advanced);
+  const hasActiveFilters =
+    statusFilter !== "All" || activeFilterCount > 0 || searchQuery.trim().length > 0;
   const totalCount = statusCounts.All ?? 0;
 
   const activeRound = activeRoundId ? rounds.find((r) => r.id === activeRoundId) : null;
@@ -149,10 +123,17 @@ export function InterviewKanbanToolbar({
     setFiltersOpen(false);
   }
 
-  function clearFilters() {
+  function clearAdvancedFilters() {
     onAdvancedChange(EMPTY_ADVANCED_FILTERS);
     setDraftAdvanced(EMPTY_ADVANCED_FILTERS);
     setFiltersOpen(false);
+  }
+
+  function clearAll() {
+    onStatusFilterChange("All");
+    clearAdvancedFilters();
+    onSearchQueryChange("");
+    onClearAllFilters?.();
   }
 
   function submitNewRound() {
@@ -176,7 +157,7 @@ export function InterviewKanbanToolbar({
       <div className="flex shrink-0 items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1 rounded-[9px] px-2.5 text-xs shadow-none">
+            <Button variant="outline" size="sm" className={cn("h-8 gap-1 rounded-[9px] px-2.5 text-xs", toolbarTriggerClass)}>
               <Layers className="h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={1.75} />
               <span className="max-w-[140px] truncate font-medium">{roundTriggerLabel}</span>
               {countBadge(activeRoundCount)}
@@ -267,53 +248,63 @@ export function InterviewKanbanToolbar({
         </DropdownMenu>
       </div>
 
-      <div
-        className={cn(
-          "flex min-w-0 flex-1 items-center gap-1 overflow-x-auto",
-          "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+      <div className="min-w-0 flex-1 px-2">
+        {hasActiveFilters ? (
+          <p className="truncate text-[11px] text-[#71717A] dark:text-muted">
+            {statusFilter !== "All" ? (
+              <span className="font-medium text-forest">{statusFilter}</span>
+            ) : (
+              "Filtered"
+            )}
+            {activeRound ? ` · ${activeRound.title}` : ""}
+            {" · "}
+            <span className="tabular-nums">{statusCounts[statusFilter] ?? statusCounts.All}</span> shown
+          </p>
+        ) : (
+          <p className="truncate text-[11px] text-[#A1A1AA]">
+            Filter by status within each round — rejections stay in their round column
+          </p>
         )}
-        role="tablist"
-        aria-label="Interview status filters"
-      >
-        {INTERVIEW_STATUS_CHIPS_PRIMARY.map((f) => (
-          <StatusChip
-            key={f}
-            label={f}
-            count={statusCounts[f] ?? 0}
-            active={statusFilter === f}
-            onClick={() => onStatusFilterChange(f)}
-          />
-        ))}
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-7 shrink-0 gap-1 px-2 text-xs",
-                  overflowActive && "bg-forest/10 text-forest",
-                )}
-              >
-                +{INTERVIEW_STATUS_CHIPS_OVERFLOW.length} more
-                <ChevronDown className="h-3 w-3 opacity-60" strokeWidth={2} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-52">
-              {INTERVIEW_STATUS_CHIPS_OVERFLOW.map((f) => (
-                <DropdownMenuItem
-                  key={f}
-                  className="flex items-center justify-between text-xs"
-                  onSelect={() => onStatusFilterChange(f)}
-                >
-                  {f}
-                  {countBadge(statusCounts[f] ?? 0)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "h-8 gap-1 rounded-[9px] px-2.5 text-xs",
+                toolbarTriggerClass,
+                statusFilter !== "All" && toolbarTriggerActiveClass,
+              )}
+            >
+              <span className="text-[#71717A]">Status:</span>
+              <span className="max-w-[120px] truncate font-medium text-text">{statusFilter}</span>
+              {statusFilter !== "All" ? countBadge(statusCounts[statusFilter] ?? 0) : null}
+              <ChevronDown className="h-3 w-3 opacity-50" strokeWidth={2} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-[min(320px,50vh)] w-56 overflow-y-auto">
+            <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted">
+              Interview status
+            </DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={statusFilter}
+              onValueChange={(v) => onStatusFilterChange(v as InterviewOperationalStatus | "All")}
+            >
+              {INTERVIEW_STATUS_FILTERS.map((f) => (
+                <DropdownMenuRadioItem key={f} value={f} className="text-xs">
+                  <span className="flex flex-1 items-center justify-between gap-2">
+                    {f}
+                    {countBadge(statusCounts[f] ?? 0)}
+                  </span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Popover
           open={filtersOpen}
           onOpenChange={(open) => {
@@ -322,7 +313,7 @@ export function InterviewKanbanToolbar({
           }}
         >
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-[9px] px-2.5 text-xs shadow-none">
+            <Button variant="outline" size="sm" className={cn("h-8 gap-1.5 rounded-[9px] px-2.5 text-xs", toolbarTriggerClass)}>
               <Filter className="h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={1.75} />
               Filters
               {activeFilterCount > 0 ? countBadge(activeFilterCount) : null}
@@ -407,7 +398,7 @@ export function InterviewKanbanToolbar({
               </Select>
             </div>
             <div className="flex items-center justify-between border-t border-[rgba(15,23,42,0.06)] pt-2 dark:border-white/[0.06]">
-              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearFilters}>
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearAdvancedFilters}>
                 Clear
               </Button>
               <Button size="sm" className="h-8 text-xs" onClick={applyFilters}>
@@ -417,13 +408,19 @@ export function InterviewKanbanToolbar({
           </PopoverContent>
         </Popover>
 
+        {hasActiveFilters ? (
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearAll}>
+            Clear filters
+          </Button>
+        ) : null}
+
         <div className="relative hidden sm:block">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted/60" strokeWidth={1.75} />
           <Input
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
             placeholder="Search"
-            className="h-8 w-[120px] rounded-[9px] pl-8 text-xs lg:w-[160px]"
+            className={cn("h-8 w-[120px] rounded-[9px] border-border-subtle pl-8 text-xs shadow-none lg:w-[160px]", toolbarTriggerClass)}
             aria-label="Search candidates"
           />
         </div>

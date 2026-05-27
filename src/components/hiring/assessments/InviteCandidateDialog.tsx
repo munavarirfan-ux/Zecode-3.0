@@ -52,6 +52,7 @@ export function InviteCandidateDialog({
   return (
     <AssessmentModalDrawer
       open={open}
+      placement="center"
       onOpenChange={(o) => {
         if (!o) reset();
         onOpenChange(o);

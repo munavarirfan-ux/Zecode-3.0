@@ -8,7 +8,8 @@ import {
 } from "@/lib/hiring/interviewFeedback";
 import type { HiringCandidate } from "@/lib/hiring/types";
 import { FeedbackStatusBadge } from "./FeedbackStatusBadge";
-import { dashboardRowSurface, dashboardSectionSub } from "@/components/dashboard/dashboardTokens";
+import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
+import { dashboardRowSurface } from "@/components/dashboard/dashboardTokens";
 
 export function InterviewFeedbackDashboard({ candidate }: { candidate: HiringCandidate }) {
   const bundle = getInterviewFeedback(candidate);
@@ -18,7 +19,7 @@ export function InterviewFeedbackDashboard({ candidate }: { candidate: HiringCan
   return (
     <div className="space-y-3">
       {candidate.interviews.length === 0 ? (
-        <p className={dashboardSectionSub}>No interviews scheduled.</p>
+        <LineArtEmptyState illustration="interviews" message="No interviews scheduled." size="compact" />
       ) : (
         candidate.interviews.map((interview) => (
           <article key={interview.id} className={dashboardRowSurface}>

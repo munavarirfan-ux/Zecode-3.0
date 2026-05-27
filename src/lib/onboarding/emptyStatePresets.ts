@@ -1,7 +1,7 @@
-import type { EmptyStateIllustrationId } from "@/components/onboarding/EmptyStateIllustrations";
+import type { LineArtIllustrationId } from "@/components/empty-states/line-art-illustrations";
 
 export type EmptyStatePreset = {
-  illustration: EmptyStateIllustrationId;
+  illustration: LineArtIllustrationId;
   headline: string;
   subtext: string;
   guideTitle?: string;
@@ -17,7 +17,7 @@ export const EMPTY_STATE_PRESETS = {
     guideBody: "Jobs help organize candidates, interviews, and assessments under one workflow.",
   },
   jobsFiltered: {
-    illustration: "jobs",
+    illustration: "filters",
     headline: "No jobs match",
     subtext: "Try another status tab or adjust filters to find what you're looking for.",
   },

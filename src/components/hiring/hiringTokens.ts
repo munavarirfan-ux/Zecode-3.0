@@ -21,6 +21,10 @@ export const hiringCanvas =
 
 export const hiringTransition = "transition-all duration-[180ms] ease-out";
 
+/** Focus ring on gradient heroes — never use accent ring (reads as thick green border) */
+export const hiringHeroFocusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-0";
+
 export const hiringTitle = "text-[1.0625rem] font-semibold leading-snug tracking-[-0.025em] text-text";
 
 export const hiringMeta = "text-[13px] font-medium text-text-secondary/70";
@@ -75,7 +79,8 @@ export const hiringHeroCollapsedBackBtn = cn(
 );
 
 export const hiringHeroCollapseToggleBtn = cn(
-  "h-7 w-7 shrink-0 text-white/70 hover:bg-white/[0.08] hover:text-white",
+  "h-7 w-7 shrink-0 border-0 text-white/70 shadow-none hover:bg-white/[0.08] hover:text-white",
+  hiringHeroFocusRing,
 );
 
 export const hiringHeroCollapsedIconBtn = cn(
@@ -169,19 +174,36 @@ export const hiringHeroPrimaryBtn = cn(
   "border-0 font-semibold text-accent bg-white",
   "shadow-[0_2px_12px_rgba(0,0,0,0.14)]",
   hiringTransition,
+  hiringHeroFocusRing,
   "hover:bg-white/95 hover:text-accent-hover hover:shadow-[0_4px_18px_rgba(0,0,0,0.16)]",
 );
 
 export const hiringHeroPrimaryBtnSm = cn(
   hiringHeroPrimaryBtn,
   "h-9 gap-1.5 rounded-[11px] px-4 text-[13px]",
+  "disabled:pointer-events-none disabled:border-0 disabled:bg-white/55 disabled:text-white/90 disabled:opacity-100 disabled:shadow-none",
+  "disabled:focus-visible:ring-white/25",
 );
 
 /** Secondary CTA on gradient hero — frosted glass, white text */
 export const hiringHeroSecondaryBtnSm = cn(
-  "h-9 gap-1.5 rounded-[11px] border-0 px-4 text-[13px] font-medium text-white",
+  "h-9 gap-1.5 rounded-[11px] border border-white/[0.2] px-4 text-[13px] font-medium text-white",
   hiringTransition,
-  "bg-white/[0.14] shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-white/[0.2]",
+  hiringHeroFocusRing,
+  "bg-white/[0.14] shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:border-white/[0.28] hover:bg-white/[0.22]",
+  "disabled:pointer-events-none disabled:border-white/10 disabled:bg-white/[0.08] disabled:text-white/45 disabled:opacity-100",
+);
+
+/** Native select on gradient hero — frosted, high-contrast */
+export const hiringHeroSelectSm = cn(
+  "h-9 min-w-[7.5rem] cursor-pointer appearance-none rounded-[11px]",
+  "border border-white/[0.22] bg-white/[0.14] px-3 pr-8 text-[13px] font-medium text-white",
+  "backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
+  "outline-none",
+  "hover:border-white/[0.3] hover:bg-white/[0.2]",
+  hiringHeroFocusRing,
+  "bg-[length:12px] bg-[right_0.65rem_center] bg-no-repeat",
+  "bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272%27%3E%3Cpath d=%27M6 9l6 6 6-6%27/%3E%3C/svg%3E')]",
 );
 
 export const hiringHeroPrimaryBtnMd = cn(

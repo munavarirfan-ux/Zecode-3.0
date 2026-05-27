@@ -10,7 +10,7 @@ import {
   Rocket,
   Users,
 } from "lucide-react";
-import type { EmptyStateIllustrationId } from "@/components/onboarding/EmptyStateIllustrations";
+import type { LineArtIllustrationId } from "@/components/empty-states/line-art-illustrations";
 import { APP_NAME, MODULE_HIRE } from "@/constants/app";
 import { ROUTES } from "@/config/routes";
 
@@ -24,7 +24,7 @@ export type NewUserEmptyModuleId =
   | "mySchedule";
 
 export type NewUserEmptyModuleConfig = {
-  illustration: EmptyStateIllustrationId;
+  illustration: LineArtIllustrationId;
   eyebrow: string;
   headline: string;
   subtext: string;
