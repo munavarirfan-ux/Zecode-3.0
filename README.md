@@ -1,6 +1,6 @@
 # Ze[hub] — Developer Handoff
 
-> **Ze[hub]** is an enterprise hiring operations platform built on Next.js 14 (App Router). It combines four tightly integrated product surfaces: **Ze[hire]** (hiring pipeline), **Ze[meet]** (live video interviews), **Ze[code]** (assessments & question pool), and **Ze[log]** (audit trail).
+> **Ze[hub]** is an enterprise hiring operations platform built on Next.js 14 (App Router). It combines three tightly integrated product surfaces: **Ze[hire]** (hiring pipeline), **Ze[meet]** (live video interviews), and **Ze[code]** (assessments & question pool).
 
 ---
 
@@ -408,17 +408,6 @@ Schedule assessments for batches of candidates with live monitoring.
 |---|---|
 | `lib/scheduling/scheduleStore.ts` | Zustand — date/time slots, timezone |
 | `components/hiring/assessment-schedules/` | Drive UI components |
-
----
-
-### Ze[log] — Audit Log
-
-**Route:** `/(dashboard)/settings/audit`
-
-Records all privileged actions for compliance.
-
-- `features/settings/components/AuditLogPanel.tsx` — log viewer UI
-- Prisma model `AuditEvent` — stores actor, action, target, timestamp
 
 ---
 
