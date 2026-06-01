@@ -5,6 +5,8 @@ import type { HiringJob } from "./types";
 
 const STORAGE_PREFIX = "kerohire-hiring-team";
 
+export const TEAM_UPDATED_EVENT = "kerohire:team-updated";
+
 export type JobTeamAssignee = {
   id: string;
   name: string;
@@ -101,6 +103,7 @@ export function loadJobHiringTeam(jobId: string): JobHiringTeamGroups | null {
 export function saveJobHiringTeam(jobId: string, team: JobHiringTeamGroups): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(`${STORAGE_PREFIX}:${jobId}`, JSON.stringify(team));
+  window.dispatchEvent(new CustomEvent(TEAM_UPDATED_EVENT, { detail: { jobId } }));
 }
 
 export function getJobHiringTeamForJob(job: HiringJob): JobHiringTeamGroups {
@@ -241,4 +244,13 @@ export function addTeamMember(
     ...team,
     [role]: [...team[role], member],
   };
+}
+
+/** Returns true when the team has at least one recruiter, one hiring manager, and one panel member. */
+export function isHiringTeamComplete(team: JobHiringTeamGroups): boolean {
+  return (
+    team.recruiters.length >= 1 &&
+    team.hiringManagers.length >= 1 &&
+    team.panelMembers.length >= 1
+  );
 }

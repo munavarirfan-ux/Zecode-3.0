@@ -11,6 +11,7 @@ import {
   Inbox,
   Layers,
   Mic2,
+  UserCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -31,10 +32,12 @@ import {
 } from "@/components/hiring/hiringTokens";
 import { HiringHeroDecor } from "@/components/hiring/HiringHeroDecor";
 import { InterviewsTimeframeHeroKpi } from "@/components/dashboard/InterviewsTimeframeHeroKpi";
+import { TimeframeHeroKpi } from "@/components/dashboard/TimeframeHeroKpi";
 import {
   buildEvaluatorUpcomingInterviewsOverall,
   getOrgUpcomingInterviewsOverall,
   isInterviewsTimeframeKpiId,
+  isStaticKpiTimeframeId,
 } from "@/lib/dashboard/interviewTimeframeKpi";
 
 function greetingLine(hour: number) {
@@ -48,6 +51,7 @@ const HERO_KPI_ICONS: Record<string, LucideIcon> = {
   feedbackDue: Inbox,
   assessmentsProgress: ClipboardList,
   offers: FileCheck,
+  hired: UserCheck,
   today: Calendar,
   feedback: Inbox,
   upcoming: Mic2,
@@ -221,17 +225,29 @@ export function GreetingHero({
           </header>
 
           <ul className={kpiGridClass}>
-            {hero.kpis.map((k) =>
-              isInterviewsTimeframeKpiId(k.id) ? (
-                <InterviewsTimeframeHeroKpi
-                  key={k.id}
-                  role={role}
-                  sessionName={session?.user?.name}
-                />
-              ) : (
-                <HeroGlassKpi key={k.id} k={k} />
-              ),
-            )}
+            {hero.kpis.map((k) => {
+              if (isInterviewsTimeframeKpiId(k.id)) {
+                return (
+                  <InterviewsTimeframeHeroKpi
+                    key={k.id}
+                    role={role}
+                    sessionName={session?.user?.name}
+                  />
+                );
+              }
+              if (isStaticKpiTimeframeId(k.id)) {
+                const Icon = HERO_KPI_ICONS[k.id] ?? Briefcase;
+                return (
+                  <TimeframeHeroKpi
+                    key={k.id}
+                    kpiId={k.id}
+                    label={k.label}
+                    icon={Icon}
+                  />
+                );
+              }
+              return <HeroGlassKpi key={k.id} k={k} />;
+            })}
           </ul>
 
           {hero.chips.length > 0 ? (

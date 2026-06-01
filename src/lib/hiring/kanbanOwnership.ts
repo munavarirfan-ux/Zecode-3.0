@@ -4,6 +4,7 @@ import type { HiringCandidate, KanbanViewMode } from "./types";
 import type { EngagementRecord } from "./types";
 import { candidateVisibleInViewMode } from "./ownership";
 import { enrichCandidateOwnership } from "./candidateOwnership";
+import { getContactStatus, loadContactedCandidateIds } from "./candidateContactStatus";
 
 export type KanbanSortKey =
   | "newest"
@@ -16,12 +17,15 @@ export type KanbanEngagementFilter = "" | "onlyMe" | "multiple" | "none";
 
 export type KanbanStageAgeFilter = "" | "lt3" | "3to7" | "gt7" | "gt14";
 
+export type KanbanContactFilter = "" | "needs_contact" | "engaged";
+
 export type KanbanOwnershipFilters = {
   sources: string[];
   engagement: KanbanEngagementFilter;
   stageAge: KanbanStageAgeFilter;
   sort: KanbanSortKey;
   search: string;
+  contactFilter: KanbanContactFilter;
 };
 
 export const EMPTY_KANBAN_OWNERSHIP_FILTERS: KanbanOwnershipFilters = {
@@ -30,6 +34,7 @@ export const EMPTY_KANBAN_OWNERSHIP_FILTERS: KanbanOwnershipFilters = {
   stageAge: "",
   sort: "newest",
   search: "",
+  contactFilter: "",
 };
 
 const KANBAN_VIEW_MODE_KEY = "kanban-view-mode";
@@ -151,6 +156,11 @@ function applyKanbanFilters(
   );
 
   result = result.filter((c) => matchesStageAge(c.appliedAt, filters.stageAge));
+
+  if (filters.contactFilter) {
+    const contacted = loadContactedCandidateIds();
+    result = result.filter((c) => getContactStatus(c, contacted) === filters.contactFilter);
+  }
 
   const q = filters.search.trim().toLowerCase();
   if (q) {

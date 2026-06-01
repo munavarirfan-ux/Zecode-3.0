@@ -18,6 +18,7 @@ export type ApplicantsFilterState = {
   status: string;
   appliedDate: string;
   owner: string;
+  contactStatus: string;
 };
 
 export const EMPTY_APPLICANTS_FILTERS: ApplicantsFilterState = {
@@ -26,6 +27,7 @@ export const EMPTY_APPLICANTS_FILTERS: ApplicantsFilterState = {
   status: "",
   appliedDate: "",
   owner: "",
+  contactStatus: "",
 };
 
 export function countApplicantFilters(filters: ApplicantsFilterState): number {
@@ -180,6 +182,16 @@ export function ApplicantsFiltersPopover({
             onChange={(owner) => setDraft((d) => ({ ...d, owner }))}
             placeholder="All owners"
             options={owners.map((o) => ({ value: o, label: o }))}
+          />
+          <FilterField
+            label="Contact status"
+            value={draft.contactStatus}
+            onChange={(contactStatus) => setDraft((d) => ({ ...d, contactStatus }))}
+            placeholder="All candidates"
+            options={[
+              { value: "needs_contact", label: "Needs Contact" },
+              { value: "engaged", label: "Engaged" },
+            ]}
           />
         </div>
         <div className="mt-3 flex gap-2 border-t border-[rgba(15,23,42,0.06)] pt-3">

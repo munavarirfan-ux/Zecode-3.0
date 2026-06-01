@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { ROUTES } from "@/config/routes";
 import { createDefaultInterviewRoundsForNewJob } from "@/lib/hiring/customiseHiringProcess";
-import { createHiringJob, createHiringJobDraft } from "@/lib/hiring/createHiringJob";
+import { createHiringJobDraft } from "@/lib/hiring/createHiringJob";
 import { CUSTOM_FIELD_DEFS, DEPARTMENTS, LOCATIONS } from "@/lib/hiring/mockData";
 import { JOB_FORM_STEPS, hasJobWizardProgress, isJobFormStepValid } from "@/lib/hiring/jobFormSteps";
 import type { InterviewRound } from "@/lib/hiring/interviewRounds";
@@ -149,18 +149,18 @@ export function NewJobFormDialog({
     onOpenChange(false);
   }
 
-  async function publishJob() {
+  async function saveAsDraftAndNavigate() {
     if (!isJobFormStepValid(stepIndex, basic, interviewRounds)) return;
     setPublishing(true);
     try {
-      await new Promise((r) => setTimeout(r, 480));
-      const job = createHiringJob({ basic, additional, interviewRounds });
-      toast.success("Job published successfully");
+      await new Promise((r) => setTimeout(r, 380));
+      const job = createHiringJobDraft({ basic, additional, interviewRounds });
+      toast.success("Job saved as draft");
       onCreated?.(job.id);
       onOpenChange(false);
-      router.push(`${ROUTES.hiringJob(job.id)}?published=1`);
+      router.push(ROUTES.hiringJob(job.id));
     } catch {
-      toast.error("Could not publish job. Please try again.");
+      toast.error("Could not save draft. Please try again.");
       setPublishing(false);
     }
   }
@@ -174,7 +174,7 @@ export function NewJobFormDialog({
       return;
     }
     if (isLastStep) {
-      void publishJob();
+      void saveAsDraftAndNavigate();
       return;
     }
     setStepIndex((i) => Math.min(i + 1, JOB_FORM_STEPS.length - 1));
@@ -254,8 +254,8 @@ export function NewJobFormDialog({
             {publishing ? (
               <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 px-8 py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-forest" aria-hidden />
-                <p className="text-[15px] font-medium text-[#18181B]">Publishing your job…</p>
-                <p className="text-[13px] text-[#71717A]">Setting up pipeline and workspace</p>
+                <p className="text-[15px] font-medium text-[#18181B]">Saving job draft…</p>
+                <p className="text-[13px] text-[#71717A]">Setting up your job workspace</p>
               </div>
             ) : null}
 
@@ -358,7 +358,7 @@ export function NewJobFormDialog({
                     )}
                     disabled={!isStepValid || publishing}
                   >
-                    {isLastStep ? "Publish Job" : "Next"}
+                    {isLastStep ? "Save as Draft" : "Next"}
                   </Button>
                 </div>
               </footer>

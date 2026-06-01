@@ -214,7 +214,7 @@ export const globalInterviewFeedRows: GlobalInterviewFeedRow[] = [
   },
 ];
 
-export type InterviewerWorkloadStatus = "Available" | "Moderate load" | "Busy" | "Overloaded";
+export type InterviewerWorkloadStatus = "Available" | "Busy";
 
 export type InterviewerOpsRow = {
   id: string;
@@ -236,7 +236,7 @@ export const interviewerOpsRows: InterviewerOpsRow[] = [
     completed: 8,
     pendingFeedback: 3,
     availableSlotsToday: 2,
-    status: "Moderate load",
+    status: "Available",
   },
   {
     id: "i-2",
@@ -266,7 +266,7 @@ export const interviewerOpsRows: InterviewerOpsRow[] = [
     completed: 11,
     pendingFeedback: 7,
     availableSlotsToday: 0,
-    status: "Overloaded",
+    status: "Busy",
   },
 ];
 

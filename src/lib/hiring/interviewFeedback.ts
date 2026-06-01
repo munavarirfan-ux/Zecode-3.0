@@ -31,16 +31,59 @@ export type HireRecommendation =
   | "hire"
   | "strong_hire";
 
+/** Qualitative competency rating — independent of hiring recommendation */
+export type SkillRating = "poor" | "fair" | "good" | "very_good" | "excellent";
+
+export const SKILL_RATING_OPTIONS: {
+  value: SkillRating;
+  label: string;
+  pillClass: string;
+  activeClass: string;
+}[] = [
+  {
+    value: "poor",
+    label: "Poor",
+    pillClass: "border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.03)] text-[#71717A]",
+    activeClass: "border-red-300 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-950/30 dark:text-red-400",
+  },
+  {
+    value: "fair",
+    label: "Fair",
+    pillClass: "border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.03)] text-[#71717A]",
+    activeClass: "border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-700/40 dark:bg-orange-950/30 dark:text-orange-400",
+  },
+  {
+    value: "good",
+    label: "Good",
+    pillClass: "border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.03)] text-[#71717A]",
+    activeClass: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-950/30 dark:text-amber-600",
+  },
+  {
+    value: "very_good",
+    label: "Very Good",
+    pillClass: "border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.03)] text-[#71717A]",
+    activeClass: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-400",
+  },
+  {
+    value: "excellent",
+    label: "Excellent",
+    pillClass: "border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.03)] text-[#71717A]",
+    activeClass: "border-green-400 bg-green-50 text-green-700 dark:border-green-700/40 dark:bg-green-950/30 dark:text-green-400",
+  },
+];
+
 export type SkillFeedbackEntry = {
   id: string;
   title: string;
   rating: number;
+  /** Qualitative rating — preferred over numeric rating */
+  skillRating?: SkillRating;
   quickSignals: string[];
   summary: string;
   detailedNotes: string;
   strengths: string[];
   concerns: string[];
-  /** True when added via “Add More” — can be removed by the interviewer */
+  /** True when added via "Add More" — can be removed by the interviewer */
   custom?: boolean;
 };
 
@@ -613,7 +656,7 @@ export const RECOMMENDATION_OPTIONS: {
   label: string;
   shortLabel: string;
   className: string;
-  icon: "x" | "minus" | "tilde" | "check" | "star";
+  icon: "dbl_down" | "down" | "neutral" | "up" | "dbl_up";
 }[] = [
   {
     value: "strong_no_hire",
@@ -621,23 +664,23 @@ export const RECOMMENDATION_OPTIONS: {
     shortLabel: "Strong No",
     className:
       "border-red-200/80 bg-red-50/80 text-red-800 hover:border-red-300 data-[selected=true]:border-red-600 data-[selected=true]:bg-red-600 data-[selected=true]:text-white data-[selected=true]:shadow-[0_4px_12px_-4px_rgba(220,38,38,0.45)]",
-    icon: "x",
+    icon: "dbl_down",
   },
   {
     value: "no_hire",
     label: "No Hire",
-    shortLabel: "No",
+    shortLabel: "No Hire",
     className:
       "border-orange-200/80 bg-orange-50/80 text-orange-900 hover:border-orange-300 data-[selected=true]:border-orange-600 data-[selected=true]:bg-orange-600 data-[selected=true]:text-white data-[selected=true]:shadow-[0_4px_12px_-4px_rgba(234,88,12,0.4)]",
-    icon: "minus",
+    icon: "down",
   },
   {
     value: "lean_hire",
-    label: "Lean Hire",
-    shortLabel: "Lean",
+    label: "Neutral",
+    shortLabel: "Neutral",
     className:
       "border-amber-200/80 bg-amber-50/80 text-amber-900 hover:border-amber-300 data-[selected=true]:border-amber-600 data-[selected=true]:bg-amber-600 data-[selected=true]:text-white data-[selected=true]:shadow-[0_4px_12px_-4px_rgba(217,119,6,0.4)]",
-    icon: "tilde",
+    icon: "neutral",
   },
   {
     value: "hire",
@@ -645,14 +688,14 @@ export const RECOMMENDATION_OPTIONS: {
     shortLabel: "Hire",
     className:
       "border-emerald-200/80 bg-emerald-50/80 text-emerald-900 hover:border-emerald-300 data-[selected=true]:border-emerald-600 data-[selected=true]:bg-emerald-600 data-[selected=true]:text-white data-[selected=true]:shadow-[0_4px_12px_-4px_rgba(5,150,105,0.4)]",
-    icon: "check",
+    icon: "up",
   },
   {
     value: "strong_hire",
     label: "Strong Hire",
-    shortLabel: "Strong",
+    shortLabel: "Strong Hire",
     className:
       "border-green-300/80 bg-green-50/80 text-green-950 hover:border-green-500 data-[selected=true]:border-green-700 data-[selected=true]:bg-green-700 data-[selected=true]:text-white data-[selected=true]:shadow-[0_4px_14px_-4px_rgba(21,128,61,0.45)]",
-    icon: "star",
+    icon: "dbl_up",
   },
 ];

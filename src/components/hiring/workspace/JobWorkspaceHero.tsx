@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -9,14 +10,30 @@ import {
   Copy,
   FileCheck,
   Link2,
+  Lock,
   MoreHorizontal,
   Pause,
   Pencil,
   Plus,
+  Rocket,
   Share2,
   Users,
   XCircle,
 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogOverlay,
+  DialogPanel,
+  DialogPortal,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  getJobHiringTeamForJob,
+  isHiringTeamComplete,
+  TEAM_UPDATED_EVENT,
+} from "@/lib/hiring/jobHiringTeam";
+import { publishPersistedJob } from "@/lib/hiring/persistedJobs";
 import { HeroActionButton } from "../HeroActionButton";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,6 +90,37 @@ export function JobWorkspaceHero({
   const isInterviewMode = searchParams.get("mode") === "interview";
   const hiringStage = getActiveHiringStage(job, candidates);
 
+  const isDraft = job.status === "Draft";
+  const [teamComplete, setTeamComplete] = useState(false);
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const team = getJobHiringTeamForJob(job);
+      setTeamComplete(isHiringTeamComplete(team));
+    };
+    check();
+    window.addEventListener(TEAM_UPDATED_EVENT, check);
+    return () => window.removeEventListener(TEAM_UPDATED_EVENT, check);
+  }, [job]);
+
+  async function handlePublish() {
+    setPublishing(true);
+    try {
+      await new Promise((r) => setTimeout(r, 400));
+      publishPersistedJob(job.id);
+      toast.success("Job published successfully");
+      setPublishModalOpen(false);
+      // Trigger a page refresh to reflect new status
+      window.location.reload();
+    } catch {
+      toast.error("Could not publish job. Please try again.");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   const copyJobLink = () => {
     const url = `${window.location.origin}/hiring/jobs/${job.id}`;
     void navigator.clipboard.writeText(url);
@@ -112,6 +160,7 @@ export function JobWorkspaceHero({
   ] as const;
 
   return (
+    <>
     <HiringHeroWorkspace
       aria-label="Job workspace header"
       heroCollapseStorageKey="job-detail"
@@ -137,7 +186,13 @@ export function JobWorkspaceHero({
       meta={
         <div className={hiringHeroStripMetaChips}>
           <span className={glassMeta}>{job.employmentType}</span>
-          <span className={cn(glassMeta, "text-white/88")}>{job.status}</span>
+          {isDraft ? (
+            <span className={cn(glassMeta, "border-amber-400/30 bg-amber-400/15 text-amber-200")}>
+              Draft · Hiring team incomplete
+            </span>
+          ) : (
+            <span className={cn(glassMeta, "text-white/88")}>{job.status}</span>
+          )}
           <span className={glassMeta}>{hiringStage}</span>
           <span className={glassMeta}>Updated {job.lastUpdatedLabel}</span>
         </div>
@@ -162,6 +217,21 @@ export function JobWorkspaceHero({
             <Plus className="h-3.5 w-3.5" strokeWidth={2} />
             Add candidate
           </HeroActionButton>
+          {isDraft ? (
+            teamComplete ? (
+              <HeroActionButton variant="primary" onClick={() => setPublishModalOpen(true)}>
+                <Rocket className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Publish Job
+              </HeroActionButton>
+            ) : (
+              <div title="Add recruiter, hiring manager, and panel member to publish this job.">
+                <HeroActionButton variant="secondary" disabled>
+                  <Lock className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  Publish unavailable
+                </HeroActionButton>
+              </div>
+            )
+          ) : null}
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -219,5 +289,47 @@ export function JobWorkspaceHero({
         </HeroMetricsCollapsible>
       }
     />
+
+      {isDraft ? (
+        <Dialog open={publishModalOpen} onOpenChange={setPublishModalOpen}>
+          <DialogPortal>
+            <DialogOverlay className="z-[230] bg-[rgba(15,23,42,0.4)] backdrop-blur-[4px]" />
+            <div className="fixed inset-0 z-[230] flex items-center justify-center px-4">
+              <DialogPanel className="relative w-full max-w-[420px] rounded-[20px] border border-[rgba(15,23,42,0.06)] bg-white p-6 shadow-[0_24px_64px_-32px_rgba(15,23,42,0.22)] dark:bg-surface">
+                <DialogTitle className="text-[18px] font-semibold text-[#18181B] dark:text-text">
+                  Publish this job?
+                </DialogTitle>
+                <p className="mt-2 text-[14px] leading-relaxed text-[#71717A] dark:text-muted">
+                  This job will become visible to candidates and start accepting applications.
+                </p>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPublishModalOpen(false)}
+                    disabled={publishing}
+                    className="inline-flex h-10 items-center justify-center rounded-[10px] border border-[rgba(15,23,42,0.1)] bg-white px-4 text-[14px] font-medium text-[#3F3F46] transition-colors hover:bg-[#FAFAFB] disabled:opacity-50 dark:bg-surface"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handlePublish()}
+                    disabled={publishing}
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] bg-accent px-5 text-[14px] font-medium text-white transition-colors hover:bg-[rgb(var(--accent-hover-rgb))] disabled:opacity-50"
+                  >
+                    {publishing ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Rocket className="h-4 w-4" strokeWidth={1.75} />
+                    )}
+                    Publish Job
+                  </button>
+                </div>
+              </DialogPanel>
+            </div>
+          </DialogPortal>
+        </Dialog>
+      ) : null}
+    </>
   );
 }

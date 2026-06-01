@@ -19,6 +19,12 @@ import {
   type TransferNotification,
   type TransferNotificationsSnapshot,
 } from "@/lib/hiring/transferNotifications";
+import {
+  getMoveToInterviewSnapshot,
+  markMoveToInterviewNotificationRead,
+  subscribeMoveToInterviewStore,
+  type MoveToInterviewSnapshot,
+} from "@/lib/hiring/moveToInterviewApproval";
 import { TransferRequestReviewDialog } from "@/components/hiring/applicants/TransferRequestReviewDialog";
 import { OwnershipTransferReviewDialog } from "@/components/hiring/kanban/OwnershipTransferReviewDialog";
 import { cn } from "@/lib/utils";
@@ -30,6 +36,12 @@ const EMPTY_FEEDBACK: FeedbackNotificationsSnapshot = {
 };
 
 const EMPTY_TRANSFER: TransferNotificationsSnapshot = {
+  version: 0,
+  notifications: [],
+  unread: 0,
+};
+
+const EMPTY_MTI: MoveToInterviewSnapshot = {
   version: 0,
   notifications: [],
   unread: 0,
@@ -52,6 +64,16 @@ function useTransferNotifications(role: PreviewRole) {
   );
   const getSnapshot = useCallback(() => getTransferNotificationsSnapshot(role), [role]);
   const getServerSnapshot = useCallback(() => EMPTY_TRANSFER, []);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+function useMoveToInterviewNotifications(role: PreviewRole) {
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => subscribeMoveToInterviewStore(onStoreChange),
+    [],
+  );
+  const getSnapshot = useCallback(() => getMoveToInterviewSnapshot(role), [role]);
+  const getServerSnapshot = useCallback(() => EMPTY_MTI, []);
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
@@ -85,13 +107,14 @@ export function FeedbackNotificationsMenu() {
   const { selectedRole } = useRole();
   const feedback = useFeedbackNotifications(selectedRole);
   const transfer = useTransferNotifications(selectedRole);
+  const mti = useMoveToInterviewNotifications(selectedRole);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewRequestId, setReviewRequestId] = useState<string | null>(null);
   const [ownershipReviewOpen, setOwnershipReviewOpen] = useState(false);
   const [ownershipReviewId, setOwnershipReviewId] = useState<string | null>(null);
 
-  const unread = feedback.unread + transfer.unread;
-  const hasAny = feedback.notifications.length > 0 || transfer.notifications.length > 0;
+  const unread = feedback.unread + transfer.unread + mti.unread;
+  const hasAny = feedback.notifications.length > 0 || transfer.notifications.length > 0 || mti.notifications.length > 0;
 
   function openTransferReview(n: TransferNotification) {
     markTransferNotificationRead(n.id);
@@ -183,6 +206,27 @@ export function FeedbackNotificationsMenu() {
                       </div>
                     </dl>
                     <span className="mt-2 inline-flex text-[11px] font-medium text-accent">{n.ctaLabel} →</span>
+                  </button>
+                </li>
+              ))}
+              {mti.notifications.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    className={cn(
+                      "w-full rounded-lg px-2.5 py-2.5 text-left transition-colors",
+                      "hover:bg-[rgba(15,23,42,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/25",
+                      !n.read && "bg-amber-500/[0.04]",
+                    )}
+                    onClick={() => markMoveToInterviewNotificationRead(n.id)}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="mt-1 flex h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-semibold text-[#18181B]">{n.title}</p>
+                        <p className="mt-0.5 text-[12px] leading-relaxed text-[#52525B]">{n.body}</p>
+                      </div>
+                    </div>
                   </button>
                 </li>
               ))}

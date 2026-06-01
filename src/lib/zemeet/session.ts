@@ -68,7 +68,6 @@ export function resolveZeMeetSession(
       initials: initials(candidate.name),
       isMuted: false,
       isVideoOn: true,
-      avatarSrc: "/avatars/candidate.png",
     },
     ...interviewerNames.map((name, i) => ({
       id: `iv-${i}`,
@@ -78,7 +77,6 @@ export function resolveZeMeetSession(
       initials: initials(name),
       isMuted: i > 0,
       isVideoOn: true,
-      avatarSrc: i === 0 ? "/avatars/interviewer.png" : undefined,
     })),
   ];
 
@@ -171,7 +169,6 @@ function getDemoZeMeetSession(
         initials: "AS",
         isMuted: false,
         isVideoOn: true,
-        avatarSrc: "/avatars/candidate.png",
       },
       {
         id: "iv-0",
@@ -181,7 +178,6 @@ function getDemoZeMeetSession(
         initials: "EH",
         isMuted: false,
         isVideoOn: true,
-        avatarSrc: "/avatars/interviewer.png",
       },
     ],
     viewerRole,

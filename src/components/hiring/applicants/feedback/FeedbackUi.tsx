@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Minus, Star, X } from "lucide-react";
+import { Minus, Star, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { HireRecommendation } from "@/lib/hiring/interviewFeedback";
 import { RECOMMENDATION_OPTIONS } from "@/lib/hiring/interviewFeedback";
@@ -34,11 +34,21 @@ export function SidebarCard({
 
 function RecommendationIcon({ type }: { type: (typeof RECOMMENDATION_OPTIONS)[number]["icon"] }) {
   const cls = "h-3.5 w-3.5 shrink-0";
-  if (type === "x") return <X className={cls} strokeWidth={2} aria-hidden />;
-  if (type === "minus") return <Minus className={cls} strokeWidth={2} aria-hidden />;
-  if (type === "tilde") return <span className="text-[13px] font-semibold leading-none" aria-hidden>~</span>;
-  if (type === "check") return <Check className={cls} strokeWidth={2.5} aria-hidden />;
-  return <Star className={cls} fill="currentColor" strokeWidth={0} aria-hidden />;
+  if (type === "dbl_down") return (
+    <span className="flex gap-0.5" aria-hidden>
+      <ThumbsDown className="h-3 w-3 shrink-0" strokeWidth={2} />
+      <ThumbsDown className="h-3 w-3 shrink-0" strokeWidth={2} />
+    </span>
+  );
+  if (type === "down") return <ThumbsDown className={cls} strokeWidth={2} aria-hidden />;
+  if (type === "neutral") return <Minus className={cls} strokeWidth={2} aria-hidden />;
+  if (type === "up") return <ThumbsUp className={cls} strokeWidth={2} aria-hidden />;
+  return (
+    <span className="flex gap-0.5" aria-hidden>
+      <ThumbsUp className="h-3 w-3 shrink-0" strokeWidth={2} />
+      <ThumbsUp className="h-3 w-3 shrink-0" strokeWidth={2} />
+    </span>
+  );
 }
 
 export function RecommendationPills({

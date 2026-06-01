@@ -16,6 +16,7 @@ import {
   getRoleExpectations,
 } from "./jobWorkspaceUtils";
 import { JobWorkspaceHiringSetup } from "./JobWorkspaceHiringSetup";
+import { PublishReadinessCard } from "./PublishReadinessCard";
 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
@@ -54,6 +55,7 @@ export function JobWorkspaceOverview({
 
   return (
     <div className="space-y-4" role="region" aria-label="Job overview">
+      {job.status === "Draft" ? <PublishReadinessCard job={job} /> : null}
       <JobWorkspaceHiringSetup job={job} />
 
       {/* About role — editorial + elevated side panel */}

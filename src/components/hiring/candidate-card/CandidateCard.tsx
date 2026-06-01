@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
-import { GripVertical, Mail } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCheck, GripVertical, Mail, Phone } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,6 +25,19 @@ import {
   type StageActionContext,
 } from "@/lib/hiring/stage-actions";
 import { enrichCandidateOwnership } from "@/lib/hiring/candidateOwnership";
+import {
+  getContactStatus,
+  loadContactedCandidateIds,
+  markCandidateEngaged,
+  CONTACT_STATUS_UPDATED_EVENT,
+} from "@/lib/hiring/candidateContactStatus";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { kanbanCard, kanbanCardDragging } from "../hiringTokens";
 import { CandidateSourceIcon, sourceShortLabel } from "./CandidateSourceIcon";
 import { CandidateCardKebabMenu } from "./CandidateCardKebabMenu";
@@ -52,6 +66,8 @@ export function CandidateCard({
   onOpenEmails,
   showDragHandle = true,
   showEngagedBy = true,
+  suppressEngagementChip = false,
+  pendingMoveApproval = false,
   showVerdictPicker = true,
   showStatusLine = true,
   compact = false,
@@ -77,6 +93,9 @@ export function CandidateCard({
   onOpenEmails?: (candidate: HiringCandidate) => void;
   showDragHandle?: boolean;
   showEngagedBy?: boolean;
+  /** Suppress the Engaged/Needs Contact chip — used for shortlisted cards owned by the current user */
+  suppressEngagementChip?: boolean;
+  pendingMoveApproval?: boolean;
   /** Thumbs verdict dropdown on card header */
   showVerdictPicker?: boolean;
   /** Status row (e.g. Awaiting review, Shortlisted) below candidate meta */
@@ -98,6 +117,35 @@ export function CandidateCard({
   const appliedShort = formatRelativeApplied(enriched.appliedAt);
   const appliedFull = formatAppliedTooltip(enriched.appliedAt);
   const engagedBy = enriched.engagedBy ?? [];
+
+  // ── Contact status ────────────────────────────────────────────
+  const [contactedIds, setContactedIds] = useState<Set<string>>(() => loadContactedCandidateIds());
+  useEffect(() => {
+    const refresh = () => setContactedIds(loadContactedCandidateIds());
+    window.addEventListener(CONTACT_STATUS_UPDATED_EVENT, refresh);
+    return () => window.removeEventListener(CONTACT_STATUS_UPDATED_EVENT, refresh);
+  }, []);
+  function handleMarkContacted(id: string) {
+    setContactedIds((prev) => { const next = new Set(prev); next.add(id); return next; });
+  }
+  const contactStatus = getContactStatus(enriched, contactedIds);
+  const needsContact = contactStatus === "needs_contact";
+  const isEngaged = contactStatus === "engaged";
+
+  // Build "Engaged by MC, AR" label — all recruiter initials, then owner fallback
+  const engagedLabel = (() => {
+    const toInits = (name: string) =>
+      name.split(/\s+/).map((p: string) => p[0]).join("").slice(0, 2).toUpperCase();
+
+    if (engagedBy.length > 0) {
+      const inits = engagedBy.map((e) => toInits(e.recruiterName)).join(", ");
+      return `Engaged by ${inits}`;
+    }
+    if (enriched.ownerName) {
+      return `Engaged by ${toInits(enriched.ownerName)}`;
+    }
+    return "Engaged";
+  })();
   const ownerId = enriched.ownerId ?? "";
 
   const actionContext: StageActionContext = {
@@ -275,24 +323,69 @@ export function CandidateCard({
         </div>
       ) : null}
 
-      {/* Engaged by */}
-      {showEngagedBy && engagedBy.length > 0 ? (
-        <div
-          className={cn(
-            "flex items-center gap-1.5",
-            compact ? "mt-1" : "mt-2 gap-2",
-            CONTENT_INDENT[compact ? "compact" : "default"],
-          )}
-        >
-          <span className={cn("shrink-0 text-muted", compact ? "text-[10px]" : "text-xs")}>
-            Engaged:
+      {/* Pending move-to-interview approval chip */}
+      {pendingMoveApproval ? (
+        <div className={cn("mt-1.5", CONTENT_INDENT[compact ? "compact" : "default"])}>
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300">
+            Move request pending
           </span>
-          <EngagedByPills recruiters={engagedBy} ownerId={ownerId} compact={compact} />
         </div>
       ) : null}
 
-      {/* Action — separated by border */}
-      <div
+      {/* Contact status chip — hidden for owned shortlisted cards (Mine view) */}
+      {(needsContact || isEngaged) && !suppressEngagementChip ? (
+        <div className={cn("mt-1.5", CONTENT_INDENT[compact ? "compact" : "default"])}>
+          {needsContact ? (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Contact candidate options"
+                >
+                  Needs Contact
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="z-[210] w-44 rounded-[12px] p-1.5">
+                <DropdownMenuItem
+                  className="gap-2 text-[12px]"
+                  onSelect={() => toast.success("Email composer opened")}
+                >
+                  <Mail className="h-3.5 w-3.5 opacity-55" strokeWidth={1.5} />
+                  Send Email
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2 text-[12px]"
+                  onSelect={() => toast.success("Scheduling calendar opened")}
+                >
+                  <Phone className="h-3.5 w-3.5 opacity-55" strokeWidth={1.5} />
+                  Schedule Call
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1" />
+                <DropdownMenuItem
+                  className="gap-2 text-[12px]"
+                  onSelect={() => {
+                    markCandidateEngaged(enriched.id);
+                    handleMarkContacted(enriched.id);
+                    toast.success(`${enriched.name} marked as engaged`);
+                  }}
+                >
+                  <CheckCheck className="h-3.5 w-3.5 opacity-55" strokeWidth={1.5} />
+                  Mark as Engaged
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full border border-sky-400/30 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300">
+              {engagedLabel}
+            </span>
+          )}
+        </div>
+      ) : null}
+
+      {/* Action — separated by border; Review is removed (card is clickable) */}
+      {stageAction.action !== "review" ? <div
         className={cn(
           "flex flex-col items-center border-t border-border-subtle",
           compact ? "mt-2 pt-2" : "mt-3.5 pt-3",
@@ -341,7 +434,7 @@ export function CandidateCard({
             {actionDisabledHint}
           </p>
         ) : null}
-      </div>
+      </div> : null}
     </article>
   );
 }

@@ -40,6 +40,11 @@ import { JobWorkspaceHero } from "./workspace/JobWorkspaceHero";
 import { JobWorkspaceOverview } from "./workspace/JobWorkspaceOverview";
 import { getJobWorkspaceMetrics } from "./workspace/jobWorkspaceUtils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  getContactStatus,
+  loadContactedCandidateIds,
+  CONTACT_STATUS_UPDATED_EVENT,
+} from "@/lib/hiring/candidateContactStatus";
 
 const FULL_TABS = [
   { id: "overview", label: "Job overview" },
@@ -85,6 +90,14 @@ export function JobWorkspace({ job }: { job: HiringJob }) {
     EMPTY_KANBAN_OWNERSHIP_FILTERS,
   );
 
+  // ── Contact status counts for Applicants Stats strip ──────────
+  const [contactedIds, setContactedIds] = useState<Set<string>>(() => loadContactedCandidateIds());
+  useEffect(() => {
+    const refresh = () => setContactedIds(loadContactedCandidateIds());
+    window.addEventListener(CONTACT_STATUS_UPDATED_EVENT, refresh);
+    return () => window.removeEventListener(CONTACT_STATUS_UPDATED_EVENT, refresh);
+  }, []);
+
   const openKanbanReport = useCallback((candidate: HiringCandidate, tab = "overview") => {
     setKanbanReportCandidate(candidate);
     setKanbanReportInitialTab(tab);
@@ -118,6 +131,17 @@ export function JobWorkspace({ job }: { job: HiringJob }) {
       ),
     [screeningCandidates, kanbanViewMode, currentRecruiter.id, kanbanFilters],
   );
+
+  const contactStats = useMemo(() => {
+    let needsContact = 0;
+    let engaged = 0;
+    for (const c of screeningCandidates) {
+      const s = getContactStatus(c, contactedIds);
+      if (s === "needs_contact") needsContact++;
+      else engaged++;
+    }
+    return { needsContact, engaged };
+  }, [screeningCandidates, contactedIds]);
 
   const kanbanOwnership = useMemo(
     () => ({
@@ -203,6 +227,7 @@ export function JobWorkspace({ job }: { job: HiringJob }) {
               onFiltersChange={setKanbanFilters}
               viewMode={kanbanViewMode}
               onViewModeChange={setKanbanViewMode}
+              contactCounts={contactStats}
             />
             <div className="kanban-board-area--tall">
               <HiringKanban

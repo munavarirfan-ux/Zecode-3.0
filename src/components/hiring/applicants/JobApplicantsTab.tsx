@@ -19,6 +19,11 @@ import {
   type ApplicantsFilterState,
 } from "./ApplicantsFiltersPopover";
 import { normalizeSource } from "@/lib/hiring/stages";
+import {
+  loadContactedCandidateIds,
+  getContactStatus,
+  CONTACT_STATUS_UPDATED_EVENT,
+} from "@/lib/hiring/candidateContactStatus";
 import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
 import { DirectoryPagination } from "../directories/DirectoryPagination";
@@ -38,7 +43,7 @@ function matchesAppliedDate(appliedAt: string, filter: string): boolean {
   return applied >= cutoff;
 }
 
-function applyFilters(list: HiringCandidate[], filters: ApplicantsFilterState): HiringCandidate[] {
+function applyFilters(list: HiringCandidate[], filters: ApplicantsFilterState, contactedIds: Set<string>): HiringCandidate[] {
   let result = [...list];
   if (filters.source) {
     result = result.filter((c) => normalizeSource(c.source as string) === filters.source);
@@ -51,6 +56,12 @@ function applyFilters(list: HiringCandidate[], filters: ApplicantsFilterState): 
   if (filters.status) result = result.filter((c) => c.resumeStatus === filters.status);
   if (filters.appliedDate) result = result.filter((c) => matchesAppliedDate(c.appliedAt, filters.appliedDate));
   if (filters.owner) result = result.filter((c) => c.recruiterOwner === filters.owner);
+  if (filters.contactStatus) {
+    result = result.filter((c) => {
+      const status = getContactStatus(c, contactedIds);
+      return status === filters.contactStatus;
+    });
+  }
   return result;
 }
 
@@ -82,6 +93,17 @@ export function JobApplicantsTab({
   const [filters, setFilters] = useState<ApplicantsFilterState>(EMPTY_APPLICANTS_FILTERS);
   const [sort, setSort] = useState<SortKey>("newest");
   const [selected, setSelected] = useState<HiringCandidate | null>(null);
+  const [contactedIds, setContactedIds] = useState<Set<string>>(() => loadContactedCandidateIds());
+
+  useEffect(() => {
+    const refresh = () => setContactedIds(loadContactedCandidateIds());
+    window.addEventListener(CONTACT_STATUS_UPDATED_EVENT, refresh);
+    return () => window.removeEventListener(CONTACT_STATUS_UPDATED_EVENT, refresh);
+  }, []);
+
+  const handleMarkContacted = useCallback((candidateId: string) => {
+    setContactedIds((prev) => { const next = new Set(prev); next.add(candidateId); return next; });
+  }, []);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportTab, setReportTab] = useState("overview");
   const [page, setPage] = useState(1);
@@ -101,13 +123,13 @@ export function JobApplicantsTab({
   }, [job.id, stageFilter, onCandidatesChange]);
 
   const filtered = useMemo(() => {
-    let list = applyFilters(applicants, filters);
+    let list = applyFilters(applicants, filters, contactedIds);
     list.sort((a, b) => {
       const cmp = a.appliedAt.localeCompare(b.appliedAt);
       return sort === "newest" ? -cmp : cmp;
     });
     return list;
-  }, [applicants, filters, sort]);
+  }, [applicants, filters, sort, contactedIds]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / APPLICANTS_PAGE_SIZE));
 
@@ -202,6 +224,8 @@ export function JobApplicantsTab({
                   onOpenReport={() => openReport(c)}
                   onOpenResume={() => openReport(c, "resume")}
                   onStageChanged={refreshApplicants}
+                  contactedIds={contactedIds}
+                  onMarkContacted={handleMarkContacted}
                 />
               </li>
             ))}

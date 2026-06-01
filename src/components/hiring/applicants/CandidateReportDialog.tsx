@@ -109,6 +109,12 @@ import {
   type InterviewerAssignmentOverride,
   type InterviewerReportContext,
 } from "@/lib/hiring/interviewerReportContext";
+import {
+  getMoveToInterviewPendingRequest,
+  subscribeMoveToInterviewStore,
+  type MoveToInterviewRequest,
+} from "@/lib/hiring/moveToInterviewApproval";
+import { MoveToInterviewApprovalBanner } from "@/components/hiring/kanban/MoveToInterviewApprovalBanner";
 
 const reportMenuItem =
   "flex cursor-pointer items-center gap-2 rounded-[8px] px-2 py-1.5 text-[12px] font-medium outline-none focus:bg-[rgba(15,23,42,0.04)] data-[highlighted]:bg-[rgba(15,23,42,0.04)]";
@@ -468,6 +474,13 @@ export function CandidateReportDialog({
   const [liveCandidate, setLiveCandidate] = useState<HiringCandidate | null>(candidate);
   const editReturnFocusRef = useRef<HTMLElement | null>(null);
   const { selectedRole } = useRole();
+  const [mtiVersion, setMtiVersion] = useState(0);
+  useEffect(() => {
+    return subscribeMoveToInterviewStore(() => setMtiVersion((n) => n + 1));
+  }, []);
+  void mtiVersion; // triggers re-render on store change
+  const pendingMoveRequest: MoveToInterviewRequest | null =
+    liveCandidate ? (getMoveToInterviewPendingRequest(liveCandidate.id) ?? null) : null;
   const { data: session } = useSession();
   const canSchedule = canScheduleInterview(selectedRole);
   const canMoveApplicant = canUseMoveApplicantAction(selectedRole);
@@ -654,6 +667,18 @@ export function CandidateReportDialog({
                     />
                   )}
                 </div>
+
+                {selectedRole === "superAdmin" && pendingMoveRequest ? (
+                  <MoveToInterviewApprovalBanner
+                    request={pendingMoveRequest}
+                    reviewerName="Super Admin"
+                    onDecision={() => {
+                      setMtiVersion((n) => n + 1);
+                      const refreshed = getCandidateById(liveCandidate.id);
+                      if (refreshed) handleCandidateUpdated(refreshed);
+                    }}
+                  />
+                ) : null}
 
                 <div
                   className={cn(

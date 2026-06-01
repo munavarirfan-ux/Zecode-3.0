@@ -37,17 +37,10 @@ function designHeroBlock(): DashboardHeroBlock {
     topLabel: "",
     subheading: "You have 4 interviews today and 12 feedback items pending review.",
     kpis: [
-      { id: "interviewsToday", label: "Interviews", value: "15", caption: "Scheduled panels", trend: "+3 today", trendUp: true },
-      {
-        id: "upcomingInterviewsOverall",
-        label: "Upcoming interviews",
-        value: "63",
-        caption: "Org-wide scheduled",
-        trend: "31 this week · 24 next week",
-        trendUp: true,
-      },
-      { id: "offers", label: "Offers sent", value: "09", caption: "Awaiting response", trend: "2 expiring", trendUp: false },
+      { id: "interviewsToday", label: "Interviews", value: "15", caption: "Scheduled panels", trend: "+3 vs yesterday", trendUp: true },
       { id: "feedbackDue", label: "Feedback due", value: "10", caption: "Write-ups owed", trend: "3 overdue", trendUp: false },
+      { id: "offers", label: "Offers sent", value: "09", caption: "Awaiting response", trend: "2 expiring", trendUp: false },
+      { id: "hired", label: "Hired", value: "24", caption: "Successfully hired", trend: "5 this month", trendUp: true },
     ],
     chips: [],
   };

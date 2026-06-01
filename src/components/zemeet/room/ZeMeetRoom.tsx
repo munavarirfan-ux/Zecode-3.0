@@ -521,7 +521,9 @@ function ShareLinkToolbarBtn({
   const [copied, setCopied] = useState(false);
   const [candidateStatus] = useState<CandidateStatus>("waiting");
 
-  const joinUrl = `https://zemeet.ai/join/${roomId}`;
+  const joinUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/meet/${roomId}?role=candidate`
+    : `/meet/${roomId}?role=candidate`;
 
   function copyLink() {
     navigator.clipboard.writeText(joinUrl).catch(() => {});

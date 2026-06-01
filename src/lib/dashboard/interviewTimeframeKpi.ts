@@ -20,6 +20,17 @@ export const INTERVIEW_TIMEFRAME_OPTIONS: {
   { value: "this-month", label: "This month" },
 ];
 
+/** Timeframe options for non-interview KPIs — Tomorrow excluded (not operationally relevant). */
+export const KPI_TIMEFRAME_OPTIONS: {
+  value: InterviewTimeframe;
+  label: string;
+}[] = [
+  { value: "today", label: "Today" },
+  { value: "this-week", label: "This week" },
+  { value: "next-week", label: "Next week" },
+  { value: "this-month", label: "This month" },
+];
+
 export type InterviewTimeframeSnapshot = {
   count: number;
   subStat: string;
@@ -190,4 +201,74 @@ export function persistInterviewTimeframe(timeframe: InterviewTimeframe): void {
 
 export function isInterviewsTimeframeKpiId(id: string): boolean {
   return id === "interviewsToday" || id === "today";
+}
+
+// ── Static timeframe KPI data (feedbackDue, offers, hired) ────
+
+const FEEDBACK_DUE_TIMEFRAME_STATS: InterviewTimeframeStats = {
+  today:        { count: 10, subStat: "3 overdue" },
+  tomorrow:     { count: 6,  subStat: "2 due tomorrow" },
+  "this-week":  { count: 12, subStat: "12 pending review" },
+  "next-week":  { count: 9,  subStat: "9 upcoming" },
+  "this-month": { count: 38, subStat: "38 pending review" },
+};
+
+const OFFERS_TIMEFRAME_STATS: InterviewTimeframeStats = {
+  today:        { count: 9,  subStat: "2 expiring" },
+  tomorrow:     { count: 7,  subStat: "1 expiring tomorrow" },
+  "this-week":  { count: 8,  subStat: "8 active offers" },
+  "next-week":  { count: 5,  subStat: "5 active offers" },
+  "this-month": { count: 26, subStat: "26 active offers" },
+};
+
+const HIRED_TIMEFRAME_STATS: InterviewTimeframeStats = {
+  today:        { count: 1,  subStat: "1 hired today" },
+  tomorrow:     { count: 0,  subStat: "No hires projected" },
+  "this-week":  { count: 5,  subStat: "5 this week" },
+  "next-week":  { count: 3,  subStat: "3 projected" },
+  "this-month": { count: 24, subStat: "Across all roles" },
+};
+
+const STATIC_KPI_TIMEFRAME_STATS: Record<string, InterviewTimeframeStats> = {
+  feedbackDue: FEEDBACK_DUE_TIMEFRAME_STATS,
+  offers:      OFFERS_TIMEFRAME_STATS,
+  hired:       HIRED_TIMEFRAME_STATS,
+};
+
+const STATIC_KPI_STORAGE_KEYS: Record<string, string> = {
+  feedbackDue: "ze.dashboard.feedback-due-timeframe",
+  offers:      "ze.dashboard.offers-timeframe",
+  hired:       "ze.dashboard.hired-timeframe",
+};
+
+export function getStaticKpiTimeframeStats(kpiId: string): InterviewTimeframeStats {
+  return STATIC_KPI_TIMEFRAME_STATS[kpiId] ?? FEEDBACK_DUE_TIMEFRAME_STATS;
+}
+
+export function readStoredKpiTimeframe(kpiId: string): InterviewTimeframe {
+  if (typeof window === "undefined") return "today";
+  try {
+    const key = STATIC_KPI_STORAGE_KEYS[kpiId];
+    if (!key) return "today";
+    const stored = localStorage.getItem(key);
+    // Validate against the restricted option set (no Tomorrow for static KPIs)
+    if (stored && KPI_TIMEFRAME_OPTIONS.some((o) => o.value === stored)) {
+      return stored as InterviewTimeframe;
+    }
+  } catch { /* ignore */ }
+  return "today";
+}
+
+export function persistKpiTimeframe(kpiId: string, timeframe: InterviewTimeframe): void {
+  try {
+    if (typeof window === "undefined") return;
+    const key = STATIC_KPI_STORAGE_KEYS[kpiId];
+    if (key) localStorage.setItem(key, timeframe);
+  } catch { /* ignore */ }
+}
+
+const STATIC_TIMEFRAME_KPI_IDS = new Set(["feedbackDue", "offers", "hired"]);
+
+export function isStaticKpiTimeframeId(id: string): boolean {
+  return STATIC_TIMEFRAME_KPI_IDS.has(id);
 }

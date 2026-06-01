@@ -76,3 +76,8 @@ export function mergePersistedJobs(jobs: HiringJob[]): HiringJob[] {
     return jobs;
   }
 }
+
+/** Publish a draft job by persisting a Published status override. */
+export function publishPersistedJob(jobId: string): void {
+  persistJobOverride({ id: jobId, status: "Published" });
+}

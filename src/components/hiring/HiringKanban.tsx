@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { rejectCandidate } from "@/lib/hiring/candidateProfile";
 import {
@@ -43,6 +43,11 @@ import { KanbanBulkActionBar } from "./kanban/KanbanBulkActionBar";
 import { KanbanBulkTagsDialog } from "./kanban/KanbanBulkTagsDialog";
 import { KanbanColumnHeader } from "./kanban/KanbanColumnHeader";
 import { useKanbanBulkSelection } from "./kanban/useKanbanBulkSelection";
+import {
+  getMoveToInterviewPendingRequest,
+  subscribeMoveToInterviewStore,
+} from "@/lib/hiring/moveToInterviewApproval";
+import { RequestMoveToInterviewDialog } from "./kanban/RequestMoveToInterviewDialog";
 import {
   kanbanBoardGrain,
   kanbanBoardShell,
@@ -125,6 +130,11 @@ export function HiringKanban({
   const [collisionCandidate, setCollisionCandidate] = useState<HiringCandidate | null>(null);
   const [transferCandidate, setTransferCandidate] = useState<HiringCandidate | null>(null);
   const [transferSubmitting, setTransferSubmitting] = useState(false);
+  const [mtiRequestCandidate, setMtiRequestCandidate] = useState<HiringCandidate | null>(null);
+  const [mtiVersion, setMtiVersion] = useState(0);
+  useEffect(() => {
+    return subscribeMoveToInterviewStore(() => setMtiVersion((n) => n + 1));
+  }, []);
   const undoRef = useRef<UndoSnapshot | null>(null);
 
   const canDrag = enableDragDrop && columns.length > 1;
@@ -322,6 +332,11 @@ export function HiringKanban({
         case "moveToInterview":
           if (!allowMoveToInterview) {
             toast.error("You don't have permission to move candidates to interview");
+            break;
+          }
+          // Admin must request SA approval; SA can move directly
+          if (ownership?.previewRole === "admin") {
+            setMtiRequestCandidate(candidate);
             break;
           }
           if (jobId) setMoveToInterviewCandidates([candidate]);
@@ -562,6 +577,11 @@ export function HiringKanban({
                       const showEngaged = showEngagedByOnCard(c);
                       const isOwner =
                         bypassOwnership || owner.ownerId === userId;
+                      // Suppress engagement chip on shortlisted cards the current user owns
+                      // (in Mine view all shortlisted are owned → all chips hidden;
+                      //  in All view only own cards are suppressed, others show "Engaged by X")
+                      const suppressEngagement =
+                        inShortlisted && !bypassOwnership && owner.ownerId === userId;
                       const canDragCard =
                         canDrag &&
                         (!isApplicantsStatsBoard ||
@@ -570,6 +590,11 @@ export function HiringKanban({
                       const pendingTransfer = inApplicantsPool
                         ? getPendingOwnershipTransferForCandidate(c.id)
                         : undefined;
+                      const pendingMoveApproval = inShortlisted
+                        ? getMoveToInterviewPendingRequest(c.id)
+                        : null;
+                      // mtiVersion forces re-render when requests change
+                      void mtiVersion;
                       const blockedOnShortlisted =
                         inShortlisted && !isOwner && !bypassOwnership;
                       return (
@@ -581,15 +606,17 @@ export function HiringKanban({
                           draggable={canDragCard && selectedIds.size === 0}
                           isDragging={draggingId === c.id}
                           highlight={highlightId === c.id}
-                          actionDisabled={!!pendingTransfer || blockedOnShortlisted}
+                          actionDisabled={!!pendingTransfer || !!pendingMoveApproval || blockedOnShortlisted}
                           actionDisabledHint={
-                            blockedOnShortlisted
-                              ? `Shortlisted by ${owner.ownerName}`
-                              : inApplicantsPool && !isOwner
-                                ? `Managed by ${owner.ownerName} — request transfer to shortlist`
-                                : pendingTransfer
-                                  ? `Transfer pending from ${pendingTransfer.toRecruiterName}`
-                                  : undefined
+                            pendingMoveApproval
+                              ? "Waiting for Super Admin approval"
+                              : blockedOnShortlisted
+                                ? `Shortlisted by ${owner.ownerName}`
+                                : inApplicantsPool && !isOwner
+                                  ? `Managed by ${owner.ownerName} — request transfer to shortlist`
+                                  : pendingTransfer
+                                    ? `Transfer pending from ${pendingTransfer.toRecruiterName}`
+                                    : undefined
                           }
                           onDragStart={() => setDraggingId(c.id)}
                           onDragEnd={() => {
@@ -604,6 +631,8 @@ export function HiringKanban({
                           }
                           onOpenEmails={onOpenEmails}
                           showEngagedBy={showEngaged}
+                          suppressEngagementChip={suppressEngagement}
+                          pendingMoveApproval={!!pendingMoveApproval}
                           showVerdictPicker={!isApplicantsStatsBoard}
                           showStatusLine={!isApplicantsStatsBoard}
                           selectable={bulkEnabled}
@@ -665,6 +694,18 @@ export function HiringKanban({
           />
         </>
       ) : null}
+
+      <RequestMoveToInterviewDialog
+        open={mtiRequestCandidate !== null}
+        onOpenChange={(open) => { if (!open) setMtiRequestCandidate(null); }}
+        candidate={mtiRequestCandidate}
+        job={job ?? ({ id: jobId ?? "", title: "Open Role" } as any)}
+        requestedBy={userName}
+        onSubmitted={() => {
+          setMtiRequestCandidate(null);
+          setMtiVersion((n) => n + 1);
+        }}
+      />
 
       {jobId ? (
         <MoveToInterviewDialog

@@ -25,6 +25,7 @@ import {
   type KanbanSortKey,
   type KanbanEngagementFilter,
   type KanbanStageAgeFilter,
+  type KanbanContactFilter,
 } from "@/lib/hiring/kanbanOwnership";
 import { KanbanViewSelector } from "./KanbanViewSelector";
 import { cn } from "@/lib/utils";
@@ -45,11 +46,13 @@ export function KanbanOwnershipToolbar({
   onFiltersChange,
   viewMode,
   onViewModeChange,
+  contactCounts,
 }: {
   filters: KanbanOwnershipFilters;
   onFiltersChange: (next: KanbanOwnershipFilters) => void;
   viewMode: KanbanViewMode;
   onViewModeChange: (mode: KanbanViewMode) => void;
+  contactCounts?: { needsContact: number; engaged: number };
 }) {
   useEffect(() => {
     saveKanbanViewMode(viewMode);
@@ -58,7 +61,14 @@ export function KanbanOwnershipToolbar({
   const activeFilterCount =
     filters.sources.length +
     (filters.engagement ? 1 : 0) +
-    (filters.stageAge ? 1 : 0);
+    (filters.stageAge ? 1 : 0) +
+    (filters.contactFilter ? 1 : 0);
+
+  const contactOptions: { value: KanbanContactFilter; label: string; count?: number }[] = [
+    { value: "", label: "All" },
+    { value: "needs_contact", label: "Needs Contact", count: contactCounts?.needsContact },
+    { value: "engaged", label: "Engaged", count: contactCounts?.engaged },
+  ];
 
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
@@ -67,6 +77,28 @@ export function KanbanOwnershipToolbar({
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        {/* Quick contact status pills */}
+        <div className="flex items-center gap-1 rounded-[10px] border border-border-subtle bg-surface p-0.5">
+          {contactOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onFiltersChange({ ...filters, contactFilter: opt.value })}
+              className={cn(
+                "inline-flex h-6 items-center gap-1 rounded-[7px] px-2 text-[11px] font-medium transition-colors",
+                filters.contactFilter === opt.value
+                  ? "bg-white shadow-sm text-text dark:bg-surface-2"
+                  : "text-text-secondary hover:text-text",
+              )}
+            >
+              {opt.label}
+              {opt.count !== undefined && opt.count > 0 ? (
+                <span className="tabular-nums opacity-60">{opt.count}</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -84,6 +116,30 @@ export function KanbanOwnershipToolbar({
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-[280px] space-y-4">
+            {/* Contact Status */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-text">Contact status</Label>
+              <div className="space-y-1.5">
+                {contactOptions.map((opt) => (
+                  <label key={opt.value} className="flex cursor-pointer items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="contactFilter"
+                        value={opt.value}
+                        checked={filters.contactFilter === opt.value}
+                        onChange={() => onFiltersChange({ ...filters, contactFilter: opt.value })}
+                        className="accent-[rgb(var(--accent-rgb))]"
+                      />
+                      {opt.label}
+                    </div>
+                    {opt.count !== undefined ? (
+                      <span className="tabular-nums text-muted">{opt.count}</span>
+                    ) : null}
+                  </label>
+                ))}
+              </div>
+            </div>
             <div>
               <Label className="text-xs font-semibold text-text">Source</Label>
               <div className="mt-2 max-h-[140px] space-y-1.5 overflow-y-auto">
@@ -154,7 +210,7 @@ export function KanbanOwnershipToolbar({
               size="sm"
               className="h-7 w-full text-xs"
               onClick={() =>
-                onFiltersChange({ ...filters, sources: [], engagement: "", stageAge: "" })
+                onFiltersChange({ ...filters, sources: [], engagement: "", stageAge: "", contactFilter: "" })
               }
             >
               Clear filters

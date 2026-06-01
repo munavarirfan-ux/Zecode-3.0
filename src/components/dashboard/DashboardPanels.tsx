@@ -624,11 +624,7 @@ function workloadDot(status: InterviewerWorkloadStatus) {
   switch (status) {
     case "Available":
       return "bg-[#22C55E]";
-    case "Moderate load":
-      return "bg-[#EAB308]";
     case "Busy":
-      return "bg-[#F97316]";
-    case "Overloaded":
       return "bg-[#EF4444]";
   }
 }
@@ -867,9 +863,7 @@ function InterviewerWorkloadAvailabilityCard({
   const sorted = useMemo(() => {
     const rank: Record<InterviewerWorkloadStatus, number> = {
       Available: 0,
-      "Moderate load": 1,
-      Busy: 2,
-      Overloaded: 3,
+      Busy: 1,
     };
     const copy = [...filtered];
     copy.sort((a, b) => {
@@ -886,11 +880,7 @@ function InterviewerWorkloadAvailabilityCard({
     switch (s) {
       case "Available":
         return "border-[#BBF7D0]/70 bg-[#F0FDF4]/70 text-[#166534] dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-[#86EFAC]";
-      case "Moderate load":
-        return "border-[#FEF08A]/70 bg-[#FEFCE8]/70 text-[#854D0E] dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-[#FDE68A]";
       case "Busy":
-        return "border-[#FED7AA]/70 bg-[#FFF7ED]/70 text-[#9A3412] dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-[#FDBA74]";
-      case "Overloaded":
         return "border-[#FECACA]/70 bg-[#FEF2F2]/70 text-[#991B1B] dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-[#FCA5A5]";
     }
   }
@@ -957,9 +947,7 @@ function InterviewerWorkloadAvailabilityCard({
               <DropdownMenuContent align="end" className="w-[200px]">
                 <DropdownMenuItem onSelect={() => setStatusFilter("all")}>All statuses</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setStatusFilter("Available")}>Available</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setStatusFilter("Moderate load")}>Moderate</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setStatusFilter("Busy")}>Busy</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setStatusFilter("Overloaded")}>Overloaded</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -1021,7 +1009,7 @@ function InterviewerWorkloadAvailabilityCard({
                     <div className="shrink-0 text-right">
                       <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold", statusPillClass(r.status))}>
                         <span className={cn("h-1.5 w-1.5 rounded-full", workloadDot(r.status))} aria-hidden />
-                        {r.status === "Moderate load" ? "Moderate" : r.status}
+                        {r.status}
                       </span>
                     </div>
                   </div>
@@ -1068,7 +1056,7 @@ function InterviewerWorkloadAvailabilityCard({
                         )}
                       >
                         <span className={cn("h-1.5 w-1.5 rounded-full", workloadDot(r.status))} aria-hidden />
-                        {r.status === "Moderate load" ? "Moderate" : r.status}
+                        {r.status}
                       </span>
                     </div>
                   </div>
