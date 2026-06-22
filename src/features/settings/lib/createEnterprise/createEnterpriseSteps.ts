@@ -4,6 +4,7 @@ import {
   validateEnterpriseDetails,
 } from "./validation";
 import { validateEnterpriseSlugFromDomain } from "./slugs";
+import { CORE_FEATURE_IDS } from "./features";
 
 export const CREATE_ENTERPRISE_STEPS = [
   { id: 1, key: "details", label: "Enterprise Details" },
@@ -22,6 +23,9 @@ export function isCreateEnterpriseStepValid(
     const slugErr = validateEnterpriseSlugFromDomain(form.details.domainName, takenSlugs);
     if (slugErr) return false;
     return !hasValidationErrors(errors);
+  }
+  if (stepIndex === 1) {
+    return CORE_FEATURE_IDS.some((id) => form.features[id]);
   }
   return true;
 }

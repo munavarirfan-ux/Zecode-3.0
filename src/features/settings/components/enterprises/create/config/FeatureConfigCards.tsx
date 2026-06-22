@@ -1,25 +1,26 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type {
-  AutoSubmitInterviewConfig,
-  CountPlanConfig,
-  EndInterviewConfig,
+  AssessmentConfig,
+  AssessmentDriveConfig,
+  BrandingConfig,
+  CandidateDirectoryConfig,
   FeatureConfigState,
-  ImportQuestionsConfig,
-  LimitPlanConfig,
-  PlanType,
+  GoogleMeetConfig,
+  InterviewsConfig,
+  JobsConfig,
+  PlatformSettingsConfig,
   ProctoringConfig,
-  WhiteLabellingConfig,
+  QuestionPoolConfig,
+  ReportsConfig,
+  TeamsConfig,
+  ZemeetConfig,
 } from "../../../../lib/createEnterprise/types";
-import { totalLimit } from "../../../../lib/createEnterprise/defaults";
 import {
-  settingsAccentBgHover,
   settingsFieldLabel,
-  settingsSecondaryBtn,
   settingsSectionDesc,
   settingsSectionTitle,
 } from "../../../../settingsTokens";
@@ -40,29 +41,6 @@ function ConfigCard({
       <p className={cn(settingsSectionDesc, "mt-1")}>{description}</p>
       <div className="mt-4 flex flex-1 flex-col gap-3">{children}</div>
     </article>
-  );
-}
-
-function PlanSelect({
-  value,
-  onChange,
-  options = ["Standard", "Professional", "Custom"] as PlanType[],
-}: {
-  value: PlanType;
-  onChange: (v: PlanType) => void;
-  options?: PlanType[];
-}) {
-  return (
-    <label className="block space-y-1.5">
-      <span className={settingsFieldLabel}>Plan Type</span>
-      <select className={formInputClass} value={value} onChange={(e) => onChange(e.target.value as PlanType)}>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 
@@ -87,72 +65,116 @@ function ToggleRow({
   );
 }
 
-function LimitPlanFields({
-  config,
+function NumberField({
+  label,
+  value,
   onChange,
-  totalLabel,
-  addLabel,
+  min = 0,
 }: {
-  config: LimitPlanConfig;
-  onChange: (patch: Partial<LimitPlanConfig>) => void;
-  totalLabel: string;
-  addLabel: string;
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
 }) {
-  const total = totalLimit(config);
   return (
-    <>
-      <PlanSelect value={config.planType} onChange={(planType) => onChange({ planType })} />
-      <label className="block space-y-1.5">
-        <span className={settingsFieldLabel}>Candidates Included</span>
-        <input
-          type="number"
-          min={0}
-          className={formInputClass}
-          value={config.candidatesIncluded}
-          onChange={(e) => onChange({ candidatesIncluded: Math.max(0, Number(e.target.value) || 0) })}
-        />
-      </label>
-      <label className="block space-y-1.5">
-        <span className={settingsFieldLabel}>Additionally Added</span>
-        <input
-          type="number"
-          min={0}
-          className={formInputClass}
-          value={config.additionallyAdded}
-          onChange={(e) => onChange({ additionallyAdded: Math.max(0, Number(e.target.value) || 0) })}
-        />
-      </label>
-      <div className="rounded-[10px] bg-[rgba(15,23,42,0.04)] px-3 py-2 dark:bg-white/[0.04]">
-        <p className="text-[10px] font-medium text-muted">{totalLabel}</p>
-        <p className="text-[15px] font-semibold tabular-nums text-text">{total}</p>
-      </div>
-      <button
-        type="button"
-        className={cn(settingsSecondaryBtn, "w-full justify-center")}
-        onClick={() => onChange({ additionallyAdded: config.additionallyAdded + 25 })}
-      >
-        <Plus className="h-3.5 w-3.5" />
-        {addLabel}
-      </button>
-    </>
+    <label className="block space-y-1.5">
+      <span className={settingsFieldLabel}>{label}</span>
+      <input
+        type="number"
+        min={min}
+        className={formInputClass}
+        value={value}
+        onChange={(e) => onChange(Math.max(min, Number(e.target.value) || min))}
+      />
+    </label>
   );
 }
 
-export function AssessmentsConfigCard({
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className={settingsFieldLabel}>{label}</span>
+      <select
+        className={formInputClass}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className={settingsFieldLabel}>{label}</span>
+      <input type="text" readOnly className={cn(formInputClass, "cursor-default opacity-70")} value={value} />
+    </label>
+  );
+}
+
+// ── Config Cards ──
+
+export function JobsConfigCard({
   config,
   onChange,
 }: {
-  config: LimitPlanConfig;
-  onChange: (patch: Partial<LimitPlanConfig>) => void;
+  config: JobsConfig;
+  onChange: (patch: Partial<JobsConfig>) => void;
 }) {
   return (
-    <ConfigCard title="Assessments" description="Candidate limits and plan tier for assessments.">
-      <LimitPlanFields
-        config={config}
-        onChange={onChange}
-        totalLabel="Total Assessment Limit"
-        addLabel="Add candidates"
+    <ConfigCard title="Jobs Configuration" description="Limits and defaults for job postings.">
+      <NumberField label="Max active jobs" value={config.maxActiveJobs} onChange={(v) => onChange({ maxActiveJobs: v })} min={1} />
+      <SelectField
+        label="Default job visibility"
+        value={config.defaultJobVisibility}
+        onChange={(v) => onChange({ defaultJobVisibility: v as JobsConfig["defaultJobVisibility"] })}
+        options={[
+          { value: "Public", label: "Public" },
+          { value: "Private", label: "Private" },
+          { value: "Internal", label: "Internal" },
+        ]}
       />
+      <ToggleRow label="Require approval before publishing" checked={config.requireApproval} onChange={(v) => onChange({ requireApproval: v })} />
+    </ConfigCard>
+  );
+}
+
+export function CandidateDirectoryConfigCard({
+  config,
+  onChange,
+}: {
+  config: CandidateDirectoryConfig;
+  onChange: (patch: Partial<CandidateDirectoryConfig>) => void;
+}) {
+  return (
+    <ConfigCard title="Candidate Directory Configuration" description="Candidate visibility and limits.">
+      <NumberField label="Max candidates" value={config.maxCandidates} onChange={(v) => onChange({ maxCandidates: v })} min={1} />
+      <SelectField
+        label="Candidate visibility"
+        value={config.candidateVisibility}
+        onChange={(v) => onChange({ candidateVisibility: v as CandidateDirectoryConfig["candidateVisibility"] })}
+        options={[
+          { value: "All team", label: "All team" },
+          { value: "Assigned users only", label: "Assigned users only" },
+        ]}
+      />
+      <ToggleRow label="Allow duplicate candidates" checked={config.allowDuplicates} onChange={(v) => onChange({ allowDuplicates: v })} />
     </ConfigCard>
   );
 }
@@ -161,17 +183,90 @@ export function InterviewsConfigCard({
   config,
   onChange,
 }: {
-  config: LimitPlanConfig;
-  onChange: (patch: Partial<LimitPlanConfig>) => void;
+  config: InterviewsConfig;
+  onChange: (patch: Partial<InterviewsConfig>) => void;
 }) {
   return (
-    <ConfigCard title="Interviews" description="Interview capacity and plan tier.">
-      <LimitPlanFields
-        config={config}
-        onChange={onChange}
-        totalLabel="Total Interview Limit"
-        addLabel="Add interview count"
+    <ConfigCard title="Interviews Configuration" description="Interview scheduling and limits.">
+      <NumberField label="Monthly interview limit" value={config.monthlyLimit} onChange={(v) => onChange({ monthlyLimit: v })} min={1} />
+      <SelectField
+        label="Default interview duration"
+        value={String(config.defaultDuration)}
+        onChange={(v) => onChange({ defaultDuration: Number(v) as InterviewsConfig["defaultDuration"] })}
+        options={[
+          { value: "30", label: "30 minutes" },
+          { value: "45", label: "45 minutes" },
+          { value: "60", label: "60 minutes" },
+          { value: "90", label: "90 minutes" },
+        ]}
       />
+      <ToggleRow label="Allow reschedule requests" checked={config.allowReschedule} onChange={(v) => onChange({ allowReschedule: v })} />
+      <ToggleRow label="Require Super Admin approval to move to interview" checked={config.requireApproval} onChange={(v) => onChange({ requireApproval: v })} />
+    </ConfigCard>
+  );
+}
+
+export function GoogleMeetConfigCard({
+  config,
+  onChange,
+}: {
+  config: GoogleMeetConfig;
+  onChange: (patch: Partial<GoogleMeetConfig>) => void;
+}) {
+  return (
+    <ConfigCard title="Google Meet Integration" description="Meeting link configuration.">
+      <ToggleRow label="Auto-generate Google Meet link" checked={config.autoGenerateLink} onChange={(v) => onChange({ autoGenerateLink: v })} />
+      <ReadOnlyField label="Default meeting provider" value="Google Meet" />
+    </ConfigCard>
+  );
+}
+
+export function ZemeetConfigCard({
+  config,
+  onChange,
+}: {
+  config: ZemeetConfig;
+  onChange: (patch: Partial<ZemeetConfig>) => void;
+}) {
+  return (
+    <ConfigCard title="ze[meet] Interview Workspace" description="Interview workspace tools.">
+      <ToggleRow label="Enable code challenge button" checked={config.enableCodeChallenge} onChange={(v) => onChange({ enableCodeChallenge: v })} />
+      <ToggleRow label="Enable resume button" checked={config.enableResume} onChange={(v) => onChange({ enableResume: v })} />
+      <ToggleRow label="Enable LinkedIn button" checked={config.enableLinkedIn} onChange={(v) => onChange({ enableLinkedIn: v })} />
+      <ToggleRow label="Enable private notes" checked={config.enablePrivateNotes} onChange={(v) => onChange({ enablePrivateNotes: v })} />
+    </ConfigCard>
+  );
+}
+
+export function AssessmentsConfigCard({
+  config,
+  onChange,
+}: {
+  config: AssessmentConfig;
+  onChange: (patch: Partial<AssessmentConfig>) => void;
+}) {
+  return (
+    <ConfigCard title="Assessment Configuration" description="Assessment limits and defaults.">
+      <NumberField label="Monthly assessment limit" value={config.monthlyLimit} onChange={(v) => onChange({ monthlyLimit: v })} min={1} />
+      <NumberField label="Default assessment duration (minutes)" value={config.defaultDuration} onChange={(v) => onChange({ defaultDuration: v })} min={1} />
+      <NumberField label="Default assessment validity (days)" value={config.defaultValidityDays} onChange={(v) => onChange({ defaultValidityDays: v })} min={1} />
+      <NumberField label="Qualifying percentage" value={config.qualifyingPercentage} onChange={(v) => onChange({ qualifyingPercentage: Math.min(100, v) })} min={0} />
+    </ConfigCard>
+  );
+}
+
+export function AssessmentDriveConfigCard({
+  config,
+  onChange,
+}: {
+  config: AssessmentDriveConfig;
+  onChange: (patch: Partial<AssessmentDriveConfig>) => void;
+}) {
+  return (
+    <ConfigCard title="Assessment Drive Configuration" description="Bulk assessment drive settings.">
+      <NumberField label="Max scheduled drives per month" value={config.maxDrivesPerMonth} onChange={(v) => onChange({ maxDrivesPerMonth: v })} min={1} />
+      <NumberField label="Max candidates per drive" value={config.maxCandidatesPerDrive} onChange={(v) => onChange({ maxCandidatesPerDrive: v })} min={1} />
+      <ToggleRow label="Enable live monitoring" checked={config.enableLiveMonitoring} onChange={(v) => onChange({ enableLiveMonitoring: v })} />
     </ConfigCard>
   );
 }
@@ -184,154 +279,131 @@ export function ProctoringConfigCard({
   onChange: (patch: Partial<ProctoringConfig>) => void;
 }) {
   return (
-    <ConfigCard title="Proctoring" description="Integrity monitoring options.">
-      <PlanSelect value={config.planType} onChange={(planType) => onChange({ planType })} options={["Standard", "Custom"]} />
-      <ToggleRow label="Enable camera monitoring" checked={config.cameraMonitoring} onChange={(v) => onChange({ cameraMonitoring: v })} />
-      <ToggleRow label="Enable tab switch detection" checked={config.tabSwitchDetection} onChange={(v) => onChange({ tabSwitchDetection: v })} />
-      <ToggleRow label="Enable copy detection" checked={config.copyDetection} onChange={(v) => onChange({ copyDetection: v })} />
-      <ToggleRow label="Enable movement detection" checked={config.movementDetection} onChange={(v) => onChange({ movementDetection: v })} />
+    <ConfigCard title="Proctoring Configuration" description="Integrity monitoring options.">
+      <ToggleRow label="Camera monitoring" checked={config.cameraMonitoring} onChange={(v) => onChange({ cameraMonitoring: v })} />
+      <ToggleRow label="Tab switch detection" checked={config.tabSwitchDetection} onChange={(v) => onChange({ tabSwitchDetection: v })} />
+      <ToggleRow label="Copy detection" checked={config.copyDetection} onChange={(v) => onChange({ copyDetection: v })} />
+      <ToggleRow label="Movement detection" checked={config.movementDetection} onChange={(v) => onChange({ movementDetection: v })} />
     </ConfigCard>
   );
 }
 
-export function WhiteLabellingConfigCard({
+export function QuestionPoolConfigCard({
   config,
   onChange,
 }: {
-  config: WhiteLabellingConfig;
-  onChange: (patch: Partial<WhiteLabellingConfig>) => void;
+  config: QuestionPoolConfig;
+  onChange: (patch: Partial<QuestionPoolConfig>) => void;
 }) {
   return (
-    <ConfigCard title="White Labelling" description="Branding controls on candidate surfaces.">
-      <PlanSelect value={config.planType} onChange={(planType) => onChange({ planType })} options={["Standard", "Custom"]} />
-      <ToggleRow label="Enable white labelling" checked={config.enabled} onChange={(v) => onChange({ enabled: v })} />
-      <ToggleRow label="Custom logo allowed" checked={config.customLogo} onChange={(v) => onChange({ customLogo: v })} />
-      <ToggleRow label="Custom favicon allowed" checked={config.customFavicon} onChange={(v) => onChange({ customFavicon: v })} />
-      <ToggleRow label="Custom theme allowed" checked={config.customTheme} onChange={(v) => onChange({ customTheme: v })} />
+    <ConfigCard title="Question Pool Configuration" description="Question library settings.">
+      <NumberField label="Max questions" value={config.maxQuestions} onChange={(v) => onChange({ maxQuestions: v })} min={1} />
+      <ToggleRow label="Allow custom questions" checked={config.allowCustomQuestions} onChange={(v) => onChange({ allowCustomQuestions: v })} />
+      <ToggleRow label="Allow import questions" checked={config.allowImportQuestions} onChange={(v) => onChange({ allowImportQuestions: v })} />
     </ConfigCard>
   );
 }
 
-export function ImportQuestionsConfigCard({
+export function ReportsConfigCard({
   config,
   onChange,
 }: {
-  config: ImportQuestionsConfig;
-  onChange: (patch: Partial<ImportQuestionsConfig>) => void;
+  config: ReportsConfig;
+  onChange: (patch: Partial<ReportsConfig>) => void;
 }) {
-  const setSource = (key: keyof ImportQuestionsConfig["sources"], v: boolean) =>
-    onChange({ sources: { ...config.sources, [key]: v } });
-
   return (
-    <ConfigCard title="Import Questions" description="Allowed external import sources.">
-      <PlanSelect value={config.planType} onChange={(planType) => onChange({ planType })} options={["Standard", "Custom"]} />
-      <p className={settingsFieldLabel}>Allowed import sources</p>
-      {(
-        [
-          ["csv", "CSV"],
-          ["hackerRank", "HackerRank"],
-          ["codeSignal", "CodeSignal"],
-          ["mettl", "Mettl"],
-          ["customApi", "Custom API"],
-        ] as const
-      ).map(([key, label]) => (
-        <label key={key} className="flex items-center gap-2 text-[12px] text-text">
-          <input
-            type="checkbox"
-            checked={config.sources[key]}
-            onChange={(e) => setSource(key, e.target.checked)}
-            className="h-4 w-4 accent-accent"
-          />
-          {label}
-        </label>
-      ))}
+    <ConfigCard title="Reports Configuration" description="Reporting and export options.">
+      <ToggleRow label="Enable export reports" checked={config.enableExportReports} onChange={(v) => onChange({ enableExportReports: v })} />
+      <ToggleRow label="Enable candidate report sharing" checked={config.enableCandidateReportSharing} onChange={(v) => onChange({ enableCandidateReportSharing: v })} />
     </ConfigCard>
   );
 }
 
-export function CountPlanCard({
-  title,
-  description,
-  config,
-  onChange,
-  monthlyLabel,
-  concurrentLabel,
-}: {
-  title: string;
-  description: string;
-  config: CountPlanConfig;
-  onChange: (patch: Partial<CountPlanConfig>) => void;
-  monthlyLabel: string;
-  concurrentLabel: string;
-}) {
-  return (
-    <ConfigCard title={title} description={description}>
-      <PlanSelect value={config.planType} onChange={(planType) => onChange({ planType })} options={["Standard", "Custom"]} />
-      <label className="block space-y-1.5">
-        <span className={settingsFieldLabel}>{monthlyLabel}</span>
-        <input
-          type="number"
-          min={0}
-          className={formInputClass}
-          value={config.monthlyCount}
-          onChange={(e) => onChange({ monthlyCount: Math.max(0, Number(e.target.value) || 0) })}
-        />
-      </label>
-      <label className="block space-y-1.5">
-        <span className={settingsFieldLabel}>{concurrentLabel}</span>
-        <input
-          type="number"
-          min={0}
-          className={formInputClass}
-          value={config.maxConcurrent}
-          onChange={(e) => onChange({ maxConcurrent: Math.max(0, Number(e.target.value) || 0) })}
-        />
-      </label>
-    </ConfigCard>
-  );
-}
+const ALL_ROLES = [
+  "Super Admin",
+  "Admin",
+  "Recruiter",
+  "Hiring Manager",
+  "Interviewer",
+  "Evaluator",
+  "Curator",
+  "Viewer",
+];
 
-export function EndInterviewConfigCard({
+export function TeamsConfigCard({
   config,
   onChange,
 }: {
-  config: EndInterviewConfig;
-  onChange: (patch: Partial<EndInterviewConfig>) => void;
+  config: TeamsConfig;
+  onChange: (patch: Partial<TeamsConfig>) => void;
 }) {
+  const toggleRole = (role: string) => {
+    const roles = config.allowedRoles.includes(role)
+      ? config.allowedRoles.filter((r) => r !== role)
+      : [...config.allowedRoles, role];
+    onChange({ allowedRoles: roles });
+  };
+
   return (
-    <ConfigCard title="End Interview" description="Who can end an interview session.">
-      <PlanSelect value={config.planType} onChange={(planType) => onChange({ planType })} options={["Standard", "Custom"]} />
-      <ToggleRow label="Allow interviewer to end interview" checked={config.interviewerCanEnd} onChange={(v) => onChange({ interviewerCanEnd: v })} />
-      <ToggleRow label="Allow admin forced end" checked={config.adminForcedEnd} onChange={(v) => onChange({ adminForcedEnd: v })} />
+    <ConfigCard title="Teams Configuration" description="Team size and role access.">
+      <NumberField label="Max team members" value={config.maxTeamMembers} onChange={(v) => onChange({ maxTeamMembers: v })} min={1} />
+      <div className="space-y-1.5">
+        <span className={settingsFieldLabel}>Allowed roles</span>
+        <div className="flex flex-wrap gap-1.5">
+          {ALL_ROLES.map((role) => {
+            const active = config.allowedRoles.includes(role);
+            return (
+              <button
+                key={role}
+                type="button"
+                onClick={() => toggleRole(role)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  active
+                    ? "border-accent/30 bg-[rgb(var(--accent-rgb)/0.12)] text-accent"
+                    : "border-[rgba(15,23,42,0.08)] bg-white text-muted hover:bg-[rgba(15,23,42,0.04)] dark:border-white/[0.08] dark:bg-white/[0.04]",
+                )}
+              >
+                {role}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </ConfigCard>
   );
 }
 
-export function AutoSubmitInterviewConfigCard({
+export function BrandingConfigCard({
   config,
   onChange,
 }: {
-  config: AutoSubmitInterviewConfig;
-  onChange: (patch: Partial<AutoSubmitInterviewConfig>) => void;
+  config: BrandingConfig;
+  onChange: (patch: Partial<BrandingConfig>) => void;
 }) {
   return (
-    <ConfigCard title="Auto Submit Interview" description="Automatic submission after inactivity.">
-      <PlanSelect value={config.planType} onChange={(planType) => onChange({ planType })} options={["Standard", "Custom"]} />
-      <label className="block space-y-1.5">
-        <span className={settingsFieldLabel}>Auto submit time for interviewer (minutes)</span>
-        <input
-          type="number"
-          min={1}
-          className={formInputClass}
-          value={config.autoSubmitMinutes}
-          onChange={(e) => onChange({ autoSubmitMinutes: Math.max(1, Number(e.target.value) || 1) })}
-        />
-      </label>
+    <ConfigCard title="Branding Configuration" description="Logo, favicon, and theme controls.">
+      <ToggleRow label="Allow logo upload" checked={config.allowLogoUpload} onChange={(v) => onChange({ allowLogoUpload: v })} />
+      <ToggleRow label="Allow favicon upload" checked={config.allowFaviconUpload} onChange={(v) => onChange({ allowFaviconUpload: v })} />
+      <ToggleRow label="Allow custom theme colors" checked={config.allowCustomThemeColors} onChange={(v) => onChange({ allowCustomThemeColors: v })} />
     </ConfigCard>
   );
 }
 
-export type ConfigPatch = Partial<FeatureConfigState>;
+export function PlatformSettingsConfigCard({
+  config,
+  onChange,
+}: {
+  config: PlatformSettingsConfig;
+  onChange: (patch: Partial<PlatformSettingsConfig>) => void;
+}) {
+  return (
+    <ConfigCard title="Platform Settings Configuration" description="Localization and migration tools.">
+      <ToggleRow label="Enable localization" checked={config.enableLocalization} onChange={(v) => onChange({ enableLocalization: v })} />
+      <ToggleRow label="Enable migration tools" checked={config.enableMigrationTools} onChange={(v) => onChange({ enableMigrationTools: v })} />
+    </ConfigCard>
+  );
+}
 
 export function patchConfig(
   config: FeatureConfigState,

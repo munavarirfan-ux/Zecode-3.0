@@ -31,6 +31,8 @@ export const ROUTES = {
   reports: "/reports",
   analytics: "/analytics",
   enterprises: "/enterprises",
+  allEnterprises: "/all-enterprises",
+  allEnterprise: (id: string) => `/all-enterprises/${id}`,
   compare: "/compare",
   roles: "/roles",
   role: (id: string) => `/roles/${id}`,

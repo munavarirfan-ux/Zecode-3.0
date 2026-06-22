@@ -12,8 +12,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import * as Switch from "@radix-ui/react-switch";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/config/routes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -191,11 +193,13 @@ export function EnterpriseCard({
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
 }) {
+  const router = useRouter();
   const displayStatus = enabled ? enterprise.status : "Disabled";
   const accent = enabled
     ? (STATUS_ACCENT[enterprise.status] ?? STATUS_ACCENT.Inactive)
     : STATUS_ACCENT.Disabled;
   const joinedLabel = formatJoined(enterprise.joined);
+  const slug = enterprise.domain.trim().toLowerCase().split(".")[0].replace(/[^a-z0-9-]/g, "");
 
   const openWorkspace = () => {
     if (!enabled) {
@@ -204,7 +208,7 @@ export function EnterpriseCard({
       });
       return;
     }
-    toast.message(`Open ${enterprise.name}`);
+    router.push(ROUTES.allEnterprise(slug));
   };
 
   const setEnabled = (next: boolean) => {

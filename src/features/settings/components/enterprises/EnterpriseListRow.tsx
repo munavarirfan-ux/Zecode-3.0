@@ -3,8 +3,10 @@
 import { format } from "date-fns";
 import { Building2, ChevronRight, MoreHorizontal, Power, PowerOff } from "lucide-react";
 import * as Switch from "@radix-ui/react-switch";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/config/routes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +74,9 @@ export function EnterpriseListRow({
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
 }) {
+  const router = useRouter();
   const joined = formatJoined(enterprise.joined);
+  const slug = enterprise.domain.trim().toLowerCase().split(".")[0].replace(/[^a-z0-9-]/g, "");
 
   const setEnabled = (next: boolean) => {
     onEnabledChange(next);
@@ -84,7 +88,7 @@ export function EnterpriseListRow({
       toast.error(`${enterprise.name} is disabled`);
       return;
     }
-    toast.message(`Open ${enterprise.name}`);
+    router.push(ROUTES.allEnterprise(slug));
   };
 
   return (

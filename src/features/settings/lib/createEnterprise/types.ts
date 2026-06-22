@@ -1,5 +1,3 @@
-export type PlanType = "Standard" | "Professional" | "Custom";
-
 export type NatureOfBusiness =
   | "IT Services"
   | "Product Company"
@@ -12,29 +10,36 @@ export type NatureOfBusiness =
   | "Other";
 
 export type FeatureId =
+  | "jobs"
+  | "candidate-directory"
   | "interviews"
   | "assessments"
-  | "manage-teams"
-  | "theme-configuration"
-  | "interview-platform"
-  | "assessment-platform"
+  | "assessment-drive"
+  | "question-pool"
+  | "reports"
+  | "settings"
+  | "interview-scheduling"
+  | "google-meet-integration"
+  | "zemeet-workspace"
+  | "code-challenge"
+  | "private-notes"
+  | "interview-feedback"
+  | "end-interview"
+  | "auto-submit-interview"
+  | "create-assessment"
   | "assessment-edit"
   | "assessment-delete"
   | "assessment-share-report"
-  | "create-assessment"
-  | "question-pool"
-  | "candidate-directory"
-  | "reports"
-  | "settings"
-  | "assessment-drive"
   | "live-monitoring"
   | "proctoring"
-  | "white-labelling"
   | "import-questions"
-  | "end-interview"
-  | "auto-submit-interview";
+  | "manage-teams"
+  | "theme-configuration"
+  | "white-labelling"
+  | "localization"
+  | "migration";
 
-export type FeatureCategory = "Core" | "Assessments" | "Interviews" | "Platform" | "Admin";
+export type FeatureCategory = "Core" | "Interview" | "Assessment" | "Enterprise";
 
 export type EnterpriseDetailsForm = {
   organisationName: string;
@@ -52,66 +57,97 @@ export type EnterpriseDetailsForm = {
   faviconUrl: string | null;
 };
 
-export type LimitPlanConfig = {
-  planType: PlanType;
-  candidatesIncluded: number;
-  additionallyAdded: number;
+export type JobsConfig = {
+  maxActiveJobs: number;
+  defaultJobVisibility: "Public" | "Private" | "Internal";
+  requireApproval: boolean;
+};
+
+export type CandidateDirectoryConfig = {
+  maxCandidates: number;
+  candidateVisibility: "All team" | "Assigned users only";
+  allowDuplicates: boolean;
+};
+
+export type InterviewsConfig = {
+  monthlyLimit: number;
+  defaultDuration: 30 | 45 | 60 | 90;
+  allowReschedule: boolean;
+  requireApproval: boolean;
+};
+
+export type GoogleMeetConfig = {
+  autoGenerateLink: boolean;
+};
+
+export type ZemeetConfig = {
+  enableCodeChallenge: boolean;
+  enableResume: boolean;
+  enableLinkedIn: boolean;
+  enablePrivateNotes: boolean;
+};
+
+export type AssessmentConfig = {
+  monthlyLimit: number;
+  defaultDuration: number;
+  defaultValidityDays: number;
+  qualifyingPercentage: number;
+};
+
+export type AssessmentDriveConfig = {
+  maxDrivesPerMonth: number;
+  maxCandidatesPerDrive: number;
+  enableLiveMonitoring: boolean;
 };
 
 export type ProctoringConfig = {
-  planType: PlanType;
   cameraMonitoring: boolean;
   tabSwitchDetection: boolean;
   copyDetection: boolean;
   movementDetection: boolean;
 };
 
-export type WhiteLabellingConfig = {
-  planType: PlanType;
-  enabled: boolean;
-  customLogo: boolean;
-  customFavicon: boolean;
-  customTheme: boolean;
+export type QuestionPoolConfig = {
+  maxQuestions: number;
+  allowCustomQuestions: boolean;
+  allowImportQuestions: boolean;
 };
 
-export type ImportQuestionsConfig = {
-  planType: PlanType;
-  sources: {
-    csv: boolean;
-    hackerRank: boolean;
-    codeSignal: boolean;
-    mettl: boolean;
-    customApi: boolean;
-  };
+export type ReportsConfig = {
+  enableExportReports: boolean;
+  enableCandidateReportSharing: boolean;
 };
 
-export type CountPlanConfig = {
-  planType: PlanType;
-  monthlyCount: number;
-  maxConcurrent: number;
+export type TeamsConfig = {
+  maxTeamMembers: number;
+  allowedRoles: string[];
 };
 
-export type EndInterviewConfig = {
-  planType: PlanType;
-  interviewerCanEnd: boolean;
-  adminForcedEnd: boolean;
+export type BrandingConfig = {
+  allowLogoUpload: boolean;
+  allowFaviconUpload: boolean;
+  allowCustomThemeColors: boolean;
 };
 
-export type AutoSubmitInterviewConfig = {
-  planType: PlanType;
-  autoSubmitMinutes: number;
+export type PlatformSettingsConfig = {
+  enableLocalization: boolean;
+  enableMigrationTools: boolean;
 };
 
 export type FeatureConfigState = {
-  assessments: LimitPlanConfig;
-  interviews: LimitPlanConfig;
+  jobs: JobsConfig;
+  candidateDirectory: CandidateDirectoryConfig;
+  interviews: InterviewsConfig;
+  googleMeet: GoogleMeetConfig;
+  zemeet: ZemeetConfig;
+  assessments: AssessmentConfig;
+  assessmentDrive: AssessmentDriveConfig;
   proctoring: ProctoringConfig;
-  whiteLabelling: WhiteLabellingConfig;
-  importQuestions: ImportQuestionsConfig;
-  assessmentsCount: CountPlanConfig;
-  interviewsCount: CountPlanConfig;
-  endInterview: EndInterviewConfig;
-  autoSubmitInterview: AutoSubmitInterviewConfig;
+  questionPool: QuestionPoolConfig;
+  reports: ReportsConfig;
+  teams: TeamsConfig;
+  branding: BrandingConfig;
+  platformSettings: PlatformSettingsConfig;
 };
 
 export type CreateEnterpriseFormState = {

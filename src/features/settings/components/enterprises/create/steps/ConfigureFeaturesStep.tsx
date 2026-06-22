@@ -3,16 +3,22 @@
 import type { ReactNode } from "react";
 import type { CreateEnterpriseFormState, FeatureId } from "../../../../lib/createEnterprise/types";
 import {
+  AssessmentDriveConfigCard,
   AssessmentsConfigCard,
-  AutoSubmitInterviewConfigCard,
-  CountPlanCard,
-  EndInterviewConfigCard,
-  ImportQuestionsConfigCard,
+  BrandingConfigCard,
+  CandidateDirectoryConfigCard,
+  GoogleMeetConfigCard,
   InterviewsConfigCard,
+  JobsConfigCard,
   patchConfig,
+  PlatformSettingsConfigCard,
   ProctoringConfigCard,
-  WhiteLabellingConfigCard,
+  QuestionPoolConfigCard,
+  ReportsConfigCard,
+  TeamsConfigCard,
+  ZemeetConfigCard,
 } from "../config/FeatureConfigCards";
+
 export function ConfigureFeaturesStep({
   features,
   config,
@@ -25,21 +31,22 @@ export function ConfigureFeaturesStep({
 }) {
   const cards: ReactNode[] = [];
 
-  if (features.assessments) {
+  if (features.jobs) {
     cards.push(
-      <AssessmentsConfigCard
-        key="assessments"
-        config={config.assessments}
-        onChange={(patch) => onConfigChange(patchConfig(config, "assessments", patch))}
+      <JobsConfigCard
+        key="jobs"
+        config={config.jobs}
+        onChange={(patch) => onConfigChange(patchConfig(config, "jobs", patch))}
       />,
-      <CountPlanCard
-        key="assessments-count"
-        title="Assessments Count"
-        description="Monthly throughput and concurrency limits."
-        config={config.assessmentsCount}
-        onChange={(patch) => onConfigChange(patchConfig(config, "assessmentsCount", patch))}
-        monthlyLabel="Monthly assessment count"
-        concurrentLabel="Max concurrent assessments"
+    );
+  }
+
+  if (features["candidate-directory"]) {
+    cards.push(
+      <CandidateDirectoryConfigCard
+        key="candidate-directory"
+        config={config.candidateDirectory}
+        onChange={(patch) => onConfigChange(patchConfig(config, "candidateDirectory", patch))}
       />,
     );
   }
@@ -51,14 +58,45 @@ export function ConfigureFeaturesStep({
         config={config.interviews}
         onChange={(patch) => onConfigChange(patchConfig(config, "interviews", patch))}
       />,
-      <CountPlanCard
-        key="interviews-count"
-        title="Interviews Count"
-        description="Monthly throughput and concurrency limits."
-        config={config.interviewsCount}
-        onChange={(patch) => onConfigChange(patchConfig(config, "interviewsCount", patch))}
-        monthlyLabel="Monthly interview count"
-        concurrentLabel="Max concurrent interviews"
+    );
+  }
+
+  if (features["google-meet-integration"]) {
+    cards.push(
+      <GoogleMeetConfigCard
+        key="google-meet"
+        config={config.googleMeet}
+        onChange={(patch) => onConfigChange(patchConfig(config, "googleMeet", patch))}
+      />,
+    );
+  }
+
+  if (features["zemeet-workspace"]) {
+    cards.push(
+      <ZemeetConfigCard
+        key="zemeet"
+        config={config.zemeet}
+        onChange={(patch) => onConfigChange(patchConfig(config, "zemeet", patch))}
+      />,
+    );
+  }
+
+  if (features.assessments) {
+    cards.push(
+      <AssessmentsConfigCard
+        key="assessments"
+        config={config.assessments}
+        onChange={(patch) => onConfigChange(patchConfig(config, "assessments", patch))}
+      />,
+    );
+  }
+
+  if (features["assessment-drive"]) {
+    cards.push(
+      <AssessmentDriveConfigCard
+        key="assessment-drive"
+        config={config.assessmentDrive}
+        onChange={(patch) => onConfigChange(patchConfig(config, "assessmentDrive", patch))}
       />,
     );
   }
@@ -73,42 +111,52 @@ export function ConfigureFeaturesStep({
     );
   }
 
-  if (features["white-labelling"]) {
+  if (features["question-pool"]) {
     cards.push(
-      <WhiteLabellingConfigCard
-        key="white-labelling"
-        config={config.whiteLabelling}
-        onChange={(patch) => onConfigChange(patchConfig(config, "whiteLabelling", patch))}
+      <QuestionPoolConfigCard
+        key="question-pool"
+        config={config.questionPool}
+        onChange={(patch) => onConfigChange(patchConfig(config, "questionPool", patch))}
       />,
     );
   }
 
-  if (features["import-questions"]) {
+  if (features.reports) {
     cards.push(
-      <ImportQuestionsConfigCard
-        key="import-questions"
-        config={config.importQuestions}
-        onChange={(patch) => onConfigChange(patchConfig(config, "importQuestions", patch))}
+      <ReportsConfigCard
+        key="reports"
+        config={config.reports}
+        onChange={(patch) => onConfigChange(patchConfig(config, "reports", patch))}
       />,
     );
   }
 
-  if (features["end-interview"]) {
+  if (features["manage-teams"]) {
     cards.push(
-      <EndInterviewConfigCard
-        key="end-interview"
-        config={config.endInterview}
-        onChange={(patch) => onConfigChange(patchConfig(config, "endInterview", patch))}
+      <TeamsConfigCard
+        key="teams"
+        config={config.teams}
+        onChange={(patch) => onConfigChange(patchConfig(config, "teams", patch))}
       />,
     );
   }
 
-  if (features["auto-submit-interview"]) {
+  if (features["theme-configuration"] || features["white-labelling"]) {
     cards.push(
-      <AutoSubmitInterviewConfigCard
-        key="auto-submit"
-        config={config.autoSubmitInterview}
-        onChange={(patch) => onConfigChange(patchConfig(config, "autoSubmitInterview", patch))}
+      <BrandingConfigCard
+        key="branding"
+        config={config.branding}
+        onChange={(patch) => onConfigChange(patchConfig(config, "branding", patch))}
+      />,
+    );
+  }
+
+  if (features.localization || features.migration) {
+    cards.push(
+      <PlatformSettingsConfigCard
+        key="platform-settings"
+        config={config.platformSettings}
+        onChange={(patch) => onConfigChange(patchConfig(config, "platformSettings", patch))}
       />,
     );
   }

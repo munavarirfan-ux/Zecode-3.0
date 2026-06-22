@@ -117,6 +117,10 @@ export function CreateEnterpriseModal({
       toast.error("Fix required fields before continuing");
       return;
     }
+    if (stepIndex === 1 && !isStepValid) {
+      toast.error("Enable at least one core feature");
+      return;
+    }
     if (isLastStep) {
       submit();
       return;
@@ -140,11 +144,8 @@ export function CreateEnterpriseModal({
       domain: form.details.domainName.trim().toLowerCase(),
       name: form.details.organisationName.trim(),
       slug,
-      plan: mapPlan(form.config.assessments.planType),
-      seats: Math.max(
-        1,
-        Number(form.details.numberOfEmployees) || totalFromConfig(form),
-      ),
+      plan: "Starter",
+      seats: Math.max(1, Number(form.details.numberOfEmployees) || form.config.teams.maxTeamMembers),
       region: form.details.location.trim(),
       timezone: "UTC",
       language: "en",
@@ -342,14 +343,3 @@ export function CreateEnterpriseModal({
   );
 }
 
-function mapPlan(plan: string): CreatedEnterprise["plan"] {
-  if (plan === "Professional") return "Growth";
-  if (plan === "Custom") return "Enterprise";
-  return "Starter";
-}
-
-function totalFromConfig(form: CreateEnterpriseFormState): number {
-  const a = form.config.assessments.candidatesIncluded + form.config.assessments.additionallyAdded;
-  const i = form.config.interviews.candidatesIncluded + form.config.interviews.additionallyAdded;
-  return Math.max(a, i, 25);
-}

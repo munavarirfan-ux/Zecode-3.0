@@ -1,27 +1,29 @@
 import type { CreateEnterpriseFormState, FeatureId } from "./types";
 import { ENTERPRISE_FEATURES } from "./features";
 
-function allFeatures(defaultOn = true): Record<FeatureId, boolean> {
+const DEFAULT_ENABLED: FeatureId[] = [
+  "jobs",
+  "candidate-directory",
+  "interviews",
+  "interview-scheduling",
+  "google-meet-integration",
+  "interview-feedback",
+  "assessments",
+  "question-pool",
+  "reports",
+  "manage-teams",
+  "settings",
+];
+
+function defaultFeatures(): Record<FeatureId, boolean> {
   return ENTERPRISE_FEATURES.reduce(
     (acc, f) => {
-      acc[f.id] = defaultOn;
+      acc[f.id] = DEFAULT_ENABLED.includes(f.id);
       return acc;
     },
     {} as Record<FeatureId, boolean>,
   );
 }
-
-const defaultLimit = {
-  planType: "Standard" as const,
-  candidatesIncluded: 100,
-  additionallyAdded: 0,
-};
-
-const defaultCount = {
-  planType: "Standard" as const,
-  monthlyCount: 50,
-  maxConcurrent: 10,
-};
 
 export function createDefaultEnterpriseForm(): CreateEnterpriseFormState {
   return {
@@ -40,43 +42,81 @@ export function createDefaultEnterpriseForm(): CreateEnterpriseFormState {
       logoUrl: null,
       faviconUrl: null,
     },
-    features: allFeatures(true),
+    features: defaultFeatures(),
     config: {
-      assessments: { ...defaultLimit },
-      interviews: { ...defaultLimit },
+      jobs: {
+        maxActiveJobs: 25,
+        defaultJobVisibility: "Public",
+        requireApproval: false,
+      },
+      candidateDirectory: {
+        maxCandidates: 5000,
+        candidateVisibility: "All team",
+        allowDuplicates: false,
+      },
+      interviews: {
+        monthlyLimit: 100,
+        defaultDuration: 60,
+        allowReschedule: true,
+        requireApproval: false,
+      },
+      googleMeet: {
+        autoGenerateLink: true,
+      },
+      zemeet: {
+        enableCodeChallenge: true,
+        enableResume: true,
+        enableLinkedIn: true,
+        enablePrivateNotes: true,
+      },
+      assessments: {
+        monthlyLimit: 500,
+        defaultDuration: 60,
+        defaultValidityDays: 7,
+        qualifyingPercentage: 60,
+      },
+      assessmentDrive: {
+        maxDrivesPerMonth: 10,
+        maxCandidatesPerDrive: 500,
+        enableLiveMonitoring: true,
+      },
       proctoring: {
-        planType: "Standard",
         cameraMonitoring: true,
         tabSwitchDetection: true,
         copyDetection: false,
-        movementDetection: true,
+        movementDetection: false,
       },
-      whiteLabelling: {
-        planType: "Standard",
-        enabled: true,
-        customLogo: true,
-        customFavicon: true,
-        customTheme: false,
+      questionPool: {
+        maxQuestions: 1000,
+        allowCustomQuestions: true,
+        allowImportQuestions: true,
       },
-      importQuestions: {
-        planType: "Standard",
-        sources: { csv: true, hackerRank: true, codeSignal: false, mettl: false, customApi: false },
+      reports: {
+        enableExportReports: true,
+        enableCandidateReportSharing: true,
       },
-      assessmentsCount: { ...defaultCount },
-      interviewsCount: { ...defaultCount },
-      endInterview: {
-        planType: "Standard",
-        interviewerCanEnd: true,
-        adminForcedEnd: true,
+      teams: {
+        maxTeamMembers: 20,
+        allowedRoles: [
+          "Super Admin",
+          "Admin",
+          "Recruiter",
+          "Hiring Manager",
+          "Interviewer",
+          "Evaluator",
+          "Curator",
+          "Viewer",
+        ],
       },
-      autoSubmitInterview: {
-        planType: "Standard",
-        autoSubmitMinutes: 30,
+      branding: {
+        allowLogoUpload: true,
+        allowFaviconUpload: true,
+        allowCustomThemeColors: false,
+      },
+      platformSettings: {
+        enableLocalization: false,
+        enableMigrationTools: false,
       },
     },
   };
-}
-
-export function totalLimit(config: { candidatesIncluded: number; additionallyAdded: number }): number {
-  return Math.max(0, config.candidatesIncluded + config.additionallyAdded);
 }
