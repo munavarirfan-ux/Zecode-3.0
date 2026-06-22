@@ -56,6 +56,7 @@ export function JobsDashboard() {
   const [sort, setSort] = useState<JobsSortKey>("updated");
   const [view, setView] = useState<"list" | "grid">("grid");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(JOBS_PAGE_SIZE);
   const [jobsRefresh, setJobsRefresh] = useState(0);
   const workspaceRefresh = useWorkspaceRefresh();
 
@@ -84,7 +85,7 @@ export function JobsDashboard() {
 
   useEffect(() => {
     setPage(1);
-  }, [statusTab, filters, sort, view]);
+  }, [statusTab, filters, sort, view, pageSize]);
 
   function handleAddJobOpenChange(open: boolean) {
     setAddJobOpen(open);
@@ -99,16 +100,16 @@ export function JobsDashboard() {
     return sortJobsList(byFilters, sort);
   }, [allJobs, statusTab, filters, sort]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / JOBS_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
   const paginatedJobs = useMemo(() => {
-    const start = (page - 1) * JOBS_PAGE_SIZE;
-    return filtered.slice(start, start + JOBS_PAGE_SIZE);
-  }, [filtered, page]);
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
 
   const activeJobs = useMemo(
     () => allJobs.filter((j) => j.status !== "Deleted"),
@@ -173,16 +174,18 @@ export function JobsDashboard() {
                 jobs={paginatedJobs}
                 totalCount={filtered.length}
                 page={page}
-                totalPages={totalPages}
+                pageSize={pageSize}
                 onPageChange={setPage}
+                onPageSizeChange={setPageSize}
               />
             ) : (
               <JobDirectoryGridView
                 jobs={paginatedJobs}
                 totalCount={filtered.length}
                 page={page}
-                totalPages={totalPages}
+                pageSize={pageSize}
                 onPageChange={setPage}
+                onPageSizeChange={setPageSize}
               />
             )
           ) : activeJobs.length === 0 ? (

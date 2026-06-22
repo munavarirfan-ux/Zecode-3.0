@@ -8,9 +8,9 @@ import type { HiringJob } from "@/lib/hiring/types";
 import { JobCard } from "../JobCard";
 import { StatusBadge } from "../StatusBadge";
 import { hiringCard, hiringTransition } from "../hiringTokens";
-import { DirectoryPagination } from "../directories/DirectoryPagination";
+import { PaginationControls } from "../directories/DirectoryPagination";
 
-export const JOBS_PAGE_SIZE = 24;
+export const JOBS_PAGE_SIZE = 25;
 
 const LIST_ROW_GRID = cn(
   "grid items-center gap-x-3 px-3",
@@ -133,14 +133,16 @@ export function JobDirectoryListView({
   jobs,
   totalCount,
   page,
-  totalPages,
+  pageSize,
   onPageChange,
+  onPageSizeChange,
 }: {
   jobs: HiringJob[];
   totalCount: number;
   page: number;
-  totalPages: number;
+  pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 }) {
   return (
     <div
@@ -161,13 +163,13 @@ export function JobDirectoryListView({
         </div>
       </div>
 
-      <DirectoryPagination
+      <PaginationControls
+        totalItems={totalCount}
         page={page}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        pageSize={JOBS_PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={onPageChange}
-        itemLabel="jobs"
+        onPageSizeChange={onPageSizeChange}
+        entityLabel="jobs"
       />
     </div>
   );
@@ -177,14 +179,16 @@ export function JobDirectoryGridView({
   jobs,
   totalCount,
   page,
-  totalPages,
+  pageSize,
   onPageChange,
+  onPageSizeChange,
 }: {
   jobs: HiringJob[];
   totalCount: number;
   page: number;
-  totalPages: number;
+  pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 }) {
   return (
     <div
@@ -199,13 +203,13 @@ export function JobDirectoryGridView({
           <JobCard key={job.id} job={job} />
         ))}
       </div>
-      <DirectoryPagination
+      <PaginationControls
+        totalItems={totalCount}
         page={page}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        pageSize={JOBS_PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={onPageChange}
-        itemLabel="jobs"
+        onPageSizeChange={onPageSizeChange}
+        entityLabel="jobs"
       />
     </div>
   );

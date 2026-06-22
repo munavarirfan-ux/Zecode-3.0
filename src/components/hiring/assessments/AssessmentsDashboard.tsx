@@ -16,7 +16,6 @@ import {
   countByTab,
   EMPTY_ASSESSMENTS_FILTERS,
   filterByTab,
-  GRID_PAGE_SIZE,
   LIST_PAGE_SIZE,
   sortAssessmentsList,
   uniqueCreators,
@@ -32,7 +31,7 @@ import {
   duplicateAssessment,
   setAssessmentEnabled,
 } from "@/lib/hiring/assessments/assessmentStore";
-import { DirectoryPagination } from "../directories/DirectoryPagination";
+import { PaginationControls } from "../directories/DirectoryPagination";
 import { hiringCanvas, hiringCard } from "../hiringTokens";
 import { AssessmentsHero } from "./AssessmentsHero";
 import { AssessmentsToolbar } from "./AssessmentsToolbar";
@@ -52,6 +51,7 @@ export function AssessmentsDashboard() {
   const [filters, setFilters] = useState<AssessmentsFilterState>(EMPTY_ASSESSMENTS_FILTERS);
   const [sort, setSort] = useState<AssessmentsSortKey>("updated");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(LIST_PAGE_SIZE);
   const [createOpen, setCreateOpen] = useState(false);
   const [shareTarget, setShareTarget] = useState<AssessmentRecord | null>(null);
   const [disableTarget, setDisableTarget] = useState<AssessmentRecord | null>(null);
@@ -81,10 +81,9 @@ export function AssessmentsDashboard() {
     return sortAssessmentsList(byFilters, sort);
   }, [all, tab, filters, sort]);
 
-  const pageSize = view === "grid" ? GRID_PAGE_SIZE : LIST_PAGE_SIZE;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
-  useEffect(() => setPage(1), [tab, filters, sort, view]);
+  useEffect(() => setPage(1), [tab, filters, sort, view, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -202,13 +201,13 @@ export function AssessmentsDashboard() {
         )}
 
         {filtered.length > 0 ? (
-          <DirectoryPagination
+          <PaginationControls
+            totalItems={filtered.length}
             page={page}
-            totalPages={totalPages}
-            totalCount={filtered.length}
             pageSize={pageSize}
             onPageChange={setPage}
-            itemLabel="assessments"
+            onPageSizeChange={setPageSize}
+            entityLabel="assessments"
           />
         ) : null}
         </>

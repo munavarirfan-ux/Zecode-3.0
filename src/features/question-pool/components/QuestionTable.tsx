@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Checkbox from "@radix-ui/react-checkbox";
 import { Check, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hiringCard, hiringTransition } from "@/components/hiring/hiringTokens";
-import { DirectoryPagination } from "@/components/hiring/directories/DirectoryPagination";
+import { PaginationControls } from "@/components/hiring/directories/DirectoryPagination";
 import { DifficultyMeter } from "./DifficultyMeter";
 import {
   EMPTY_CELL,
@@ -17,7 +17,7 @@ import {
 } from "../tokens";
 import { filterQuestions, sortQuestions } from "../lib/selectors";
 import { usePoolStore } from "../store/poolStore";
-import { POOL_PAGE_SIZE, type Question, type QuestionType } from "../types";
+import { POOL_PAGE_SIZE as POOL_DEFAULT_PAGE_SIZE, type Question, type QuestionType } from "../types";
 
 /** Checkbox · # · question · type · difficulty · skill · tag · curator · status · actions */
 const TABLE_GRID = cn(
@@ -218,6 +218,7 @@ export function QuestionTable() {
   const activeTypeTab = usePoolStore((s) => s.activeTypeTab);
   const sortKey = usePoolStore((s) => s.sortKey);
   const sortDir = usePoolStore((s) => s.sortDir);
+  const [pageSize, setPageSize] = useState(POOL_DEFAULT_PAGE_SIZE);
 
   const { rows, total, totalPages } = useMemo(() => {
     const filtered = sortQuestions(
@@ -226,19 +227,23 @@ export function QuestionTable() {
       sortDir,
     );
     const total = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(total / POOL_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const safePage = Math.min(page, totalPages);
-    const start = (safePage - 1) * POOL_PAGE_SIZE;
+    const start = (safePage - 1) * pageSize;
     return {
-      rows: filtered.slice(start, start + POOL_PAGE_SIZE),
+      rows: filtered.slice(start, start + pageSize),
       total,
       totalPages,
     };
-  }, [questions, filters, activeTypeTab, sortKey, sortDir, page]);
+  }, [questions, filters, activeTypeTab, sortKey, sortDir, page, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages, setPage]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [pageSize, setPage]);
 
   return (
     <section className={cn(hiringCard, "overflow-hidden p-0")}>
@@ -280,13 +285,13 @@ export function QuestionTable() {
         </div>
       </div>
 
-      <DirectoryPagination
+      <PaginationControls
+        totalItems={total}
         page={page}
-        totalPages={totalPages}
-        totalCount={total}
-        pageSize={POOL_PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={setPage}
-        itemLabel="questions"
+        onPageSizeChange={setPageSize}
+        entityLabel="questions"
       />
     </section>
   );

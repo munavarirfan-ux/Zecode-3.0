@@ -15,7 +15,7 @@ import { hiringCanvas, hiringCard } from "../hiringTokens";
 import { CandidateDirectoryFiltersBar } from "./CandidateDirectoryFilters";
 import { CandidateDirectoryGridView, CandidateDirectoryListView } from "./CandidateDirectoryViews";
 import {
-  CANDIDATES_PAGE_SIZE,
+  CANDIDATES_DEFAULT_PAGE_SIZE,
   CandidateDirectoryPagination,
 } from "./CandidateDirectoryPagination";
 import { CandidatesDirectoryHero } from "./CandidatesDirectoryHero";
@@ -33,6 +33,7 @@ export function CandidatesDirectory() {
   const [view, setView] = useState<"list" | "grid">("list");
   const [filters, setFilters] = useState(EMPTY_CANDIDATE_DIRECTORY_FILTERS);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(CANDIDATES_DEFAULT_PAGE_SIZE);
   const [reportRow, setReportRow] = useState<CandidateDirectoryRow | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
 
@@ -54,20 +55,20 @@ export function CandidatesDirectory() {
   );
   const stats = useMemo(() => getCandidateDirectoryStats(allRows), [allRows]);
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / CANDIDATES_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
 
   useEffect(() => {
     setPage(1);
-  }, [filters, view]);
+  }, [filters, view, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
   const paginatedRows = useMemo(() => {
-    const start = (page - 1) * CANDIDATES_PAGE_SIZE;
-    return rows.slice(start, start + CANDIDATES_PAGE_SIZE);
-  }, [rows, page]);
+    const start = (page - 1) * pageSize;
+    return rows.slice(start, start + pageSize);
+  }, [rows, page, pageSize]);
 
   const openReport = (row: CandidateDirectoryRow) => {
     setReportRow(row);
@@ -103,10 +104,10 @@ export function CandidatesDirectory() {
                 <div className={cn(hiringCard, "overflow-hidden !rounded-[14px] !p-0")}>
                   <CandidateDirectoryPagination
                     page={page}
-                    totalPages={totalPages}
-                    totalCount={rows.length}
-                    pageSize={CANDIDATES_PAGE_SIZE}
+                    totalItems={rows.length}
+                    pageSize={pageSize}
                     onPageChange={setPage}
+                    onPageSizeChange={setPageSize}
                   />
                 </div>
               </div>
@@ -115,8 +116,9 @@ export function CandidatesDirectory() {
                 rows={paginatedRows}
                 totalCount={rows.length}
                 page={page}
-                totalPages={totalPages}
+                pageSize={pageSize}
                 onPageChange={setPage}
+                onPageSizeChange={setPageSize}
                 onRowClick={openReport}
               />
             )

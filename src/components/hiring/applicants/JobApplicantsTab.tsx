@@ -26,7 +26,7 @@ import {
 } from "@/lib/hiring/candidateContactStatus";
 import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { cn } from "@/lib/utils";
-import { DirectoryPagination } from "../directories/DirectoryPagination";
+import { PaginationControls } from "../directories/DirectoryPagination";
 import { hiringCard } from "../hiringTokens";
 
 export const APPLICANTS_PAGE_SIZE = 25;
@@ -107,6 +107,7 @@ export function JobApplicantsTab({
   const [reportOpen, setReportOpen] = useState(false);
   const [reportTab, setReportTab] = useState("overview");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(APPLICANTS_PAGE_SIZE);
   const [applicants, setApplicants] = useState<HiringCandidate[]>(candidates);
 
   useEffect(() => {
@@ -131,16 +132,16 @@ export function JobApplicantsTab({
     return list;
   }, [applicants, filters, sort, contactedIds]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / APPLICANTS_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
   const paginatedApplicants = useMemo(() => {
-    const start = (page - 1) * APPLICANTS_PAGE_SIZE;
-    return filtered.slice(start, start + APPLICANTS_PAGE_SIZE);
-  }, [filtered, page]);
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
 
   useEffect(() => {
     setPage(1);
-  }, [filters, sort]);
+  }, [filters, sort, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -230,13 +231,13 @@ export function JobApplicantsTab({
               </li>
             ))}
           </ul>
-          <DirectoryPagination
+          <PaginationControls
+            totalItems={filtered.length}
             page={page}
-            totalPages={totalPages}
-            totalCount={filtered.length}
-            pageSize={APPLICANTS_PAGE_SIZE}
+            pageSize={pageSize}
             onPageChange={setPage}
-            itemLabel="applicants"
+            onPageSizeChange={setPageSize}
+            entityLabel="applicants"
           />
         </div>
       )}

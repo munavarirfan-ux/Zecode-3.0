@@ -1,32 +1,32 @@
 "use client";
 
-import { DirectoryPagination } from "./DirectoryPagination";
+import { PaginationControls } from "./DirectoryPagination";
 
-export const CANDIDATES_PAGE_SIZE = 50;
+export const CANDIDATES_DEFAULT_PAGE_SIZE = 50;
 
 export function CandidateDirectoryPagination({
   page,
-  totalPages,
-  totalCount,
+  totalItems,
   pageSize,
   onPageChange,
+  onPageSizeChange,
   className,
 }: {
   page: number;
-  totalPages: number;
-  totalCount: number;
+  totalItems: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   className?: string;
 }) {
   return (
-    <DirectoryPagination
+    <PaginationControls
+      totalItems={totalItems}
       page={page}
-      totalPages={totalPages}
-      totalCount={totalCount}
       pageSize={pageSize}
       onPageChange={onPageChange}
-      itemLabel="candidates"
+      onPageSizeChange={onPageSizeChange}
+      entityLabel="candidates"
       className={className}
     />
   );

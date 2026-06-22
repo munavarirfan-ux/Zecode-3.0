@@ -10,10 +10,7 @@ import {
   CandidateStagePill,
   MetricChip,
 } from "./candidateDirectoryUi";
-import {
-  CANDIDATES_PAGE_SIZE,
-  CandidateDirectoryPagination,
-} from "./CandidateDirectoryPagination";
+import { CandidateDirectoryPagination } from "./CandidateDirectoryPagination";
 
 /** Shared column template — header + rows use identical grid */
 const LIST_ROW_GRID = cn(
@@ -57,13 +54,13 @@ function CandidateListHeader() {
         "dark:border-white/[0.06] dark:bg-white/[0.02]",
       )}
     >
-      <ListHeaderCell>Candidate</ListHeaderCell>
-      <ListHeaderCell>Current job</ListHeaderCell>
-      <ListHeaderCell>Stage</ListHeaderCell>
-      <ListHeaderCell>Assessments</ListHeaderCell>
-      <ListHeaderCell>Interviews</ListHeaderCell>
-      <ListHeaderCell>Source</ListHeaderCell>
-      <ListHeaderCell>Owner</ListHeaderCell>
+      <ListHeaderCell className="text-[rgb(0,0,0)]">Candidate</ListHeaderCell>
+      <ListHeaderCell className="text-[rgba(0,0,0,0.7)]">Current job</ListHeaderCell>
+      <ListHeaderCell className="text-[rgba(0,0,0,0.7)]">Stage</ListHeaderCell>
+      <ListHeaderCell className="text-[rgba(0,0,0,0.7)]">Assessments</ListHeaderCell>
+      <ListHeaderCell className="text-[rgba(0,0,0,0.7)]">Interviews</ListHeaderCell>
+      <ListHeaderCell className="text-[rgba(0,0,0,0.7)]">Source</ListHeaderCell>
+      <ListHeaderCell className="text-[rgba(0,0,0,0.7)]">Owner</ListHeaderCell>
       <span className="sr-only">Open</span>
     </header>
   );
@@ -188,15 +185,17 @@ export function CandidateDirectoryListView({
   rows,
   totalCount,
   page,
-  totalPages,
+  pageSize,
   onPageChange,
+  onPageSizeChange,
   onRowClick,
 }: {
   rows: CandidateDirectoryRow[];
   totalCount: number;
   page: number;
-  totalPages: number;
+  pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onRowClick: (row: CandidateDirectoryRow) => void;
 }) {
   return (
@@ -220,10 +219,10 @@ export function CandidateDirectoryListView({
 
       <CandidateDirectoryPagination
         page={page}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        pageSize={CANDIDATES_PAGE_SIZE}
+        totalItems={totalCount}
+        pageSize={pageSize}
         onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
       />
     </div>
   );
