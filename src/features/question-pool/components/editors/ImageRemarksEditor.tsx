@@ -1,33 +1,25 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { ImagePlus, Link2, Plus, Trash2, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { FrontendLink } from "../../types";
 import { MarkdownEditor } from "./MarkdownEditor";
 
 const ACCEPTED = ".png,.jpg,.jpeg,.svg,.webp";
-
-function newLinkId() {
-  return `l-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-}
 
 export function ImageRemarksEditor({
   referenceImage,
   uiRemarks,
   evaluationRemarks,
-  frontendLinks,
   onPatch,
 }: {
   referenceImage: string;
   uiRemarks: string;
   evaluationRemarks: string;
-  frontendLinks: FrontendLink[];
   onPatch: (patch: {
     referenceImage?: string;
     uiRemarks?: string;
     evaluationRemarks?: string;
-    frontendLinks?: FrontendLink[];
   }) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -48,14 +40,6 @@ export function ImageRemarksEditor({
     },
     [handleFile],
   );
-
-  const updateLink = (id: string, patch: Partial<FrontendLink>) => {
-    onPatch({
-      frontendLinks: frontendLinks.map((l) =>
-        l.id === id ? { ...l, ...patch } : l,
-      ),
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -137,79 +121,6 @@ export function ImageRemarksEditor({
             "focus-visible:ring-2 focus-visible:ring-accent/20 dark:border-white/[0.08] dark:bg-white/[0.04]",
           )}
         />
-      </div>
-
-      {/* Links */}
-      <div className="space-y-3">
-        <h3 className="text-[12px] font-semibold text-text">
-          Assets / Reference Links
-          <span className="ml-1 text-[10px] font-normal text-muted">
-            (optional)
-          </span>
-        </h3>
-        {frontendLinks.length > 0 && (
-          <div className="space-y-2">
-            {frontendLinks.map((link) => (
-              <div
-                key={link.id}
-                className="flex items-center gap-2 rounded-[10px] border border-[rgba(15,23,42,0.08)] bg-white/80 p-2.5 dark:bg-white/[0.03]"
-              >
-                <Link2 className="h-3.5 w-3.5 shrink-0 text-muted" />
-                <input
-                  value={link.label}
-                  onChange={(e) =>
-                    updateLink(link.id, { label: e.target.value })
-                  }
-                  placeholder="Label (e.g. Figma link)"
-                  className={cn(
-                    "h-8 w-36 shrink-0 rounded-[8px] border border-[rgba(15,23,42,0.08)] bg-surface px-2.5 text-[12px] outline-none",
-                    "focus-visible:ring-2 focus-visible:ring-accent/20",
-                  )}
-                />
-                <input
-                  value={link.url}
-                  onChange={(e) =>
-                    updateLink(link.id, { url: e.target.value })
-                  }
-                  placeholder="https://..."
-                  className={cn(
-                    "h-8 flex-1 rounded-[8px] border border-[rgba(15,23,42,0.08)] bg-surface px-2.5 text-[12px] outline-none",
-                    "focus-visible:ring-2 focus-visible:ring-accent/20",
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    onPatch({
-                      frontendLinks: frontendLinks.filter(
-                        (l) => l.id !== link.id,
-                      ),
-                    })
-                  }
-                  className="rounded-[8px] p-1.5 text-muted hover:text-red-600"
-                  aria-label="Remove link"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={() =>
-            onPatch({
-              frontendLinks: [
-                ...frontendLinks,
-                { id: newLinkId(), url: "", label: "" },
-              ],
-            })
-          }
-          className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-dashed border-[rgba(15,23,42,0.12)] px-3 text-[12px] font-medium text-accent hover:bg-[rgba(124,58,237,0.06)]"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add Link
-        </button>
       </div>
     </div>
   );

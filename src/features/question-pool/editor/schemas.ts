@@ -93,9 +93,8 @@ export function validateStep(type: QuestionType, stepId: string, values: Questio
     case "coding:image-remarks": {
       const hasImage = values.referenceImage.trim().length > 0;
       const hasRemarks = values.uiRemarks.trim().length > 0;
-      const hasLink = values.frontendLinks.some((l) => l.url.trim().length > 0);
-      if (!hasImage && !hasRemarks && !hasLink)
-        return "Add at least a reference image, UI remarks, or a reference link";
+      if (!hasImage && !hasRemarks)
+        return "Add at least a reference image or UI remarks";
       return null;
     }
     case "coding:starter":

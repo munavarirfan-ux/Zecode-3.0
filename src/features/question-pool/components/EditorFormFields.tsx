@@ -124,7 +124,6 @@ export function renderStepContent(
           referenceImage={draft.referenceImage}
           uiRemarks={draft.uiRemarks}
           evaluationRemarks={draft.evaluationRemarks}
-          frontendLinks={draft.frontendLinks}
           onPatch={onPatch}
         />
       );
