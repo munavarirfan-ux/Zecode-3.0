@@ -1,6 +1,7 @@
 import type {
   DatabaseSchemaId,
   Difficulty,
+  FrontendLink,
   FunctionParameter,
   MCQOption,
   QuestionSubtype,
@@ -22,6 +23,10 @@ export type QuestionDraft = {
   functionName: string;
   returnType: string;
   parameters: FunctionParameter[];
+  referenceImage: string;
+  uiRemarks: string;
+  evaluationRemarks: string;
+  frontendLinks: FrontendLink[];
   schemaId: DatabaseSchemaId | "";
   expectedQuery: string;
   passage: string;

@@ -39,6 +39,16 @@ export const questionDraftSchema = z.object({
       required: z.boolean(),
     }),
   ),
+  referenceImage: z.string(),
+  uiRemarks: z.string(),
+  evaluationRemarks: z.string(),
+  frontendLinks: z.array(
+    z.object({
+      id: z.string(),
+      url: z.string(),
+      label: z.string(),
+    }),
+  ),
   schemaId: z.string(),
   expectedQuery: z.string(),
   passage: z.string(),
@@ -80,6 +90,14 @@ export function validateStep(type: QuestionType, stepId: string, values: Questio
       if (!values.returnType.trim()) return "Select a return type";
       if (!values.parameters.some((p) => p.name.trim())) return "Add at least one parameter";
       return null;
+    case "coding:image-remarks": {
+      const hasImage = values.referenceImage.trim().length > 0;
+      const hasRemarks = values.uiRemarks.trim().length > 0;
+      const hasLink = values.frontendLinks.some((l) => l.url.trim().length > 0);
+      if (!hasImage && !hasRemarks && !hasLink)
+        return "Add at least a reference image, UI remarks, or a reference link";
+      return null;
+    }
     case "coding:starter":
       if (!values.starterCode.trim()) return "Add starter code";
       return null;

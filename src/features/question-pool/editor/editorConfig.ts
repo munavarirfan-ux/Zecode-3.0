@@ -8,6 +8,11 @@ const CODING_BACKEND_STEPS: EditorStep[] = [
   { id: "test-cases", label: "Test Cases" },
 ];
 
+const CODING_FRONTEND_STEPS: EditorStep[] = [
+  { id: "question", label: "Question Details" },
+  { id: "image-remarks", label: "Image / Remarks" },
+];
+
 export const EDITOR_STEPS: Record<QuestionType, EditorStep[] | null> = {
   mcq: [
     { id: "question", label: "Question" },
@@ -45,10 +50,12 @@ export const EDITOR_STEPS: Record<QuestionType, EditorStep[] | null> = {
 
 export function getEditorSteps(type: QuestionType, subtype?: QuestionSubtype): EditorStep[] {
   if (type === "coding" && subtype === "backend") return CODING_BACKEND_STEPS;
+  if (type === "coding" && subtype === "frontend") return CODING_FRONTEND_STEPS;
   return EDITOR_STEPS[type] ?? [];
 }
 
 export function hasStepper(type: QuestionType, subtype?: QuestionSubtype): boolean {
   if (type === "coding" && subtype === "backend") return true;
+  if (type === "coding" && subtype === "frontend") return true;
   return EDITOR_STEPS[type] !== null;
 }

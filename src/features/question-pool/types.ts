@@ -52,6 +52,12 @@ export type FunctionParameter = {
   required: boolean;
 };
 
+export type FrontendLink = {
+  id: string;
+  url: string;
+  label: string;
+};
+
 export const RETURN_TYPES = [
   "number",
   "string",

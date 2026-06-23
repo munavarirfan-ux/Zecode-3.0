@@ -94,7 +94,38 @@ export function CandidatePreview({ draft }: { draft: QuestionDraftFormValues }) 
             </ul>
           ) : null}
 
-          {debounced.type === "coding" || debounced.type === "debug" ? (
+          {(debounced.type === "coding" && debounced.subtype === "frontend") ? (
+            <div className="mt-4 space-y-3">
+              <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-text-secondary/90">
+                {debounced.bodyMarkdown || "Question instructions appear here."}
+              </p>
+              {debounced.referenceImage && (
+                <div className="overflow-hidden rounded-[10px] border border-[rgba(15,23,42,0.08)]">
+                  <div className="bg-[rgba(15,23,42,0.04)] px-2 py-1 text-[10px] text-muted">Reference</div>
+                  <img
+                    src={debounced.referenceImage}
+                    alt="Reference"
+                    className="max-h-40 w-full object-contain p-2"
+                  />
+                </div>
+              )}
+              {debounced.uiRemarks && (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">
+                    Requirements
+                  </p>
+                  <p className="whitespace-pre-wrap rounded-[8px] border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] p-2 text-[11px] text-text-secondary/90">
+                    {debounced.uiRemarks}
+                  </p>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <span className="rounded-[8px] bg-accent px-3 py-1.5 text-[11px] font-medium text-white">
+                  Submit
+                </span>
+              </div>
+            </div>
+          ) : (debounced.type === "coding" || debounced.type === "debug") ? (
             <div className="mt-4 space-y-3">
               <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-text-secondary/90">
                 {debounced.bodyMarkdown || "Question instructions appear here."}
