@@ -79,7 +79,6 @@ export function validateStep(type: QuestionType, stepId: string, values: Questio
       if (!values.functionName.trim()) return "Add a function name";
       if (!values.returnType.trim()) return "Select a return type";
       if (!values.parameters.some((p) => p.name.trim())) return "Add at least one parameter";
-      if (!values.starterCode.trim()) return "Add starter code";
       return null;
     case "coding:starter":
       if (!values.starterCode.trim()) return "Add starter code";

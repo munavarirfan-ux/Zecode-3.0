@@ -123,7 +123,6 @@ export function renderStepContent(
           functionName={draft.functionName}
           returnType={draft.returnType}
           parameters={draft.parameters}
-          starterCode={draft.starterCode}
           onPatch={onPatch}
         />
       );

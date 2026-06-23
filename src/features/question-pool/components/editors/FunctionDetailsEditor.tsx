@@ -12,7 +12,6 @@ import {
 import { cn } from "@/lib/utils";
 import type { FunctionParameter } from "../../types";
 import { RETURN_TYPES } from "../../types";
-import { CodeEditorPane } from "./CodeEditorPane";
 
 function newParamId() {
   return `p-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
@@ -22,18 +21,15 @@ export function FunctionDetailsEditor({
   functionName,
   returnType,
   parameters,
-  starterCode,
   onPatch,
 }: {
   functionName: string;
   returnType: string;
   parameters: FunctionParameter[];
-  starterCode: string;
   onPatch: (patch: {
     functionName?: string;
     returnType?: string;
     parameters?: FunctionParameter[];
-    starterCode?: string;
   }) => void;
 }) {
   const updateParam = (id: string, patch: Partial<FunctionParameter>) => {
@@ -150,12 +146,6 @@ export function FunctionDetailsEditor({
         </button>
       </div>
 
-      <CodeEditorPane
-        label="Starter code"
-        language="typescript"
-        value={starterCode}
-        onChange={(starterCode) => onPatch({ starterCode })}
-      />
     </div>
   );
 }
