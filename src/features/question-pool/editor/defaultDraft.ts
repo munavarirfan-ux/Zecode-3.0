@@ -35,6 +35,7 @@ export function createEmptyDraft(type: QuestionType, subtype?: QuestionSubtype):
     comprehensionQuestions: "",
     functionSignature: "",
     buggyCode: "",
+    codeLanguage: "",
     fillBlankTemplate: "",
   };
 }

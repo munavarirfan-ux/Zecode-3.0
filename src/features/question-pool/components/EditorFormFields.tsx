@@ -6,6 +6,7 @@ import type { QuestionDraftFormValues } from "../editor/schemas";
 import { TagChips } from "./TagChips";
 import { CodeEditorPane } from "./editors/CodeEditorPane";
 import { DifficultyPicker } from "./editors/DifficultyPicker";
+import { DebugCodeEditor } from "./editors/DebugCodeEditor";
 import { FunctionDetailsEditor } from "./editors/FunctionDetailsEditor";
 import { ImageRemarksEditor } from "./editors/ImageRemarksEditor";
 import { MarkdownEditor } from "./editors/MarkdownEditor";
@@ -124,6 +125,15 @@ export function renderStepContent(
           referenceImage={draft.referenceImage}
           uiRemarks={draft.uiRemarks}
           evaluationRemarks={draft.evaluationRemarks}
+          onPatch={onPatch}
+        />
+      );
+    case "debug-code":
+      return (
+        <DebugCodeEditor
+          codeLanguage={draft.codeLanguage}
+          buggyCode={draft.buggyCode}
+          testCases={draft.testCases}
           onPatch={onPatch}
         />
       );

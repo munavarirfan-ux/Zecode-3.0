@@ -55,6 +55,7 @@ export const questionDraftSchema = z.object({
   comprehensionQuestions: z.string(),
   functionSignature: z.string(),
   buggyCode: z.string(),
+  codeLanguage: z.string(),
   fillBlankTemplate: z.string(),
 });
 
@@ -113,15 +114,18 @@ export function validateStep(type: QuestionType, stepId: string, values: Questio
     case "comprehension:questions":
       if (!values.comprehensionQuestions.trim()) return "Add follow-up questions";
       return null;
-    case "debug:function":
-      if (!values.functionSignature.trim()) return "Add a function signature";
+    case "debug:function-details":
+      if (!values.functionName.trim()) return "Add a function name";
+      if (!values.returnType.trim()) return "Select a return type";
+      if (!values.parameters.some((p) => p.name.trim())) return "Add at least one parameter";
       return null;
     case "debug:test-cases":
       if (!values.testCases.some((t) => t.input.trim() && t.expected.trim())) {
         return "Add at least one test case";
       }
       return null;
-    case "debug:buggy":
+    case "debug:debug-code":
+      if (!values.codeLanguage.trim()) return "Select a language";
       if (!values.buggyCode.trim()) return "Add buggy code for candidates to fix";
       return null;
     default:

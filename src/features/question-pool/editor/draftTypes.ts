@@ -33,5 +33,6 @@ export type QuestionDraft = {
   comprehensionQuestions: string;
   functionSignature: string;
   buggyCode: string;
+  codeLanguage: string;
   fillBlankTemplate: string;
 };
