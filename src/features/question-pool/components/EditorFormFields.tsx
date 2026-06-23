@@ -6,6 +6,7 @@ import type { QuestionDraftFormValues } from "../editor/schemas";
 import { TagChips } from "./TagChips";
 import { CodeEditorPane } from "./editors/CodeEditorPane";
 import { DifficultyPicker } from "./editors/DifficultyPicker";
+import { FunctionDetailsEditor } from "./editors/FunctionDetailsEditor";
 import { MarkdownEditor } from "./editors/MarkdownEditor";
 import { MCQOptionsEditor } from "./editors/MCQOptionsEditor";
 import { SchemaPickerCards } from "./editors/SchemaPickerCards";
@@ -115,6 +116,16 @@ export function renderStepContent(
           <h2 className="text-[14px] font-semibold text-text">Test cases</h2>
           <TestCasesEditor testCases={draft.testCases} onChange={(testCases) => onPatch({ testCases })} />
         </div>
+      );
+    case "function-details":
+      return (
+        <FunctionDetailsEditor
+          functionName={draft.functionName}
+          returnType={draft.returnType}
+          parameters={draft.parameters}
+          starterCode={draft.starterCode}
+          onPatch={onPatch}
+        />
       );
     case "starter":
       return (

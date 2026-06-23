@@ -107,6 +107,33 @@ export function CandidatePreview({ draft }: { draft: QuestionDraftFormValues }) 
                     : debounced.starterCode || "// starter code…"}
                 </pre>
               </div>
+              {debounced.testCases.some((t) => !t.hidden) && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">
+                    Sample test cases
+                  </p>
+                  {debounced.testCases
+                    .filter((t) => !t.hidden)
+                    .map((t, i) => (
+                      <div
+                        key={t.id}
+                        className="rounded-[8px] border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] p-2"
+                      >
+                        <p className="text-[10px] font-medium text-muted">Case {i + 1}</p>
+                        <div className="mt-1 grid grid-cols-2 gap-2 font-mono text-[10px]">
+                          <div>
+                            <span className="text-muted">Input: </span>
+                            <span className="text-text">{t.input || "—"}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted">Expected: </span>
+                            <span className="text-text">{t.expected || "—"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
               <div className="flex gap-2">
                 <span className="rounded-[8px] border px-3 py-1.5 text-[11px] font-medium">Run</span>
                 <span className="rounded-[8px] bg-accent px-3 py-1.5 text-[11px] font-medium text-white">

@@ -41,7 +41,26 @@ export type TestCase = {
   input: string;
   expected: string;
   hidden: boolean;
+  visibility?: "sample" | "hidden";
+  points?: number;
 };
+
+export type FunctionParameter = {
+  id: string;
+  name: string;
+  type: string;
+  required: boolean;
+};
+
+export const RETURN_TYPES = [
+  "number",
+  "string",
+  "boolean",
+  "number[]",
+  "string[]",
+  "object",
+  "void",
+] as const;
 
 export type DatabaseSchemaId = "banking_db" | "ecommerce_db" | "hr_db";
 

@@ -29,6 +29,16 @@ export const questionDraftSchema = z.object({
     }),
   ),
   starterCode: z.string(),
+  functionName: z.string(),
+  returnType: z.string(),
+  parameters: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      type: z.string(),
+      required: z.boolean(),
+    }),
+  ),
   schemaId: z.string(),
   expectedQuery: z.string(),
   passage: z.string(),
@@ -65,6 +75,12 @@ export function validateStep(type: QuestionType, stepId: string, values: Questio
       }
       return null;
     }
+    case "coding:function-details":
+      if (!values.functionName.trim()) return "Add a function name";
+      if (!values.returnType.trim()) return "Select a return type";
+      if (!values.parameters.some((p) => p.name.trim())) return "Add at least one parameter";
+      if (!values.starterCode.trim()) return "Add starter code";
+      return null;
     case "coding:starter":
       if (!values.starterCode.trim()) return "Add starter code";
       return null;

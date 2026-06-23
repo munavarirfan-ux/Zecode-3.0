@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+# Use polling for all file watchers to avoid EMFILE on macOS
+export NEXT_DEV_POLLING=1
+export WATCHPACK_POLLING=true
+export CHOKIDAR_USEPOLLING=true
+exec npm run dev -- --port "${PORT:-3000}"

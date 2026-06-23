@@ -1,6 +1,7 @@
 import type {
   DatabaseSchemaId,
   Difficulty,
+  FunctionParameter,
   MCQOption,
   QuestionSubtype,
   QuestionType,
@@ -18,6 +19,9 @@ export type QuestionDraft = {
   mcqOptions: MCQOption[];
   testCases: TestCase[];
   starterCode: string;
+  functionName: string;
+  returnType: string;
+  parameters: FunctionParameter[];
   schemaId: DatabaseSchemaId | "";
   expectedQuery: string;
   passage: string;

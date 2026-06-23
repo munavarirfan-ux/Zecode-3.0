@@ -56,8 +56,8 @@ export function CreateQuestionEditor({
     return () => reset();
   }, [type, subtype, initDraft, reset]);
 
-  const steps = type ? getEditorSteps(type) : [];
-  const stepped = type ? hasStepper(type) : false;
+  const steps = type ? getEditorSteps(type, subtype) : [];
+  const stepped = type ? hasStepper(type, subtype) : false;
   const stepId = steps[currentStep]?.id;
 
   const formValues: QuestionDraftFormValues | null = useMemo(

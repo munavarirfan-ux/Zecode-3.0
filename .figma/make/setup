@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+# Ensure Node.js is available
+if ! command -v node &> /dev/null; then
+  echo "Error: Node.js is not installed"
+  exit 1
+fi
+
+echo "Node $(node --version), npm $(npm --version)"
+
+# Create .env from example if it doesn't exist
+if [ ! -f .env ]; then
+  cp .env.example .env
+  echo "Created .env from .env.example"
+fi

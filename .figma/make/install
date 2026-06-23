@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+npm install
+
+# Ensure Prisma client is generated and SQLite DB exists
+npx prisma generate
+npx prisma db push --skip-generate

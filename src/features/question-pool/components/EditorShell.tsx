@@ -52,13 +52,17 @@ export function EditorShell({
       : undefined;
 
   const isReviewStep = steps?.[currentStep]?.id === "review";
+  const hasReviewStep = steps?.some((s) => s.id === "review") ?? false;
+  const isLastStep = stepped && currentStep === (steps?.length ?? 1) - 1;
   const showBack = stepped && currentStep > 0;
 
-  const primaryLabel = isReviewStep || !stepped
+  const shouldPublish = isReviewStep || (!stepped) || (isLastStep && !hasReviewStep);
+
+  const primaryLabel = shouldPublish
     ? "Publish"
-    : steps && currentStep < steps.length - 2
-      ? "Continue"
-      : "Continue to review";
+    : hasReviewStep && steps && currentStep === steps.length - 2
+      ? "Continue to review"
+      : "Continue";
 
   return (
     <div className={cn(hiringCanvas, "relative pb-20")}>
@@ -95,8 +99,8 @@ export function EditorShell({
         showBack={showBack}
         onBack={onBack}
         primaryLabel={primaryLabel}
-        onPrimary={isReviewStep || !stepped ? onPublish : onContinue!}
-        primaryVariant={isReviewStep || !stepped ? "publish" : "continue"}
+        onPrimary={shouldPublish ? onPublish : onContinue!}
+        primaryVariant={shouldPublish ? "publish" : "continue"}
       />
     </div>
   );

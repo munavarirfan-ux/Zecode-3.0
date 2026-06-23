@@ -1,6 +1,12 @@
-import type { QuestionType } from "../types";
+import type { QuestionSubtype, QuestionType } from "../types";
 
 export type EditorStep = { id: string; label: string };
+
+const CODING_BACKEND_STEPS: EditorStep[] = [
+  { id: "question", label: "Question Details" },
+  { id: "function-details", label: "Function Details" },
+  { id: "test-cases", label: "Test Cases" },
+];
 
 export const EDITOR_STEPS: Record<QuestionType, EditorStep[] | null> = {
   mcq: [
@@ -37,10 +43,12 @@ export const EDITOR_STEPS: Record<QuestionType, EditorStep[] | null> = {
   "fill-blank": null,
 };
 
-export function getEditorSteps(type: QuestionType): EditorStep[] {
+export function getEditorSteps(type: QuestionType, subtype?: QuestionSubtype): EditorStep[] {
+  if (type === "coding" && subtype === "backend") return CODING_BACKEND_STEPS;
   return EDITOR_STEPS[type] ?? [];
 }
 
-export function hasStepper(type: QuestionType): boolean {
+export function hasStepper(type: QuestionType, subtype?: QuestionSubtype): boolean {
+  if (type === "coding" && subtype === "backend") return true;
   return EDITOR_STEPS[type] !== null;
 }
