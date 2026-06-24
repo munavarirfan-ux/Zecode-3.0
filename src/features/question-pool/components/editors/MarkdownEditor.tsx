@@ -8,16 +8,18 @@ export function MarkdownEditor({
   label = "Question description",
   placeholder = "Write the prompt in markdown…",
   minHeight = "min-h-[160px]",
+  hideLabel = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   label?: string;
   placeholder?: string;
   minHeight?: string;
+  hideLabel?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[12px] font-medium text-text">{label}</label>
+      {!hideLabel && <label className="text-[12px] font-medium text-text">{label}</label>}
       <div className="overflow-hidden rounded-[12px] border border-[rgba(15,23,42,0.08)] dark:border-white/[0.08]">
         <div className="flex gap-0.5 border-b border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] px-2 py-1.5 dark:border-white/[0.06]">
           {["B", "I", "`", "Link"].map((t) => (

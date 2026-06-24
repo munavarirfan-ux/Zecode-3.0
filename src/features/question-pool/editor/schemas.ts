@@ -13,6 +13,7 @@ export const questionDraftSchema = z.object({
   bodyMarkdown: z.string().min(10, "Description is required"),
   skill: z.string().min(1, "Skill is required"),
   tags: z.array(z.string()),
+  answerType: z.enum(["single", "multiple"]),
   mcqOptions: z.array(
     z.object({
       id: z.string(),
@@ -52,7 +53,20 @@ export const questionDraftSchema = z.object({
   schemaId: z.string(),
   expectedQuery: z.string(),
   passage: z.string(),
-  comprehensionQuestions: z.string(),
+  compQuestions: z.array(
+    z.object({
+      id: z.string(),
+      questionBody: z.string(),
+      answerType: z.enum(["single", "multiple"]),
+      options: z.array(
+        z.object({
+          id: z.string(),
+          label: z.string(),
+          isCorrect: z.boolean(),
+        }),
+      ),
+    }),
+  ),
   functionSignature: z.string(),
   buggyCode: z.string(),
   codeLanguage: z.string(),
@@ -63,22 +77,12 @@ export type QuestionDraftFormValues = z.infer<typeof questionDraftSchema>;
 
 export function validateStep(type: QuestionType, stepId: string, values: QuestionDraftFormValues): string | null {
   switch (`${type}:${stepId}`) {
-    case "mcq:question":
     case "coding:question":
     case "database:question":
     case "debug:question":
       if (!values.title.trim()) return "Add a question title";
       if (!values.bodyMarkdown.trim()) return "Add a question description";
       if (!values.skill.trim()) return "Select or enter a skill";
-      return null;
-    case "mcq:options": {
-      const filled = values.mcqOptions.filter((o) => o.label.trim());
-      if (filled.length < 2) return "Add at least two options";
-      if (!values.mcqOptions.some((o) => o.isCorrect)) return "Mark one option as correct";
-      return null;
-    }
-    case "mcq:tags":
-      if (values.tags.length === 0) return "Add at least one tag";
       return null;
     case "coding:test-cases": {
       if (!values.testCases.some((t) => t.input.trim() && t.expected.trim())) {
@@ -108,12 +112,25 @@ export function validateStep(type: QuestionType, stepId: string, values: Questio
       if (!values.expectedQuery.trim()) return "Add the expected SQL query";
       return null;
     case "comprehension:passage":
-      if (!values.title.trim()) return "Add a title";
       if (!values.passage.trim()) return "Add a reading passage";
       return null;
-    case "comprehension:questions":
-      if (!values.comprehensionQuestions.trim()) return "Add follow-up questions";
+    case "comprehension:questions": {
+      if (values.compQuestions.length === 0) return "Add at least one question";
+      for (let i = 0; i < values.compQuestions.length; i++) {
+        const q = values.compQuestions[i];
+        const num = i + 1;
+        if (!q.questionBody.trim()) return `Question ${num}: add question text`;
+        const filled = q.options.filter((o) => o.label.trim());
+        if (filled.length < 2) return `Question ${num}: add at least two options`;
+        if (q.options.some((o) => !o.label.trim() && filled.length > 0))
+          return `Question ${num}: all option fields must have text`;
+        if (!q.options.some((o) => o.isCorrect))
+          return `Question ${num}: mark at least one correct answer`;
+        if (q.answerType === "single" && q.options.filter((o) => o.isCorrect).length > 1)
+          return `Question ${num}: single-answer allows only one correct option`;
+      }
       return null;
+    }
     case "debug:function-details":
       if (!values.functionName.trim()) return "Add a function name";
       if (!values.returnType.trim()) return "Select a return type";
@@ -137,6 +154,18 @@ export function validatePublish(values: QuestionDraftFormValues): string | null 
   const type = values.type as QuestionType;
   const steps = getEditorSteps(type);
   if (!steps) {
+    if (type === "mcq") {
+      if (!values.bodyMarkdown.trim()) return "Add a question in the editor";
+      const filled = values.mcqOptions.filter((o) => o.label.trim());
+      if (filled.length < 2) return "Add at least two options";
+      if (values.mcqOptions.some((o) => !o.label.trim() && filled.length > 0))
+        return "All option inputs must have text";
+      if (!values.mcqOptions.some((o) => o.isCorrect)) return "Mark at least one correct option";
+      if (values.answerType === "single" && values.mcqOptions.filter((o) => o.isCorrect).length > 1)
+        return "Single-answer mode allows only one correct option";
+      if (!values.skill.trim()) return "Select a skill";
+      return null;
+    }
     if (!values.title.trim()) return "Add a question title";
     if (!values.skill.trim()) return "Add a skill";
     if (type === "fill-blank") {

@@ -14,12 +14,7 @@ const CODING_FRONTEND_STEPS: EditorStep[] = [
 ];
 
 export const EDITOR_STEPS: Record<QuestionType, EditorStep[] | null> = {
-  mcq: [
-    { id: "question", label: "Question" },
-    { id: "options", label: "Options" },
-    { id: "tags", label: "Tags" },
-    { id: "review", label: "Review" },
-  ],
+  mcq: null,
   coding: [
     { id: "question", label: "Question" },
     { id: "test-cases", label: "Test Cases" },
@@ -35,7 +30,6 @@ export const EDITOR_STEPS: Record<QuestionType, EditorStep[] | null> = {
   comprehension: [
     { id: "passage", label: "Passage" },
     { id: "questions", label: "Questions" },
-    { id: "review", label: "Review" },
   ],
   debug: [
     { id: "question", label: "Question Details" },

@@ -12,12 +12,25 @@ import { validatePublish, validateStep } from "./editor/schemas";
 import { parseSubtypeParam } from "./questionSubtypes";
 import { QUESTION_TYPE_LABELS } from "./tokens";
 import type { QuestionType } from "./types";
+import { cn } from "@/lib/utils";
 import { EditorShell } from "./components/EditorShell";
 import { QuestionCoreFields, renderStepContent } from "./components/EditorFormFields";
 import { TagChips } from "./components/TagChips";
+import { DifficultyPicker } from "./components/editors/DifficultyPicker";
+import { MCQAnswerTypeToggle, MCQOptionsEditor } from "./components/editors/MCQOptionsEditor";
 import { MarkdownEditor } from "./components/editors/MarkdownEditor";
 import { useDraftStore } from "./store/draftStore";
 import { usePoolStore } from "./store/poolStore";
+
+const MCQ_SKILLS = [
+  "JavaScript",
+  "Python",
+  "SQL",
+  "React",
+  "System Design",
+  "Data Structures",
+  "Algorithms",
+];
 const VALID_TYPES = new Set<string>([
   "coding",
   "database",
@@ -121,6 +134,97 @@ export function CreateQuestionEditor({
 
   const formContent = stepped ? (
     renderStepContent(stepId, formValues, onPatch)
+  ) : type === "mcq" ? (
+    <div className="space-y-5">
+      {/* Note */}
+      <div className="rounded-[10px] border border-blue-200/60 bg-blue-50/40 px-3 py-2.5 text-[12px] leading-relaxed text-blue-800 dark:border-blue-500/20 dark:bg-blue-950/20 dark:text-blue-200">
+        <span className="font-semibold">Note:</span>
+        <ul className="mt-1 list-inside list-disc space-y-0.5 text-[11px]">
+          <li>The image should be in jpg, jpeg, or png format</li>
+          <li>For latex code, place a dollar ($) symbol at start and end of the code</li>
+        </ul>
+      </div>
+
+      {/* Question editor with Difficulty beside heading */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label className="text-[12px] font-medium text-text">Question</label>
+          <DifficultyPicker
+            value={formValues.difficulty}
+            onChange={(d) => onPatch({ difficulty: d })}
+          />
+        </div>
+        <MarkdownEditor
+          value={formValues.bodyMarkdown}
+          onChange={(bodyMarkdown) => onPatch({ bodyMarkdown })}
+          placeholder="Please enter text here..."
+          minHeight="min-h-[180px]"
+          hideLabel
+        />
+      </div>
+
+      {/* Options + Answer Type */}
+      <div className="border-t border-[rgba(15,23,42,0.06)] pt-5 dark:border-white/[0.06]">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[14px] font-semibold text-text">Options</h2>
+          <MCQAnswerTypeToggle
+            answerType={formValues.answerType}
+            onChange={(newType) => {
+              if (newType === "single" && formValues.answerType !== "single") {
+                const firstCorrect = formValues.mcqOptions.findIndex((o) => o.isCorrect);
+                onPatch({
+                  answerType: newType,
+                  mcqOptions: formValues.mcqOptions.map((o, i) => ({
+                    ...o,
+                    isCorrect: i === (firstCorrect >= 0 ? firstCorrect : 0),
+                  })),
+                });
+              } else {
+                onPatch({ answerType: newType });
+              }
+            }}
+          />
+        </div>
+        <MCQOptionsEditor
+          options={formValues.mcqOptions}
+          answerType={formValues.answerType}
+          onChange={(mcqOptions) => onPatch({ mcqOptions })}
+        />
+      </div>
+
+      {/* Skill / Tags */}
+      <div className="border-t border-[rgba(15,23,42,0.06)] pt-5 dark:border-white/[0.06]">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex-1 space-y-1.5">
+              <label className="text-[12px] font-medium text-text">Skill</label>
+              <input
+                list="mcq-skills"
+                value={formValues.skill}
+                onChange={(e) => onPatch({ skill: e.target.value })}
+                placeholder="Search skill"
+                className={cn(
+                  "h-9 w-full rounded-[10px] border border-[rgba(15,23,42,0.08)] bg-white/90 px-3 text-[13px] outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-accent/20 dark:border-white/[0.08] dark:bg-white/[0.04]",
+                )}
+              />
+              <datalist id="mcq-skills">
+                {MCQ_SKILLS.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <label className="text-[12px] font-medium text-text">Tags</label>
+              <TagChips
+                tags={formValues.tags}
+                onChange={(tags) => onPatch({ tags })}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   ) : (
     <div className="space-y-6">
       <QuestionCoreFields draft={formValues} onPatch={onPatch} />

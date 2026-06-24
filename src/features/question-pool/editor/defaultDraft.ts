@@ -1,4 +1,4 @@
-import type { MCQOption, QuestionSubtype, QuestionType } from "../types";
+import type { ComprehensionQuestion, MCQOption, QuestionSubtype, QuestionType } from "../types";
 import type { QuestionDraft } from "./draftTypes";
 
 function defaultMcqOptions(): MCQOption[] {
@@ -10,6 +10,20 @@ function defaultMcqOptions(): MCQOption[] {
   ];
 }
 
+export function defaultComprehensionQuestion(): ComprehensionQuestion {
+  return {
+    id: `cq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    questionBody: "",
+    answerType: "single",
+    options: [
+      { id: "a", label: "", isCorrect: true },
+      { id: "b", label: "", isCorrect: false },
+      { id: "c", label: "", isCorrect: false },
+      { id: "d", label: "", isCorrect: false },
+    ],
+  };
+}
+
 export function createEmptyDraft(type: QuestionType, subtype?: QuestionSubtype): QuestionDraft {
   return {
     type,
@@ -19,6 +33,7 @@ export function createEmptyDraft(type: QuestionType, subtype?: QuestionSubtype):
     bodyMarkdown: "",
     skill: "",
     tags: [],
+    answerType: "single",
     mcqOptions: defaultMcqOptions(),
     testCases: [{ id: "t1", input: "", expected: "", hidden: false }],
     starterCode: "",
@@ -32,7 +47,7 @@ export function createEmptyDraft(type: QuestionType, subtype?: QuestionSubtype):
     schemaId: "",
     expectedQuery: "",
     passage: "",
-    comprehensionQuestions: "",
+    compQuestions: [defaultComprehensionQuestion()],
     functionSignature: "",
     buggyCode: "",
     codeLanguage: "",

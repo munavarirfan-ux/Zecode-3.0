@@ -70,7 +70,7 @@ export function AssessmentReportHero({
     : null;
 
   return (
-    <header className={hiringHeroReportStripShell}>
+    <header className={cn(hiringHeroReportStripShell, "w-full")}>
       <HiringHeroDecor />
 
       <div className={cn(hiringHeroReportStripRow, "relative")}>

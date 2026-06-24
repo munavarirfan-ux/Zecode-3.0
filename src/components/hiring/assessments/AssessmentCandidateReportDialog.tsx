@@ -29,7 +29,7 @@ import { AssessmentReportQuestions } from "./report/AssessmentReportQuestions";
 import { AssessmentReportSnapshots } from "./report/AssessmentReportSnapshots";
 import { ViewAnswerDialog } from "./ViewAnswerDialog";
 
-const REPORT_COLUMN = "mx-auto w-full max-w-[1320px]";
+const REPORT_COLUMN = "w-full max-w-none";
 const REPORT_PAD_X = "px-5 sm:px-6";
 
 export function AssessmentCandidateReportDialog({
@@ -45,7 +45,7 @@ export function AssessmentCandidateReportDialog({
 }) {
   const [mainTab, setMainTab] = useState<AssessmentReportMainTab>("overview");
   const [questionTab, setQuestionTab] = useState<AssessmentReportTab>("Coding");
-  const [answerQuestion, setAnswerQuestion] = useState<AssessmentQuestionResult | null>(null);
+  const [answerQuestionIndex, setAnswerQuestionIndex] = useState<number>(-1);
 
   const questions = useMemo(
     () => (candidate ? getQuestionResultsForCandidate(candidate.id, assessment.id) : []),
@@ -85,8 +85,8 @@ export function AssessmentCandidateReportDialog({
           >
             <DialogPanel
               className={cn(
-                "relative flex h-[min(900px,calc(100dvh-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col overflow-hidden bg-white dark:bg-surface",
-                "w-[calc(100vw-2rem)] max-w-[1400px]",
+                "relative flex h-[92vh] flex-col overflow-hidden bg-white dark:bg-surface",
+                "w-[96vw] max-w-none",
                 "rounded-[16px] border border-[rgba(15,23,42,0.08)]",
                 "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_24px_80px_-24px_rgba(15,23,42,0.28)]",
                 "data-[state=open]:animate-radix-in data-[state=closed]:animate-radix-out",
@@ -98,7 +98,7 @@ export function AssessmentCandidateReportDialog({
                 onValueChange={(v) => setMainTab(v as AssessmentReportMainTab)}
                 className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
               >
-                <div className={cn("shrink-0", REPORT_COLUMN, REPORT_PAD_X, "pb-5 pt-5 sm:pb-6 sm:pt-6")}>
+                <div className={cn("shrink-0", REPORT_COLUMN, "px-[14px] pb-5 pt-5 sm:pb-6 sm:pt-6")}>
                   <AssessmentReportHero
                     assessment={assessment}
                     candidate={candidate}
@@ -145,7 +145,7 @@ export function AssessmentCandidateReportDialog({
                       questions={questions}
                       questionTab={questionTab}
                       onQuestionTabChange={setQuestionTab}
-                      onViewAnswer={setAnswerQuestion}
+                      onViewAnswer={(q) => setAnswerQuestionIndex(questions.indexOf(q))}
                     />
                   </TabsContent>
                 </div>
@@ -156,9 +156,11 @@ export function AssessmentCandidateReportDialog({
       </Dialog>
 
       <ViewAnswerDialog
-        open={answerQuestion != null}
-        onOpenChange={(o) => !o && setAnswerQuestion(null)}
-        question={answerQuestion}
+        open={answerQuestionIndex >= 0}
+        onOpenChange={(o) => !o && setAnswerQuestionIndex(-1)}
+        questions={questions}
+        activeIndex={answerQuestionIndex}
+        onNavigate={setAnswerQuestionIndex}
       />
     </>
   );

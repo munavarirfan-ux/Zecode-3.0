@@ -151,6 +151,7 @@ export const usePoolStore = create<PoolState>((set, get) => ({
           usedInAssessments: [],
         },
         mcqOptions: draft.type === "mcq" ? draft.mcqOptions : undefined,
+        compQuestions: draft.type === "comprehension" ? draft.compQuestions : undefined,
         testCases:
           draft.type === "coding" || draft.type === "debug" ? draft.testCases : undefined,
         schemaId:

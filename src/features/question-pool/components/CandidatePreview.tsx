@@ -72,26 +72,62 @@ export function CandidatePreview({ draft }: { draft: QuestionDraftFormValues }) 
             )}
           </span>
 
-          <h3 className="mt-3 text-[15px] font-semibold text-text">
-            {debounced.title || "Question title"}
-          </h3>
+          {debounced.type !== "mcq" && (
+            <h3 className="mt-3 text-[15px] font-semibold text-text">
+              {debounced.title || "Question title"}
+            </h3>
+          )}
 
           {debounced.type === "mcq" ? (
-            <ul className="mt-4 space-y-2">
-              {debounced.mcqOptions.map((o, i) => (
-                <li
-                  key={o.id}
-                  className={cn(
-                    "rounded-[10px] border px-3 py-2.5 text-[13px]",
-                    o.isCorrect
-                      ? "border-dashed border-emerald-400/70 bg-emerald-50/30"
-                      : "border-[rgba(15,23,42,0.08)]",
-                  )}
-                >
-                  {o.label || `Option ${String.fromCharCode(65 + i)}`}
-                </li>
-              ))}
-            </ul>
+            <div className="mt-3 space-y-3">
+              <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-text">
+                {debounced.bodyMarkdown || "Question text appears here..."}
+              </p>
+              <ul className="space-y-2">
+                {debounced.mcqOptions.map((o, i) => (
+                  <li
+                    key={o.id}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-[13px]",
+                      o.isCorrect
+                        ? "border-dashed border-emerald-400/70 bg-emerald-50/30"
+                        : "border-[rgba(15,23,42,0.08)]",
+                    )}
+                  >
+                    {debounced.answerType === "multiple" ? (
+                      <span
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border-2",
+                          o.isCorrect
+                            ? "border-emerald-500 bg-emerald-500"
+                            : "border-[rgba(15,23,42,0.2)]",
+                        )}
+                      >
+                        {o.isCorrect && (
+                          <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                    ) : (
+                      <span
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
+                          o.isCorrect
+                            ? "border-emerald-500 bg-emerald-500"
+                            : "border-[rgba(15,23,42,0.2)]",
+                        )}
+                      >
+                        {o.isCorrect && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                        )}
+                      </span>
+                    )}
+                    {o.label || `Option ${String.fromCharCode(65 + i)}`}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : null}
 
           {(debounced.type === "coding" && debounced.subtype === "frontend") ? (
@@ -188,11 +224,41 @@ export function CandidatePreview({ draft }: { draft: QuestionDraftFormValues }) 
           ) : null}
 
           {debounced.type === "comprehension" ? (
-            <div className="mt-4 space-y-3 text-[13px] text-text-secondary/90">
-              <p className="whitespace-pre-wrap rounded-[10px] bg-[rgba(15,23,42,0.03)] p-3">
+            <div className="mt-4 space-y-3 text-[13px]">
+              <div className="whitespace-pre-wrap rounded-[10px] bg-[rgba(15,23,42,0.03)] p-3 text-text-secondary/90">
                 {debounced.passage || "Reading passage…"}
-              </p>
-              <p className="whitespace-pre-wrap">{debounced.comprehensionQuestions || "Follow-up questions…"}</p>
+              </div>
+              {debounced.compQuestions.length > 0 ? (
+                <div className="space-y-3">
+                  {debounced.compQuestions.map((q, qi) => (
+                    <div key={q.id} className="space-y-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
+                        Question {qi + 1}
+                      </p>
+                      <p className="whitespace-pre-wrap text-[13px] text-text">
+                        {q.questionBody || "Question text…"}
+                      </p>
+                      <ul className="space-y-1.5">
+                        {q.options.map((o, oi) => (
+                          <li
+                            key={o.id}
+                            className="flex items-center gap-2.5 rounded-[10px] border border-[rgba(15,23,42,0.08)] px-3 py-2 text-[12px]"
+                          >
+                            {q.answerType === "multiple" ? (
+                              <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border-2 border-[rgba(15,23,42,0.2)]" />
+                            ) : (
+                              <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border-2 border-[rgba(15,23,42,0.2)]" />
+                            )}
+                            {o.label || `Option ${String.fromCharCode(65 + oi)}`}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[12px] text-muted">No questions added yet.</p>
+              )}
             </div>
           ) : null}
 

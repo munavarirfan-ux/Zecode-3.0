@@ -36,6 +36,13 @@ export type MCQOption = {
   isCorrect: boolean;
 };
 
+export type ComprehensionQuestion = {
+  id: string;
+  questionBody: string;
+  answerType: "single" | "multiple";
+  options: MCQOption[];
+};
+
 export type TestCase = {
   id: string;
   input: string;
@@ -99,6 +106,7 @@ export type Question = {
   curator: Curator;
   meta: QuestionMeta;
   mcqOptions?: MCQOption[];
+  compQuestions?: ComprehensionQuestion[];
   testCases?: TestCase[];
   schemaId?: DatabaseSchemaId;
 };

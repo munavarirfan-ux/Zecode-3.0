@@ -5,8 +5,10 @@ import { formatQuestionTypeLabel, QUESTION_TYPE_ACCENT } from "../tokens";
 import type { QuestionDraftFormValues } from "../editor/schemas";
 import { TagChips } from "./TagChips";
 import { CodeEditorPane } from "./editors/CodeEditorPane";
+import { ComprehensionQuestionsEditor } from "./editors/ComprehensionQuestionsEditor";
 import { DifficultyPicker } from "./editors/DifficultyPicker";
 import { DebugCodeEditor } from "./editors/DebugCodeEditor";
+import { ExpectedQueryEditor } from "./editors/ExpectedQueryEditor";
 import { FunctionDetailsEditor } from "./editors/FunctionDetailsEditor";
 import { ImageRemarksEditor } from "./editors/ImageRemarksEditor";
 import { MarkdownEditor } from "./editors/MarkdownEditor";
@@ -171,25 +173,26 @@ export function renderStepContent(
       );
     case "query":
       return (
-        <CodeEditorPane
-          label="Expected query"
-          language="sql"
+        <ExpectedQueryEditor
           value={draft.expectedQuery}
           onChange={(expectedQuery) => onPatch({ expectedQuery })}
+          schemaId={draft.schemaId}
         />
       );
     case "passage":
       return (
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[12px] font-medium text-text">Title</label>
+            <label className="text-[12px] font-medium text-text">
+              Passage title <span className="text-muted">(optional)</span>
+            </label>
             <input
               value={draft.title}
               onChange={(e) => onPatch({ title: e.target.value })}
-              className="h-9 w-full rounded-[10px] border border-[rgba(15,23,42,0.08)] bg-white/90 px-3 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+              placeholder="Optional title for the passage"
+              className="h-9 w-full rounded-[10px] border border-[rgba(15,23,42,0.08)] bg-white/90 px-3 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent/20 dark:border-white/[0.08] dark:bg-white/[0.04]"
             />
           </div>
-          <DifficultyPicker value={draft.difficulty} onChange={(d) => onPatch({ difficulty: d })} />
           <MarkdownEditor
             label="Reading passage"
             value={draft.passage}
@@ -200,11 +203,9 @@ export function renderStepContent(
       );
     case "questions":
       return (
-        <MarkdownEditor
-          label="Follow-up questions"
-          value={draft.comprehensionQuestions}
-          onChange={(comprehensionQuestions) => onPatch({ comprehensionQuestions })}
-          placeholder="List comprehension questions…"
+        <ComprehensionQuestionsEditor
+          compQuestions={draft.compQuestions}
+          onPatch={onPatch}
         />
       );
     case "function":

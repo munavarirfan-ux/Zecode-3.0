@@ -1,4 +1,5 @@
 import type {
+  ComprehensionQuestion,
   DatabaseSchemaId,
   Difficulty,
   FrontendLink,
@@ -17,6 +18,7 @@ export type QuestionDraft = {
   bodyMarkdown: string;
   skill: string;
   tags: string[];
+  answerType: "single" | "multiple";
   mcqOptions: MCQOption[];
   testCases: TestCase[];
   starterCode: string;
@@ -30,7 +32,7 @@ export type QuestionDraft = {
   schemaId: DatabaseSchemaId | "";
   expectedQuery: string;
   passage: string;
-  comprehensionQuestions: string;
+  compQuestions: ComprehensionQuestion[];
   functionSignature: string;
   buggyCode: string;
   codeLanguage: string;

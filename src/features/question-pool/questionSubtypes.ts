@@ -9,28 +9,13 @@ export const SUBTYPE_OPTIONS_BY_TYPE: Record<QuestionType, SubtypeOption[]> = {
   coding: [
     { id: "backend", label: "Backend" },
     { id: "frontend", label: "Frontend" },
-    { id: "full-stack", label: "Full-stack" },
-    { id: "data-engineering", label: "Data engineering" },
   ],
-  database: [
-    { id: "mysql", label: "MySQL" },
-    { id: "postgresql", label: "PostgreSQL" },
-    { id: "sqlite", label: "SQLite" },
-    { id: "mongodb", label: "MongoDB" },
-  ],
-  mcq: [
-    { id: "single-answer", label: "Single answer" },
-    { id: "multi-select", label: "Multi-select" },
-  ],
+  database: [],
+  mcq: [],
   comprehension: [],
   "open-ended": [],
   "fill-blank": [],
-  debug: [
-    { id: "javascript", label: "JavaScript" },
-    { id: "python", label: "Python" },
-    { id: "java", label: "Java" },
-    { id: "c++", label: "C++" },
-  ],
+  debug: [],
 };
 
 const _allSubtypeIds = Object.values(SUBTYPE_OPTIONS_BY_TYPE).flatMap((opts) =>
