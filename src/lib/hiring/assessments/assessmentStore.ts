@@ -67,7 +67,11 @@ export function duplicateAssessment(id: string): AssessmentRecord | null {
 export function setAssessmentEnabled(id: string, enabled: boolean): AssessmentRecord | null {
   const a = store.get(id);
   if (!a) return null;
-  const next = { ...a, enabled };
+  const next: AssessmentRecord = {
+    ...a,
+    enabled,
+    status: enabled ? "Ongoing" : "Completed",
+  };
   store.set(id, next);
   notify();
   return next;

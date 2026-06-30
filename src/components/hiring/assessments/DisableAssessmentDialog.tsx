@@ -26,10 +26,10 @@ export function DisableAssessmentDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="rounded-[14px]">
         <AlertDialogHeader>
-          <AlertDialogTitle>Disable assessment?</AlertDialogTitle>
+          <AlertDialogTitle>Move to completed?</AlertDialogTitle>
           <AlertDialogDescription>
-            Candidates will not be able to access <span className="font-medium">{assessmentName}</span> while it is
-            disabled. You can re-enable it anytime.
+            Are you sure you want to move <span className="font-medium">{assessmentName}</span> to completed? Candidates
+            will no longer be able to access it. You can reopen it anytime.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -38,7 +38,7 @@ export function DisableAssessmentDialog({
             className="bg-accent text-white hover:bg-accent-hover"
             onClick={onConfirm}
           >
-            Disable
+            Move to Completed
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

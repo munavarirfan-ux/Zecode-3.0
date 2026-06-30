@@ -94,7 +94,7 @@ export function AssessmentDetailPage({ assessmentId }: { assessmentId: string })
         onConfirm={() => {
           setAssessmentEnabled(assessment.id, false);
           bumpRefresh();
-          toast.success("Assessment disabled");
+          toast.success("Assessment moved to completed");
           setDisableOpen(false);
         }}
       />

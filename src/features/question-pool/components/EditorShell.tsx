@@ -19,12 +19,13 @@ export function EditorShell({
   draft,
   dirty,
   lastSavedAt,
-  onDiscard,
   onSaveDraft,
   onPublish,
   onContinue,
   onBack,
   stepped,
+  hidePreview,
+  onPreview,
 }: {
   title: string;
   steps: EditorStep[] | null;
@@ -34,12 +35,13 @@ export function EditorShell({
   draft: QuestionDraftFormValues;
   dirty: boolean;
   lastSavedAt: Date | null;
-  onDiscard: () => void;
   onSaveDraft: () => void;
   onPublish: () => void;
   onContinue?: () => void;
   onBack?: () => void;
   stepped: boolean;
+  hidePreview?: boolean;
+  onPreview?: () => void;
 }) {
   const typeLabel = formatQuestionTypeLabel(
     draft.type as Parameters<typeof formatQuestionTypeLabel>[0],
@@ -82,11 +84,13 @@ export function EditorShell({
 
           <div className="flex min-h-[calc(100dvh-16rem)] flex-col lg:flex-row">
             <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-6">{children}</div>
-            <aside className="w-full shrink-0 border-t border-[rgba(15,23,42,0.06)] lg:w-[480px] lg:border-l lg:border-t-0 dark:border-white/[0.06]">
-              <div className="lg:min-h-[calc(100dvh-16rem)]">
-                <CandidatePreview draft={draft} />
-              </div>
-            </aside>
+            {!hidePreview && (
+              <aside className="w-full shrink-0 border-t border-[rgba(15,23,42,0.06)] lg:w-[480px] lg:border-l lg:border-t-0 dark:border-white/[0.06]">
+                <div className="lg:min-h-[calc(100dvh-16rem)]">
+                  <CandidatePreview draft={draft} />
+                </div>
+              </aside>
+            )}
           </div>
         </section>
       </div>
@@ -94,13 +98,13 @@ export function EditorShell({
       <AutosaveBar
         dirty={dirty}
         lastSavedAt={lastSavedAt}
-        onDiscard={onDiscard}
         onSaveDraft={onSaveDraft}
         showBack={showBack}
         onBack={onBack}
         primaryLabel={primaryLabel}
         onPrimary={shouldPublish ? onPublish : onContinue!}
         primaryVariant={shouldPublish ? "publish" : "continue"}
+        onPreview={onPreview}
       />
     </div>
   );

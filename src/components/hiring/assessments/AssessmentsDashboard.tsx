@@ -227,7 +227,7 @@ export function AssessmentsDashboard() {
         onConfirm={() => {
           if (disableTarget) {
             setAssessmentEnabled(disableTarget.id, false);
-            toast.success("Assessment disabled");
+            toast.success("Assessment moved to completed");
             setRefresh((n) => n + 1);
           }
           setDisableTarget(null);

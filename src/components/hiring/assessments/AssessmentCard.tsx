@@ -14,7 +14,6 @@ import { ROUTES } from "@/config/routes";
 import { cn } from "@/lib/utils";
 import type { AssessmentRecord } from "@/lib/hiring/assessments/types";
 import { hiringCard, hiringTransition } from "../hiringTokens";
-import { AssessmentStatusBadge } from "./AssessmentStatusBadge";
 import {
   AssessmentCardMenuItem,
   AssessmentCardMenuSeparator,
@@ -155,7 +154,6 @@ export function AssessmentCard({
             <h3 className="min-w-0 flex-1 text-[1.0625rem] font-semibold leading-snug tracking-[-0.03em] text-text transition-colors duration-[180ms] group-hover:text-forest line-clamp-2">
               {assessment.name}
             </h3>
-            <AssessmentStatusBadge status={assessment.status} />
           </div>
           <p className="text-[12px] font-medium text-text-secondary/70">
             {assessment.role}
@@ -166,7 +164,7 @@ export function AssessmentCard({
 
         <div className="flex flex-wrap gap-1.5">
           <MetaChip>Created {assessment.createdOn}</MetaChip>
-          <MetaChip>{assessment.enabled ? "Accepting candidates" : "Disabled"}</MetaChip>
+          <MetaChip>{assessment.enabled ? "Accepting candidates" : "Closed"}</MetaChip>
         </div>
 
         <div className="space-y-2">
@@ -184,7 +182,7 @@ export function AssessmentCard({
           onClick={(e) => e.stopPropagation()}
         >
           <span className="text-[11px] font-medium text-muted">
-            {assessment.enabled ? "Enabled" : "Disabled"}
+            {assessment.enabled ? "Ongoing" : "Completed"}
           </span>
           <Switch
             checked={assessment.enabled}

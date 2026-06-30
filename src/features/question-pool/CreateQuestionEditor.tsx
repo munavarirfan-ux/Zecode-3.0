@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ROUTES } from "@/config/routes";
@@ -13,6 +13,7 @@ import { parseSubtypeParam } from "./questionSubtypes";
 import { QUESTION_TYPE_LABELS } from "./tokens";
 import type { QuestionType } from "./types";
 import { cn } from "@/lib/utils";
+import { CodingPreviewDialog } from "./components/CodingPreviewDialog";
 import { EditorShell } from "./components/EditorShell";
 import { QuestionCoreFields, renderStepContent } from "./components/EditorFormFields";
 import { TagChips } from "./components/TagChips";
@@ -59,6 +60,8 @@ export function CreateQuestionEditor({
   const setStep = useDraftStore((s) => s.setStep);
   const reset = useDraftStore((s) => s.reset);
   const addQuestion = usePoolStore((s) => s.addQuestion);
+
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const type = VALID_TYPES.has(typeParam) ? (typeParam as QuestionType) : null;
   const subtype = type ? parseSubtypeParam(type, subtypeParam) : undefined;
@@ -131,6 +134,9 @@ export function CreateQuestionEditor({
   }
 
   const title = `Create ${QUESTION_TYPE_LABELS[type]} question`;
+
+  const isCodingOrDebug = type === "coding" || type === "debug";
+  const isOnFinalStep = stepped && currentStep === steps.length - 1;
 
   const formContent = stepped ? (
     renderStepContent(stepId, formValues, onPatch)
@@ -246,25 +252,33 @@ export function CreateQuestionEditor({
   );
 
   return (
-    <EditorShell
-      title={title}
-      steps={stepped ? steps : null}
-      currentStep={currentStep}
-      onStepClick={(i) => i <= currentStep && setStep(i)}
-      draft={formValues}
-      dirty={dirty}
-      lastSavedAt={lastSavedAt}
-      onDiscard={() => {
-        reset();
-        router.push(ROUTES.questionPool);
-      }}
-      onSaveDraft={() => persistQuestion("draft")}
-      onPublish={() => persistQuestion("published")}
-      onContinue={stepped && stepId !== "review" ? goNext : undefined}
-      onBack={stepped && currentStep > 0 ? goBack : undefined}
-      stepped={stepped}
-    >
-      {formContent}
-    </EditorShell>
+    <>
+      <EditorShell
+        title={title}
+        steps={stepped ? steps : null}
+        currentStep={currentStep}
+        onStepClick={(i) => i <= currentStep && setStep(i)}
+        draft={formValues}
+        dirty={dirty}
+        lastSavedAt={lastSavedAt}
+        onSaveDraft={() => persistQuestion("draft")}
+        onPublish={() => persistQuestion("published")}
+        onContinue={stepped && stepId !== "review" ? goNext : undefined}
+        onBack={stepped && currentStep > 0 ? goBack : undefined}
+        stepped={stepped}
+        hidePreview={isCodingOrDebug}
+        onPreview={isCodingOrDebug && isOnFinalStep ? () => setPreviewOpen(true) : undefined}
+      >
+        {formContent}
+      </EditorShell>
+
+      {isCodingOrDebug && (
+        <CodingPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          draft={formValues}
+        />
+      )}
+    </>
   );
 }

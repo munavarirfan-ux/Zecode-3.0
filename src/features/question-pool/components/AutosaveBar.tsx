@@ -7,23 +7,23 @@ import { hiringTransition } from "@/components/hiring/hiringTokens";
 export function AutosaveBar({
   dirty,
   lastSavedAt,
-  onDiscard,
   onSaveDraft,
   showBack,
   onBack,
   primaryLabel,
   onPrimary,
   primaryVariant = "continue",
+  onPreview,
 }: {
   dirty: boolean;
   lastSavedAt: Date | null;
-  onDiscard: () => void;
   onSaveDraft: () => void;
   showBack?: boolean;
   onBack?: () => void;
   primaryLabel: string;
   onPrimary: () => void;
   primaryVariant?: "continue" | "publish";
+  onPreview?: () => void;
 }) {
   const savedLabel = lastSavedAt
     ? `Saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}`
@@ -50,24 +50,30 @@ export function AutosaveBar({
         <span className="truncate text-[12px] font-medium text-text-secondary/85">{savedLabel}</span>
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onDiscard}
-          className="h-9 rounded-[10px] px-3 text-[12px] font-medium text-text-secondary/85 hover:bg-[rgba(15,23,42,0.04)]"
-        >
-          Discard
-        </button>
         {showBack && onBack ? (
           <button
             type="button"
             onClick={onBack}
+            className={cn(
+              "h-9 rounded-[10px] px-3 text-[12px] font-medium text-text-secondary/85",
+              "hover:bg-[rgba(15,23,42,0.04)] dark:hover:bg-white/[0.04]",
+              hiringTransition,
+            )}
+          >
+            Back
+          </button>
+        ) : null}
+        {onPreview ? (
+          <button
+            type="button"
+            onClick={onPreview}
             className={cn(
               "h-9 rounded-[10px] border border-[rgba(15,23,42,0.08)] px-4 text-[12px] font-medium",
               "hover:bg-[rgba(15,23,42,0.03)] dark:border-white/[0.08]",
               hiringTransition,
             )}
           >
-            Back
+            Preview
           </button>
         ) : null}
         <button
