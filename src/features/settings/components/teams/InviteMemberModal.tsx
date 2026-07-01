@@ -11,7 +11,6 @@ import {
   WORKSPACE_MEMBER_ROLES,
   type WorkspaceMemberRole,
 } from "../../lib/settingsRolePermissions";
-import { MOCK_TEAMS } from "../../mock/teamsData";
 import {
   settingsField,
   settingsFieldLabel,
@@ -31,24 +30,23 @@ export function InviteMemberModal({
     name: string;
     email: string;
     role: WorkspaceMemberRole;
-    team: string;
     message?: string;
   }) => void;
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<WorkspaceMemberRole>("recruiter");
-  const [team, setTeam] = useState(MOCK_TEAMS[0]?.name ?? "");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
 
   const preview = useMemo(() => getRolePermissionPreview(role), [role]);
+  const canAccess = preview.filter((p) => p.allowed);
+  const cannotAccess = preview.filter((p) => !p.allowed);
 
   const reset = () => {
     setName("");
     setEmail("");
     setRole("recruiter");
-    setTeam(MOCK_TEAMS[0]?.name ?? "");
     setMessage("");
     setSent(false);
   };
@@ -63,12 +61,13 @@ export function InviteMemberModal({
       toast.error("Name and email are required");
       return;
     }
-    onInvite({ name: name.trim(), email: email.trim(), role, team, message: message.trim() || undefined });
+    onInvite({ name: name.trim(), email: email.trim(), role, message: message.trim() || undefined });
     setSent(true);
     toast.success("Invite sent");
   };
 
   const inviteLink = `https://zecode.live/join?email=${encodeURIComponent(email)}&role=${role}`;
+  const roleLabel = WORKSPACE_MEMBER_ROLES.find((r) => r.id === role)?.label ?? role;
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
@@ -77,13 +76,13 @@ export function InviteMemberModal({
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
           <Dialog.Content
             className={cn(
-              "max-h-[min(90vh,640px)] w-full max-w-[480px] overflow-y-auto rounded-[20px] border border-white/60 bg-white/95 p-6 backdrop-blur-xl",
+              "max-h-[min(90vh,680px)] w-full max-w-[480px] overflow-y-auto rounded-[20px] border border-white/60 bg-white/95 p-6 backdrop-blur-xl",
               "focus:outline-none dark:border-white/10 dark:bg-[#141416]/98",
               settingsModalShadow,
             )}
           >
             <div className="flex items-start justify-between gap-3">
-              <Dialog.Title className="text-[1rem] font-semibold text-text">Invite member</Dialog.Title>
+              <Dialog.Title className="text-[1rem] font-semibold text-text">Invite Member</Dialog.Title>
               <Dialog.Close className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] text-muted hover:bg-[rgba(15,23,42,0.04)]" aria-label="Close">
                 <X className="h-4 w-4" />
               </Dialog.Close>
@@ -115,28 +114,18 @@ export function InviteMemberModal({
                 <div className="mt-5 grid gap-3">
                   <label className="space-y-1.5">
                     <span className={settingsFieldLabel}>Full name</span>
-                    <input className={settingsField} value={name} onChange={(e) => setName(e.target.value)} />
+                    <input className={settingsField} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John Doe" />
                   </label>
                   <label className="space-y-1.5">
                     <span className={settingsFieldLabel}>Email</span>
-                    <input type="email" className={settingsField} value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <input type="email" className={settingsField} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g. john@company.com" />
                   </label>
                   <label className="space-y-1.5">
                     <span className={settingsFieldLabel}>Role</span>
                     <select className={settingsField} value={role} onChange={(e) => setRole(e.target.value as WorkspaceMemberRole)}>
-                      {WORKSPACE_MEMBER_ROLES.filter((r) => r.id !== "superAdmin").map((r) => (
+                      {WORKSPACE_MEMBER_ROLES.map((r) => (
                         <option key={r.id} value={r.id}>
                           {r.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-1.5">
-                    <span className={settingsFieldLabel}>Team</span>
-                    <select className={settingsField} value={team} onChange={(e) => setTeam(e.target.value)}>
-                      {MOCK_TEAMS.map((t) => (
-                        <option key={t.id} value={t.name}>
-                          {t.name}
                         </option>
                       ))}
                     </select>
@@ -152,23 +141,42 @@ export function InviteMemberModal({
                   </label>
                 </div>
 
-                <div className="mt-4 rounded-[12px] border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] p-3 dark:border-white/[0.06]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">Can access</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {preview.map((p) => (
-                      <span
-                        key={p.area}
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                          p.allowed
-                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                            : "bg-[rgba(15,23,42,0.04)] text-muted line-through",
-                        )}
-                      >
-                        {p.allowed ? "✓" : "✕"} {p.label}
-                      </span>
-                    ))}
-                  </div>
+                <div className="mt-4 rounded-[12px] border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] p-3 dark:border-white/[0.06] dark:bg-white/[0.02]">
+                  <p className="text-[11px] font-semibold text-text">
+                    Selected role: <span className="text-accent">{roleLabel}</span>
+                  </p>
+
+                  {canAccess.length > 0 && (
+                    <div className="mt-2.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-emerald-700 dark:text-emerald-400">Can access</p>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {canAccess.map((p) => (
+                          <span
+                            key={p.area}
+                            className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400"
+                          >
+                            {p.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {cannotAccess.length > 0 && (
+                    <div className="mt-2.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">Cannot access</p>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {cannotAccess.map((p) => (
+                          <span
+                            key={p.area}
+                            className="rounded-full bg-[rgba(15,23,42,0.04)] px-2 py-0.5 text-[10px] font-semibold text-muted line-through dark:bg-white/[0.04]"
+                          >
+                            {p.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">

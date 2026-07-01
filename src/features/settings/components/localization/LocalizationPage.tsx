@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Search, Upload } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import { HeroActionButton } from "@/components/hiring/HeroActionButton";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -22,7 +22,6 @@ import { SettingsGate } from "../SettingsGate";
 import { SettingsPageHeader } from "../SettingsPageHeader";
 import { SettingsHeroLanguageSelect } from "../SettingsHeroLanguageSelect";
 import { ImportTranslationsModal } from "./ImportTranslationsModal";
-import { LocalizationPreview } from "./LocalizationPreview";
 import { LocalizationSaveBar } from "./LocalizationSaveBar";
 
 const FILTER_TABS: { id: LocalizationFilter; label: string }[] = [
@@ -45,7 +44,6 @@ export function LocalizationPage() {
   const [language, setLanguage] = useState("en");
   const [category, setCategory] = useState<LocalizationCategory>("sidebar");
   const [filter, setFilter] = useState<LocalizationFilter>("all");
-  const [search, setSearch] = useState("");
   const [byLanguage, setByLanguage] = useState(buildAllLanguageStates);
   const [baselineByLanguage, setBaselineByLanguage] = useState(buildAllLanguageStates);
 
@@ -81,19 +79,9 @@ export function LocalizationPage() {
     return entries.filter((entry) => {
       const state = entryState(entry);
       if (filter !== "all" && state !== filter) return false;
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        if (
-          !entry.key.toLowerCase().includes(q) &&
-          !entry.label.toLowerCase().includes(q) &&
-          !entry.value.toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
       return true;
     });
-  }, [entries, filter, search]);
+  }, [entries, filter]);
 
   const updateEntry = useCallback(
     (key: string, value: string) => {
@@ -109,7 +97,6 @@ export function LocalizationPage() {
     setLanguage(nextLang);
     setCategory("sidebar");
     setFilter("all");
-    setSearch("");
   };
 
   const discard = () => {
@@ -139,8 +126,6 @@ export function LocalizationPage() {
     toast.success("Export downloaded");
   };
 
-  const categoryMeta = LOCALIZATION_CATEGORIES.find((c) => c.id === category)!;
-
   const heroActions = (
     <>
       <SettingsHeroLanguageSelect value={language} onValueChange={handleLanguageChange} />
@@ -151,14 +136,6 @@ export function LocalizationPage() {
       <HeroActionButton type="button" onClick={handleExport}>
         <Download className="h-3.5 w-3.5" />
         Export
-      </HeroActionButton>
-      <HeroActionButton
-        type="button"
-        variant="primary"
-        onClick={save}
-        disabled={changeCount === 0}
-      >
-        Save changes
       </HeroActionButton>
     </>
   );
@@ -195,58 +172,40 @@ export function LocalizationPage() {
         ))}
       </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search content key or value…"
-                className="h-9 w-full rounded-[10px] border border-[rgba(15,23,42,0.08)] bg-white/90 pl-9 pr-3 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent/20 dark:bg-white/[0.04]"
-              />
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {FILTER_TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setFilter(tab.id)}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-[11px] font-medium",
-                    filter === tab.id
-                      ? cn(settingsAccentBgActive, "text-accent")
-                      : "text-muted hover:bg-[rgba(15,23,42,0.04)]",
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            {filteredEntries.length === 0 ? (
-              <div className={cn(settingsPanel, "p-8 text-center text-[13px] text-muted")}>
-                No keys match your search or filter.
-              </div>
-            ) : (
-              filteredEntries.map((entry) => (
-                <LocalizationRow
-                  key={entry.key}
-                  entry={entry}
-                  baselineValue={baseline[category].find((b) => b.key === entry.key)?.value ?? ""}
-                  onChange={(v) => updateEntry(entry.key, v)}
-                />
-              ))
-            )}
-          </div>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-1">
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFilter(tab.id)}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-[11px] font-medium",
+                filter === tab.id
+                  ? cn(settingsAccentBgActive, "text-accent")
+                  : "text-muted hover:bg-[rgba(15,23,42,0.04)]",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        <div className="w-full shrink-0 lg:w-[240px]">
-          <LocalizationPreview entries={entries} categoryLabel={categoryMeta.label} />
+        <div className="space-y-2">
+          {filteredEntries.length === 0 ? (
+            <div className={cn(settingsPanel, "p-8 text-center text-[13px] text-muted")}>
+              No keys match your filter.
+            </div>
+          ) : (
+            filteredEntries.map((entry) => (
+              <LocalizationRow
+                key={entry.key}
+                entry={entry}
+                baselineValue={baseline[category].find((b) => b.key === entry.key)?.value ?? ""}
+                onChange={(v) => updateEntry(entry.key, v)}
+              />
+            ))
+          )}
         </div>
       </div>
 

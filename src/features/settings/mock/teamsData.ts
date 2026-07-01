@@ -7,107 +7,111 @@ export type TeamMemberRow = {
   name: string;
   email: string;
   role: WorkspaceMemberRole;
-  team: string;
   status: TeamMemberStatus;
   lastActive: string;
-  permissionsSummary: string;
 };
 
-export type TeamGroup = {
-  id: string;
-  name: string;
+export type RoleReference = {
+  role: WorkspaceMemberRole;
+  label: string;
   description: string;
-  lead: string;
-  color: string;
-  memberCount: number;
+  subtext: string;
 };
 
-export const MOCK_TEAMS: TeamGroup[] = [
+export const ROLE_REFERENCES: RoleReference[] = [
   {
-    id: "t1",
-    name: "Product hiring",
-    description: "Design and product roles",
-    lead: "Ava Patel",
-    color: "#7C3AED",
-    memberCount: 6,
+    role: "superAdmin",
+    label: "Super Admin",
+    description: "Takes complete control of the account",
+    subtext:
+      "Assumes full authority over the account, overseeing team management, interviews, assessments, and question pool",
   },
   {
-    id: "t2",
-    name: "Engineering",
-    description: "Technical interviews and assessments",
-    lead: "Marcus Chen",
-    color: "#2563EB",
-    memberCount: 8,
+    role: "admin",
+    label: "Admin",
+    description: "Platform Owner",
+    subtext:
+      "Administer users, oversees assessments and interviews, including scheduling and candidate invitations, and contribute to the question pool",
   },
   {
-    id: "t3",
-    name: "Operations",
-    description: "Scheduling and coordination",
-    lead: "Noah Singh",
-    color: "#059669",
-    memberCount: 4,
+    role: "curator",
+    label: "Curator",
+    description: "Curates Questions",
+    subtext:
+      "Administer the question pool by contributing towards adding, editing, or removing the questions",
+  },
+  {
+    role: "evaluator",
+    label: "Evaluator",
+    description: "Interviewer and Assessment Evaluator",
+    subtext:
+      "Evaluate assessments and interviews, by submitting feedback and scores",
   },
 ];
 
 export const MOCK_TEAM_MEMBERS: TeamMemberRow[] = [
   {
     id: "m1",
-    name: "Ava Patel",
-    email: "ava@novatech.io",
-    role: "recruiter",
-    team: "Product hiring",
+    name: "Marcus Chen",
+    email: "marcus@company.com",
+    role: "superAdmin",
     status: "active",
     lastActive: "2m ago",
-    permissionsSummary: "Jobs · Candidates · Interviews",
   },
   {
     id: "m2",
-    name: "Marcus Chen",
-    email: "marcus@novatech.io",
-    role: "interviewer",
-    team: "Engineering",
+    name: "Ava Patel",
+    email: "ava@company.com",
+    role: "admin",
     status: "active",
     lastActive: "18m ago",
-    permissionsSummary: "Interviews · Feedback",
   },
   {
     id: "m3",
-    name: "Lina Hoffmann",
-    email: "lina@novatech.io",
-    role: "evaluator",
-    team: "Engineering",
+    name: "Noah Singh",
+    email: "noah@company.com",
+    role: "recruiter",
     status: "active",
     lastActive: "1h ago",
-    permissionsSummary: "Assessments · Reviews",
   },
   {
     id: "m4",
-    name: "Maya Torres",
-    email: "maya@novatech.io",
-    role: "curator",
-    team: "Engineering",
+    name: "Lina Hoffmann",
+    email: "lina@company.com",
+    role: "evaluator",
     status: "active",
     lastActive: "3h ago",
-    permissionsSummary: "Question pool",
   },
   {
     id: "m5",
-    name: "Jamie Fox",
-    email: "jamie@novatech.io",
-    role: "viewer",
-    team: "Operations",
+    name: "Maya Torres",
+    email: "maya@company.com",
+    role: "curator",
     status: "active",
     lastActive: "Yesterday",
-    permissionsSummary: "Read-only",
   },
   {
     id: "m6",
-    name: "Elena Hoffmann",
-    email: "elena@novatech.io",
+    name: "James Okonkwo",
+    email: "james@company.com",
+    role: "interviewer",
+    status: "active",
+    lastActive: "2d ago",
+  },
+  {
+    id: "m7",
+    name: "Elena Rossi",
+    email: "elena@company.com",
+    role: "viewer",
+    status: "active",
+    lastActive: "5d ago",
+  },
+  {
+    id: "m8",
+    name: "Sofia Martins",
+    email: "sofia@company.com",
     role: "recruiter",
-    team: "Product hiring",
     status: "pending",
     lastActive: "—",
-    permissionsSummary: "Invite pending",
   },
 ];
