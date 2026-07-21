@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { CreateQuestionEditor } from "@/features/question-pool/CreateQuestionEditor";
+import { QuestionEditorSkeleton } from "@/components/skeletons";
 
 export default function QuestionPoolCreatePage({
   params,
@@ -8,6 +10,8 @@ export default function QuestionPoolCreatePage({
   searchParams: { subtype?: string };
 }) {
   return (
-    <CreateQuestionEditor typeParam={params.type} subtypeParam={searchParams.subtype} />
+    <Suspense fallback={<QuestionEditorSkeleton />}>
+      <CreateQuestionEditor typeParam={params.type} subtypeParam={searchParams.subtype} />
+    </Suspense>
   );
 }

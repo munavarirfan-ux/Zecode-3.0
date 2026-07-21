@@ -132,12 +132,17 @@ const config: Config = {
           from: { opacity: "1" },
           to: { opacity: "0" },
         },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "radix-in": "radix-in 180ms ease-out forwards",
         "radix-out": "radix-out 150ms ease-in forwards",
         "fade-in": "fade-in 180ms ease-out forwards",
         "fade-out": "fade-out 150ms ease-in forwards",
+        shimmer: "shimmer 1.6s ease-in-out infinite",
       },
       backgroundImage: {
         aurora: "linear-gradient(90deg, #FFE2D6 0%, #E9F7F1 50%, #FFF6EC 100%)",

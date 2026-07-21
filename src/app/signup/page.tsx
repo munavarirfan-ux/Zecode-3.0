@@ -21,15 +21,15 @@ const primaryBtnClass = cn(
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--accent-rgb)/0.4)] focus-visible:ring-offset-2",
 );
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => router.push("/dashboard"), 600);
+    setTimeout(() => router.push("/dashboard"), 700);
   };
 
   return (
@@ -50,10 +50,10 @@ export default function LoginPage() {
         {/* Card */}
         <div className="rounded-[20px] border border-[rgba(15,23,42,0.06)] bg-white/[0.97] p-8 shadow-[0_8px_40px_-12px_rgba(15,23,42,0.12),0_2px_6px_rgba(15,23,42,0.04)] backdrop-blur-xl dark:border-white/[0.06] dark:bg-[#141416]/[0.97] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)]">
           <h1 className="text-center text-[1.375rem] font-semibold tracking-[-0.02em] text-text">
-            Welcome back
+            Create your workspace
           </h1>
           <p className="mt-1.5 text-center text-[13px] text-text-secondary/80">
-            Sign in to continue to your workspace.
+            Get started with Ze[hub].
           </p>
 
           <div className="mt-7">
@@ -61,28 +61,45 @@ export default function LoginPage() {
             <Divider />
           </div>
 
-          <form onSubmit={handleLogin} className="mt-5 space-y-4">
+          <form onSubmit={handleSignup} className="mt-5 space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[12px] font-medium text-text">Email</label>
+              <label className="text-[12px] font-medium text-text">Full name</label>
+              <input
+                type="text"
+                className={fieldClass}
+                placeholder="Enter your full name"
+                autoComplete="name"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-medium text-text">Work email</label>
               <input
                 type="email"
                 className={fieldClass}
-                placeholder="Enter your email address"
+                placeholder="Enter your work email"
                 autoComplete="email"
               />
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[12px] font-medium text-text">Password</label>
-                <span className="cursor-pointer text-[11px] font-medium text-accent hover:underline">Forgot password?</span>
-              </div>
+              <label className="text-[12px] font-medium text-text">Company name</label>
+              <input
+                type="text"
+                className={fieldClass}
+                placeholder="Enter company name"
+                autoComplete="organization"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-medium text-text">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   className={cn(fieldClass, "pr-10")}
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
+                  placeholder="Create password"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -96,13 +113,13 @@ export default function LoginPage() {
             </div>
 
             <button type="submit" className={primaryBtnClass} disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Creating workspace..." : "Create Workspace"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-[13px] text-text-secondary/80">
-            New to Ze[hub]?{" "}
-            <Link href="/signup" className="font-semibold text-accent hover:underline">Create an account</Link>
+            Already have an account?{" "}
+            <Link href="/login" className="font-semibold text-accent hover:underline">Sign in</Link>
           </p>
         </div>
 

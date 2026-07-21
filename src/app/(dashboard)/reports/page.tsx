@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReportsSkeleton } from "@/components/skeletons";
 
-export default async function ReportsPage() {
+function ReportsContent() {
   return (
     <div className="space-y-6">
       <h1 className="text-chrome-active">Reports</h1>
@@ -13,5 +15,13 @@ export default async function ReportsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <Suspense fallback={<ReportsSkeleton />}>
+      <ReportsContent />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -107,6 +107,7 @@ function ToolbarBrand() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const { selectedRole, setSelectedRole } = useRole();
   const { theme, toggleTheme, navTone, navRgb } = useTheme();
@@ -288,7 +289,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      onClick={() => signOut()}
+                      onClick={() => router.push("/login")}
                       className={cn(
                         "mt-0.5 flex h-10 w-full items-center justify-center rounded-[10px] border border-transparent font-medium",
                         nc.settingsRow,
@@ -304,7 +305,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               ) : (
                 <button
                   type="button"
-                  onClick={() => signOut()}
+                  onClick={() => router.push("/login")}
                   className={cn(
                     "mt-0.5 flex h-10 w-full items-center gap-2.5 rounded-[10px] border border-transparent px-2.5 font-medium",
                     nc.settingsRow,
@@ -364,6 +365,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       ))}
                     </TabsList>
                   </Tabs>
+
+                  <Link
+                    href="/skeleton-loaders"
+                    className={cn(
+                      "inline-flex h-7 items-center rounded-[8px] px-2.5 text-[11px] font-medium transition-all duration-[180ms]",
+                      pathname === "/skeleton-loaders"
+                        ? "bg-accent/10 text-accent"
+                        : "text-text-secondary/70 hover:bg-[rgba(15,23,42,0.04)] hover:text-text dark:hover:bg-white/[0.04]",
+                    )}
+                  >
+                    Skeleton Loaders
+                  </Link>
 
                   <FeedbackNotificationsMenu />
 
