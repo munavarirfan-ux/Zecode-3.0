@@ -28,7 +28,7 @@ function migrateStorageKey(current: string, ...legacyKeys: string[]): string | n
   }
   return value;
 }
-export const DEFAULT_PRIMARY_HEX = "#FF6B2C";
+export const DEFAULT_PRIMARY_HEX = "#7100bd";
 
 export const DEFAULT_NAVBAR_LIGHT = "#0f172a";
 export const DEFAULT_NAVBAR_DARK = "#020617";
