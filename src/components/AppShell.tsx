@@ -378,6 +378,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     Skeleton Loaders
                   </Link>
 
+                  <Link
+                    href="/candidate-assessment-view"
+                    className={cn(
+                      "inline-flex h-7 items-center rounded-[8px] px-2.5 text-[11px] font-medium transition-all duration-[180ms]",
+                      pathname === "/candidate-assessment-view"
+                        ? "bg-accent/10 text-accent"
+                        : "text-text-secondary/70 hover:bg-[rgba(15,23,42,0.04)] hover:text-text dark:hover:bg-white/[0.04]",
+                    )}
+                  >
+                    Candidate Assessment View
+                  </Link>
+
                   <FeedbackNotificationsMenu />
 
                   <Button
