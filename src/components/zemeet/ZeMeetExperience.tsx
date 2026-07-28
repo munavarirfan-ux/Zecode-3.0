@@ -11,23 +11,32 @@ import { ZeMeetPostInterviewFeedback } from "@/components/zemeet/feedback/ZeMeet
 import { ZeMeetLobby } from "@/components/zemeet/lobby/ZeMeetLobby";
 import { ZeMeetRoom } from "@/components/zemeet/room/ZeMeetRoom";
 import { ZeMeetProvider, useZeMeet } from "@/components/zemeet/ZeMeetProvider";
+import { cn } from "@/lib/utils";
 import type { ZeMeetSession } from "@/lib/zemeet/types";
 
 function ZeMeetEndedScreen() {
-  const { session } = useZeMeet();
+  const { session, theme } = useZeMeet();
+  const isLight = theme === "light";
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-4 text-center">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-[#5f6368]">
         ze[meet]
       </p>
-      <h1 className="mt-2 text-[1.5rem] font-semibold text-[#e8eaed]">Session ended</h1>
-      <p className="mt-2 max-w-sm text-[14px] text-[#9aa0a6]">
+      <h1 className={cn("mt-2 text-[1.5rem] font-semibold", isLight ? "text-[#18181B]" : "text-[#e8eaed]")}>
+        Session ended
+      </h1>
+      <p className={cn("mt-2 max-w-sm text-[14px]", isLight ? "text-[#6B7280]" : "text-[#9aa0a6]")}>
         Interview artifacts have been synced to the candidate report in ze[hire].
       </p>
       <a
         href={`/hiring/jobs/${session.context.jobId}`}
-        className="mt-8 inline-flex h-11 items-center rounded-[12px] bg-white/10 px-5 text-[14px] font-medium text-white hover:bg-white/15"
+        className={cn(
+          "mt-8 inline-flex h-11 items-center rounded-[12px] px-5 text-[14px] font-medium",
+          isLight
+            ? "bg-[#18181B] text-white hover:bg-[#27272A]"
+            : "bg-white/10 text-white hover:bg-white/15",
+        )}
       >
         Back to job workspace
       </a>
@@ -100,14 +109,27 @@ export function ZeMeetExperience({ session }: { session: ZeMeetSession }) {
 }
 
 function ZeMeetExperienceInner({ skipLobby }: { skipLobby: boolean }) {
-  const { phase, startSession } = useZeMeet();
+  const { phase, startSession, theme, setTheme } = useZeMeet();
+
+  useEffect(() => {
+    setTheme("light");
+  }, [setTheme]);
 
   useEffect(() => {
     if (skipLobby && phase === "lobby") startSession();
   }, [skipLobby, phase, startSession]);
 
+  const isLight = theme === "light";
+
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-[#202124] text-[#e8eaed]">
+    <div
+      className={cn(
+        "flex h-dvh flex-col overflow-hidden",
+        isLight
+          ? "bg-[#F8F9FB] text-[#18181B]"
+          : "bg-[#202124] text-[#e8eaed]",
+      )}
+    >
       <ZeMeetFlow />
     </div>
   );

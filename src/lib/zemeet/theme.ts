@@ -15,5 +15,5 @@ export function loadZeMeetTheme(): ZeMeetTheme {
   } catch {
     /* ignore */
   }
-  return "dark";
+  return "light";
 }

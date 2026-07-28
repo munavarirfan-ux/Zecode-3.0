@@ -8,7 +8,6 @@ import {
   Copy,
   ExternalLink,
   FileText,
-  GraduationCap,
   Grid3x3,
   Hand,
   Link2,
@@ -32,7 +31,6 @@ import {
 } from "lucide-react";
 import { type ElementType, useState } from "react";
 import { ZeMeetCodeChallengeLayout } from "@/components/zemeet/code/ZeMeetCodeChallengeLayout";
-import { ZeMeetCodeChallengeSidePanel } from "@/components/zemeet/code/ZeMeetCodeChallengeSidePanel";
 import { useZeMeet } from "@/components/zemeet/ZeMeetProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type {
@@ -114,7 +112,6 @@ export function ZeMeetRoom({ onLeave }: { onLeave: () => void }) {
               <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                 <ZeMeetCodeChallengeLayout />
               </div>
-              {isInterviewer && <ZeMeetCodeChallengeSidePanel />}
             </motion.div>
           ) : (
             <motion.div
@@ -212,10 +209,15 @@ function GMeetTopBar({
   session: ZeMeetSession;
   isRecording: boolean;
 }) {
+  const { theme } = useZeMeet();
+  const isLight = theme === "light";
   const viewer = session.participants.find((p) => p.id === session.viewerId);
 
   return (
-    <div className="flex h-14 shrink-0 items-center justify-between bg-[#202124] px-4">
+    <div className={cn(
+      "flex h-14 shrink-0 items-center justify-between border-b px-4",
+      isLight ? "border-[rgba(15,23,42,0.08)] bg-white" : "border-transparent bg-[#202124]",
+    )}>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <svg viewBox="0 0 40 28" className="h-5 w-7" aria-label="Google Meet">
@@ -226,20 +228,23 @@ function GMeetTopBar({
             <path d="M6 14v6h14v-6H6z" fill="#00ac47" />
             <path d="M20 7l2 7-2 6h12V7H20z" fill="#ffba00" />
           </svg>
-          <span className="text-[14px] font-medium text-[#e8eaed]">Google Meet</span>
+          <span className={cn("text-[14px] font-medium", isLight ? "text-[#18181B]" : "text-[#e8eaed]")}>Google Meet</span>
         </div>
-        <span className="text-[#5f6368]">·</span>
-        <span className="max-w-[240px] truncate text-[13px] text-[#9aa0a6]">{title}</span>
+        <span className={isLight ? "text-[#D1D5DB]" : "text-[#5f6368]"}>·</span>
+        <span className={cn("max-w-[240px] truncate text-[13px]", isLight ? "text-[#6B7280]" : "text-[#9aa0a6]")}>{title}</span>
         {codeActive && (
-          <span className="flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-400">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-400" />
+          <span className={cn(
+            "flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+            isLight ? "border-violet-200 bg-violet-50 text-violet-700" : "border-violet-500/30 bg-violet-500/10 text-violet-400",
+          )}>
+            <span className={cn("h-1.5 w-1.5 animate-pulse rounded-full", isLight ? "bg-violet-600" : "bg-violet-400")} />
             Code Challenge Active
           </span>
         )}
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="font-mono text-[13px] tabular-nums text-[#9aa0a6]">{callTime}</span>
+        <span className={cn("font-mono text-[13px] tabular-nums", isLight ? "text-[#52525B]" : "text-[#9aa0a6]")}>{callTime}</span>
         {isRecording && (
           <div className="flex items-center gap-1.5 rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-400">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" />
@@ -248,13 +253,19 @@ function GMeetTopBar({
         )}
         <button
           type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/[0.08]"
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+            isLight ? "hover:bg-[rgba(15,23,42,0.06)]" : "hover:bg-white/[0.08]",
+          )}
         >
-          <Wifi className="h-4 w-4 text-[#5f6368]" strokeWidth={1.5} />
+          <Wifi className={cn("h-4 w-4", isLight ? "text-[#71717A]" : "text-[#5f6368]")} strokeWidth={1.5} />
         </button>
         <button
           type="button"
-          className="flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[13px] text-[#9aa0a6] transition-colors hover:bg-white/[0.08]"
+          className={cn(
+            "flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[13px] transition-colors",
+            isLight ? "text-[#52525B] hover:bg-[rgba(15,23,42,0.06)]" : "text-[#9aa0a6] hover:bg-white/[0.08]",
+          )}
         >
           <Users className="h-4 w-4" strokeWidth={1.5} />
           {session.participants.filter((p) => !p.isObserver).length}
@@ -278,6 +289,8 @@ function VideoGrid({
   session: ZeMeetSession;
   viewerAudioEnabled: boolean;
 }) {
+  const { theme } = useZeMeet();
+  const isLight = theme === "light";
   const visible = session.participants.filter(
     (p) => !p.isObserver || session.viewerRole === "observer",
   );
@@ -285,7 +298,7 @@ function VideoGrid({
   const interviewers = visible.filter((p) => p.role === "interviewer");
 
   return (
-    <div className="flex flex-1 items-center justify-center gap-4 p-6 pb-3">
+    <div className={cn("flex flex-1 items-center justify-center gap-4 rounded-xl p-6 pb-3", isLight && "bg-[#F1F5F9] m-2 mb-0")}>
       {candidate && (
         <GMeetVideoTile
           participant={candidate}
@@ -712,9 +725,15 @@ function GMeetBottomControls({
   onEndCall: () => void;
   shortCode: string;
 }) {
+  const { theme } = useZeMeet();
+  const isLight = theme === "light";
+
   return (
-    <div className="flex h-20 shrink-0 items-center justify-between bg-[#202124] px-6">
-      <div className="w-32 truncate font-mono text-[13px] text-[#5f6368]">
+    <div className={cn(
+      "flex h-20 shrink-0 items-center justify-between border-t px-6",
+      isLight ? "border-[rgba(15,23,42,0.08)] bg-white" : "border-transparent bg-[#202124]",
+    )}>
+      <div className={cn("w-32 truncate font-mono text-[13px]", isLight ? "text-[#A1A1AA]" : "text-[#5f6368]")}>
         {shortCode.slice(0, 14)}
       </div>
 
@@ -723,28 +742,30 @@ function GMeetBottomControls({
           icon={micOn ? Mic : MicOff}
           label={micOn ? "Mute" : "Unmute"}
           off={!micOn}
+          isLight={isLight}
           onClick={() => setMicOn(!micOn)}
         />
         <MCtrl
           icon={camOn ? Video : VideoOff}
           label={camOn ? "Camera off" : "Start camera"}
           off={!camOn}
+          isLight={isLight}
           onClick={() => setCamOn(!camOn)}
         />
-        <div className="mx-1 h-7 w-px bg-white/10" />
-        <MCtrl icon={Subtitles} label="Captions" />
-        <MCtrl icon={Hand} label="Raise hand" />
-        <MCtrl icon={ScreenShare} label="Present" />
-        <div className="mx-1 h-7 w-px bg-white/10" />
-        <MCtrl icon={Users} label="People" />
-        <MCtrl icon={MessageSquare} label="Chat" />
-        <MCtrl icon={Grid3x3} label="Activities" />
-        <div className="mx-1 h-7 w-px bg-white/10" />
+        <div className={cn("mx-1 h-7 w-px", isLight ? "bg-[rgba(15,23,42,0.1)]" : "bg-white/10")} />
+        <MCtrl icon={Subtitles} label="Captions" isLight={isLight} />
+        <MCtrl icon={Hand} label="Raise hand" isLight={isLight} />
+        <MCtrl icon={ScreenShare} label="Present" isLight={isLight} />
+        <div className={cn("mx-1 h-7 w-px", isLight ? "bg-[rgba(15,23,42,0.1)]" : "bg-white/10")} />
+        <MCtrl icon={Users} label="People" isLight={isLight} />
+        <MCtrl icon={MessageSquare} label="Chat" isLight={isLight} />
+        <MCtrl icon={Grid3x3} label="Activities" isLight={isLight} />
+        <div className={cn("mx-1 h-7 w-px", isLight ? "bg-[rgba(15,23,42,0.1)]" : "bg-white/10")} />
         <button
           type="button"
           onClick={onEndCall}
           title="Leave call"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ea4335] shadow-lg shadow-[#ea4335]/20 transition-all hover:bg-[#d33828] active:scale-95"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ea4335] text-white shadow-lg shadow-[#ea4335]/20 transition-all hover:bg-[#d33828] active:scale-95"
         >
           <PhoneOff className="h-5 w-5" strokeWidth={2} />
         </button>
@@ -753,9 +774,12 @@ function GMeetBottomControls({
       <div className="flex w-32 justify-end">
         <button
           type="button"
-          className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/[0.08]"
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+            isLight ? "hover:bg-[rgba(15,23,42,0.06)]" : "hover:bg-white/[0.08]",
+          )}
         >
-          <MoreHorizontal className="h-5 w-5 text-[#9aa0a6]" strokeWidth={1.5} />
+          <MoreHorizontal className={cn("h-5 w-5", isLight ? "text-[#71717A]" : "text-[#9aa0a6]")} strokeWidth={1.5} />
         </button>
       </div>
     </div>
@@ -766,11 +790,13 @@ function MCtrl({
   icon: Icon,
   label,
   off,
+  isLight,
   onClick,
 }: {
   icon: ElementType;
   label: string;
   off?: boolean;
+  isLight?: boolean;
   onClick?: () => void;
 }) {
   return (
@@ -781,8 +807,12 @@ function MCtrl({
       className={cn(
         "flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-95",
         off
-          ? "bg-white/10 text-[#ea4335] hover:bg-white/15"
-          : "bg-[#3c4043] text-[#e8eaed] hover:bg-[#4a4f52]",
+          ? isLight
+            ? "bg-red-50 text-[#ea4335] hover:bg-red-100"
+            : "bg-white/10 text-[#ea4335] hover:bg-white/15"
+          : isLight
+            ? "bg-[#F1F5F9] text-[#374151] hover:bg-[#E2E8F0]"
+            : "bg-[#3c4043] text-[#e8eaed] hover:bg-[#4a4f52]",
       )}
     >
       <Icon className="h-5 w-5" strokeWidth={1.75} />
@@ -805,26 +835,38 @@ function DrawerShell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const { theme } = useZeMeet();
+  const isLight = theme === "light";
+
   return (
     <motion.div
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
       transition={{ type: "spring", stiffness: 360, damping: 36 }}
-      className="absolute right-0 z-40 flex flex-col border-l border-white/[0.07] bg-[#1c1c1e] shadow-2xl"
+      className={cn(
+        "absolute right-0 z-40 flex flex-col border-l shadow-2xl",
+        isLight ? "border-[rgba(15,23,42,0.08)] bg-white" : "border-white/[0.07] bg-[#1c1c1e]",
+      )}
       style={{ top: 56, bottom: 80, width: 360 }}
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
+      <div className={cn(
+        "flex shrink-0 items-center justify-between border-b px-5 py-3.5",
+        isLight ? "border-[rgba(15,23,42,0.08)]" : "border-white/[0.07]",
+      )}>
         <div className="flex items-center gap-2.5">
           <Icon className={cn("h-4 w-4", iconColor)} strokeWidth={1.5} />
-          <p className="text-[14px] font-semibold text-[#e8eaed]">{title}</p>
+          <p className={cn("text-[14px] font-semibold", isLight ? "text-[#18181B]" : "text-[#e8eaed]")}>{title}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+          className={cn(
+            "flex h-7 w-7 items-center justify-center rounded-full transition-colors",
+            isLight ? "hover:bg-[rgba(15,23,42,0.06)]" : "hover:bg-white/10",
+          )}
         >
-          <X className="h-3.5 w-3.5 text-[#9aa0a6]" strokeWidth={2} />
+          <X className={cn("h-3.5 w-3.5", isLight ? "text-[#71717A]" : "text-[#9aa0a6]")} strokeWidth={2} />
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">{children}</div>
@@ -833,9 +875,12 @@ function DrawerShell({
 }
 
 function IntelSection({ label, children }: { label: string; children: React.ReactNode }) {
+  const { theme } = useZeMeet();
+  const isLight = theme === "light";
+
   return (
     <section>
-      <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-[#5f6368]">
+      <p className={cn("mb-2.5 text-[10px] font-semibold uppercase tracking-widest", isLight ? "text-[#71717A]" : "text-[#5f6368]")}>
         {label}
       </p>
       {children}
@@ -858,19 +903,28 @@ function StickyNoteDrawer({
   onSave: () => void;
   onClose: () => void;
 }) {
+  const { theme } = useZeMeet();
+  const isLight = theme === "light";
+
   return (
     <motion.div
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
       transition={{ type: "spring", stiffness: 360, damping: 36 }}
-      className="absolute right-0 z-40 flex flex-col border-l border-white/[0.07] bg-[#1c1c1e] shadow-2xl"
+      className={cn(
+        "absolute right-0 z-40 flex flex-col border-l shadow-2xl",
+        isLight ? "border-[rgba(15,23,42,0.08)] bg-white" : "border-white/[0.07] bg-[#1c1c1e]",
+      )}
       style={{ top: 56, bottom: 80, width: 340 }}
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
+      <div className={cn(
+        "flex shrink-0 items-center justify-between border-b px-5 py-3.5",
+        isLight ? "border-[rgba(15,23,42,0.08)]" : "border-white/[0.07]",
+      )}>
         <div className="flex items-center gap-2.5">
           <StickyNote className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
-          <p className="text-[14px] font-semibold text-[#e8eaed]">Private Notes</p>
+          <p className={cn("text-[14px] font-semibold", isLight ? "text-[#18181B]" : "text-[#e8eaed]")}>Private Notes</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
@@ -880,9 +934,12 @@ function StickyNoteDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-full transition-colors",
+              isLight ? "hover:bg-[rgba(15,23,42,0.06)]" : "hover:bg-white/10",
+            )}
           >
-            <X className="h-3.5 w-3.5 text-[#9aa0a6]" strokeWidth={2} />
+            <X className={cn("h-3.5 w-3.5", isLight ? "text-[#71717A]" : "text-[#9aa0a6]")} strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -955,66 +1012,51 @@ function ResumeDrawer({
   intel?: ZeMeetCandidateIntel;
   onClose: () => void;
 }) {
-  const initials = candidateName
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const { theme } = useZeMeet();
+  const isLight = theme === "light";
+
+  const resumeHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Resume</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:40px;background:#fff;color:#1a1a1a;line-height:1.5;max-width:700px;margin:0 auto}h1{font-size:24px;font-weight:700;margin-bottom:4px}.subtitle{font-size:14px;color:#6b7280;margin-bottom:24px}.contact{font-size:12px;color:#6b7280;margin-bottom:32px;display:flex;gap:16px;flex-wrap:wrap}h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#4338ca;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-top:28px;margin-bottom:14px}.job{margin-bottom:18px}.job-title{font-size:14px;font-weight:600}.job-company{font-size:13px;color:#6b7280}.job-date{font-size:12px;color:#9ca3af;margin-bottom:6px}.job-desc{font-size:13px;color:#374151}ul{padding-left:18px;margin-top:4px}li{font-size:13px;color:#374151;margin-bottom:3px}.skills{display:flex;flex-wrap:wrap;gap:8px}.skill{font-size:12px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;padding:3px 10px}.edu{margin-bottom:10px}.edu-school{font-size:14px;font-weight:600}.edu-detail{font-size:13px;color:#6b7280}</style></head><body><h1>Aaran Sharma</h1><p class="subtitle">Senior Frontend Engineer</p><div class="contact"><span>aaran.sharma@email.com</span><span>+1 (555) 234-8901</span><span>San Francisco, CA</span><span>linkedin.com/in/aaransharma</span></div><h2>Experience</h2><div class="job"><p class="job-title">Senior Frontend Engineer</p><p class="job-company">Stripe — San Francisco, CA</p><p class="job-date">Jan 2022 – Present</p><ul><li>Led the redesign of the Dashboard billing module, reducing support tickets by 34%</li><li>Built a real-time WebSocket-based notification system serving 2M+ daily active users</li><li>Mentored 4 junior engineers; introduced code review guidelines adopted org-wide</li><li>Migrated legacy jQuery components to React 18 with zero downtime</li></ul></div><div class="job"><p class="job-title">Frontend Engineer</p><p class="job-company">Figma — San Francisco, CA</p><p class="job-date">Mar 2019 – Dec 2021</p><ul><li>Developed the plugin marketplace UI, supporting 10K+ third-party plugins</li><li>Optimized canvas rendering performance, achieving 60fps on complex designs</li><li>Collaborated with design systems team on component library used by 80+ engineers</li></ul></div><div class="job"><p class="job-title">Software Engineer</p><p class="job-company">Atlassian — Sydney, Australia</p><p class="job-date">Jul 2017 – Feb 2019</p><ul><li>Built Jira board drag-and-drop interactions using React DnD</li><li>Reduced bundle size by 42% through code splitting and tree shaking</li></ul></div><h2>Education</h2><div class="edu"><p class="edu-school">Indian Institute of Technology, Delhi</p><p class="edu-detail">B.Tech Computer Science — 2013–2017 — GPA 3.8/4.0</p></div><h2>Skills</h2><div class="skills"><span class="skill">TypeScript</span><span class="skill">React</span><span class="skill">Next.js</span><span class="skill">Node.js</span><span class="skill">GraphQL</span><span class="skill">WebSocket</span><span class="skill">Tailwind CSS</span><span class="skill">PostgreSQL</span><span class="skill">AWS</span><span class="skill">Figma</span><span class="skill">System Design</span><span class="skill">Performance Optimization</span></div><h2>Certifications</h2><ul><li>AWS Solutions Architect Associate (2023)</li><li>Google Professional Cloud Developer (2022)</li></ul></body></html>`;
 
   return (
-    <DrawerShell icon={FileText} title="Resume" iconColor="text-violet-400" onClose={onClose}>
-      <div className="space-y-5 p-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2d1b5e] to-[#0d0820] text-[15px] font-bold text-white/70">
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <p className="text-[15px] font-semibold text-[#e8eaed]">{candidateName}</p>
-            <p className="text-[12px] text-[#9aa0a6]">{intel?.experience ?? "Experience on record"}</p>
-          </div>
-          {intel?.resumeUrl && (
-            <a
-              href={intel.resumeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-[11px] text-[#9aa0a6] transition-colors hover:border-white/20 hover:text-white"
-            >
-              <ExternalLink className="h-3 w-3" strokeWidth={1.5} />
-              PDF
-            </a>
-          )}
+    <motion.div
+      initial={{ x: "100%" }}
+      animate={{ x: 0 }}
+      exit={{ x: "100%" }}
+      transition={{ type: "spring", stiffness: 360, damping: 36 }}
+      className={cn(
+        "absolute right-0 z-40 flex flex-col border-l shadow-2xl",
+        isLight ? "border-[rgba(15,23,42,0.08)] bg-white" : "border-white/[0.07] bg-[#1c1c1e]",
+      )}
+      style={{ top: 56, bottom: 80, width: 480 }}
+    >
+      <div className={cn(
+        "flex shrink-0 items-center justify-between border-b px-5 py-3",
+        isLight ? "border-[rgba(15,23,42,0.08)]" : "border-white/[0.07]",
+      )}>
+        <div className="flex items-center gap-2.5">
+          <FileText className="h-4 w-4 text-violet-400" strokeWidth={1.5} />
+          <p className={cn("text-[14px] font-semibold", isLight ? "text-[#18181B]" : "text-[#e8eaed]")}>
+            {candidateName} — Resume
+          </p>
         </div>
-
-        {intel?.skills && intel.skills.length > 0 && (
-          <IntelSection label="Skills">
-            <div className="flex flex-wrap gap-1.5">
-              {intel.skills.map((s) => (
-                <span
-                  key={s}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-[#c5c6c7]"
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
-          </IntelSection>
-        )}
-
-        {intel?.education && (
-          <IntelSection label="Education">
-            <div className="flex items-center gap-2.5">
-              <GraduationCap className="h-4 w-4 shrink-0 text-[#9aa0a6]" strokeWidth={1.5} />
-              <p className="text-[13px] text-[#c5c6c7]">{intel.education}</p>
-            </div>
-          </IntelSection>
-        )}
-
-        {!intel && (
-          <p className="text-[13px] text-[#5f6368]">No resume data available for this candidate.</p>
-        )}
+        <button
+          type="button"
+          onClick={onClose}
+          className={cn(
+            "flex h-7 w-7 items-center justify-center rounded-full transition-colors",
+            isLight ? "hover:bg-[rgba(15,23,42,0.06)]" : "hover:bg-white/10",
+          )}
+        >
+          <X className={cn("h-3.5 w-3.5", isLight ? "text-[#71717A]" : "text-[#9aa0a6]")} strokeWidth={2} />
+        </button>
       </div>
-    </DrawerShell>
+      <iframe
+        srcDoc={resumeHtml}
+        title={`${candidateName} resume`}
+        className={cn("min-h-0 flex-1 border-0", isLight ? "bg-white" : "bg-[#2a2a2a]")}
+        style={{ width: "100%", height: "100%" }}
+      />
+    </motion.div>
   );
 }
 
@@ -1029,6 +1071,8 @@ function LinkedInDrawer({
   intel?: ZeMeetCandidateIntel;
   onClose: () => void;
 }) {
+  const { theme } = useZeMeet();
+  const isLight = theme === "light";
   const initials = candidateName
     .split(" ")
     .map((w) => w[0])
@@ -1039,11 +1083,17 @@ function LinkedInDrawer({
   return (
     <DrawerShell icon={Linkedin} title="LinkedIn" iconColor="text-sky-400" onClose={onClose}>
       <div className="space-y-4 p-5">
-        <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.03]">
+        <div className={cn(
+          "overflow-hidden rounded-2xl border",
+          isLight ? "border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.02)]" : "border-white/[0.07] bg-white/[0.03]",
+        )}>
           <div className="h-16 bg-gradient-to-r from-[#1a73e8]/25 via-violet-600/15 to-transparent" />
           <div className="px-4 pb-4">
             <div className="-mt-6 flex items-end justify-between">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#1c1c1e] bg-gradient-to-br from-[#2d1b5e] to-[#0d0820] text-[14px] font-bold text-white/70">
+              <div className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-full border-2 text-[14px] font-bold",
+                isLight ? "border-white bg-gradient-to-br from-[#E0E7FF] to-[#C7D2FE] text-[#4338CA]" : "border-[#1c1c1e] bg-gradient-to-br from-[#2d1b5e] to-[#0d0820] text-white/70",
+              )}>
                 {initials}
               </div>
               {intel?.linkedin && (
@@ -1051,16 +1101,19 @@ function LinkedInDrawer({
                   href={intel.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-full border border-sky-500/40 px-3 py-1 text-[11px] font-semibold text-sky-400 transition-colors hover:bg-sky-500/10"
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors",
+                    isLight ? "border-sky-200 text-sky-600 hover:bg-sky-50" : "border-sky-500/40 text-sky-400 hover:bg-sky-500/10",
+                  )}
                 >
                   <ExternalLink className="h-3 w-3" strokeWidth={1.5} />
                   Open profile
                 </a>
               )}
             </div>
-            <p className="mt-2.5 text-[14px] font-semibold text-[#e8eaed]">{candidateName}</p>
+            <p className={cn("mt-2.5 text-[14px] font-semibold", isLight ? "text-[#18181B]" : "text-[#e8eaed]")}>{candidateName}</p>
             {intel?.experience && (
-              <p className="text-[12px] text-[#9aa0a6]">{intel.experience}</p>
+              <p className={cn("text-[12px]", isLight ? "text-[#6B7280]" : "text-[#9aa0a6]")}>{intel.experience}</p>
             )}
           </div>
         </div>
@@ -1071,9 +1124,12 @@ function LinkedInDrawer({
               {intel.skills.slice(0, 5).map((skill) => (
                 <div
                   key={skill}
-                  className="flex items-center justify-between border-b border-white/[0.04] py-1.5 last:border-0"
+                  className={cn(
+                    "flex items-center justify-between border-b py-1.5 last:border-0",
+                    isLight ? "border-[rgba(15,23,42,0.06)]" : "border-white/[0.04]",
+                  )}
                 >
-                  <span className="text-[13px] text-[#c5c6c7]">{skill}</span>
+                  <span className={cn("text-[13px]", isLight ? "text-[#374151]" : "text-[#c5c6c7]")}>{skill}</span>
                 </div>
               ))}
             </div>
@@ -1081,7 +1137,7 @@ function LinkedInDrawer({
         )}
 
         {!intel && (
-          <p className="text-[13px] text-[#5f6368]">
+          <p className={cn("text-[13px]", isLight ? "text-[#71717A]" : "text-[#5f6368]")}>
             No LinkedIn data available for this candidate.
           </p>
         )}
