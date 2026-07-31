@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import type { AssessmentQuestionResult } from "@/lib/hiring/assessments/types";
+import type { AssessmentQuestionResult, ComprehensionSubQuestion, McqOptionResult } from "@/lib/hiring/assessments/types";
 import { dashboardPanelInteractive } from "@/components/dashboard/dashboardTokens";
 
 const STATUS_DOT: Record<AssessmentQuestionResult["status"], string> = {
@@ -79,6 +79,558 @@ function QuestionNavPill({
         )}
       />
     </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  MCQ Option Row                                                     */
+/* ------------------------------------------------------------------ */
+
+function McqOptionRow({ option }: { option: McqOptionResult }) {
+  const isCorrectSelected = option.isCorrect && option.isSelected;
+  const isWrongSelected = !option.isCorrect && option.isSelected;
+  const isCorrectNotSelected = option.isCorrect && !option.isSelected;
+
+  let bg = "bg-white dark:bg-surface";
+  let border = "border-[rgba(15,23,42,0.08)] dark:border-white/[0.08]";
+  let stateLabel = "";
+  let stateColor = "";
+  let icon: React.ReactNode = null;
+
+  if (isCorrectSelected) {
+    bg = "bg-emerald-50 dark:bg-emerald-500/[0.08]";
+    border = "border-emerald-200 dark:border-emerald-500/30";
+    stateLabel = "Selected · Correct";
+    stateColor = "text-emerald-700 dark:text-emerald-300";
+    icon = (
+      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+        <Check className="h-3 w-3" strokeWidth={3} />
+      </div>
+    );
+  } else if (isWrongSelected) {
+    bg = "bg-red-50 dark:bg-red-500/[0.08]";
+    border = "border-red-200 dark:border-red-500/30";
+    stateLabel = "Candidate selected";
+    stateColor = "text-red-700 dark:text-red-300";
+    icon = (
+      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-white">
+        <X className="h-3 w-3" strokeWidth={3} />
+      </div>
+    );
+  } else if (isCorrectNotSelected) {
+    bg = "bg-emerald-50/60 dark:bg-emerald-500/[0.05]";
+    border = "border-emerald-200/70 dark:border-emerald-500/20";
+    stateLabel = "Correct answer";
+    stateColor = "text-emerald-700 dark:text-emerald-300";
+    icon = (
+      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-emerald-400 text-emerald-500">
+        <Check className="h-3 w-3" strokeWidth={3} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-[10px] border px-4 py-3 transition-colors",
+        bg,
+        border,
+      )}
+    >
+      <span className={cn(
+        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold",
+        isCorrectSelected || isCorrectNotSelected
+          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+          : isWrongSelected
+            ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
+            : "bg-[rgba(15,23,42,0.05)] text-muted dark:bg-white/[0.06]",
+      )}>
+        {option.letter}
+      </span>
+      <p className="min-w-0 flex-1 text-[13px] leading-snug text-[#18181B] dark:text-text">
+        {option.text}
+      </p>
+      {icon && (
+        <div className="flex shrink-0 items-center gap-2">
+          <span className={cn("text-[10px] font-semibold", stateColor)}>
+            {stateLabel}
+          </span>
+          {icon}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  MCQ Answer Body                                                    */
+/* ------------------------------------------------------------------ */
+
+function McqAnswerBody({
+  question,
+  mcqQuestions,
+  mcqActiveIndex,
+}: {
+  question: AssessmentQuestionResult;
+  mcqQuestions: AssessmentQuestionResult[];
+  mcqActiveIndex: number;
+}) {
+  const options = question.mcqOptions ?? [];
+  const selectedLetters = options.filter((o) => o.isSelected).map((o) => o.letter);
+  const correctLetters = options.filter((o) => o.isCorrect).map((o) => o.letter);
+
+  return (
+    <div className="grid h-full grid-cols-1 gap-0 lg:grid-cols-[42%_1fr]">
+      {/* Left — Question */}
+      <div className="flex flex-col overflow-y-auto border-r border-[rgba(15,23,42,0.06)] p-5 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Question {mcqActiveIndex + 1} of {mcqQuestions.length}
+          </span>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5">
+          <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold text-muted dark:bg-white/[0.06]">
+            MCQ
+          </span>
+          <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-muted dark:bg-white/[0.06]">
+            {question.difficulty}
+          </span>
+          {question.mcqAnswerType === "multiple" && (
+            <span className="rounded-[5px] bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
+              Multi-select
+            </span>
+          )}
+        </div>
+        <h3 className="mt-4 text-[16px] font-semibold leading-snug tracking-[-0.01em] text-[#18181B] dark:text-text">
+          {question.title}
+        </h3>
+        {question.problemStatement && (
+          <p className="mt-3 text-[13px] leading-relaxed text-[#52525B] dark:text-text-secondary">
+            {question.problemStatement}
+          </p>
+        )}
+      </div>
+
+      {/* Right — Options + Summary */}
+      <div className="flex flex-col overflow-y-auto p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Answer Options
+          </span>
+          <span
+            className={cn(
+              "rounded-[5px] px-2 py-0.5 text-[10px] font-semibold",
+              STATUS_BADGE[question.status],
+            )}
+          >
+            {question.status === "Passed" ? "Correct" : question.status === "Failed" ? "Incorrect" : question.status === "Skipped" ? "Unanswered" : "Partial"}
+          </span>
+        </div>
+
+        <div className="mt-3 space-y-2.5">
+          {options.map((option) => (
+            <McqOptionRow key={option.letter} option={option} />
+          ))}
+        </div>
+
+        {/* Summary strip */}
+        <div className={cn(
+          "mt-4 flex items-center gap-4 rounded-[8px] border px-4 py-2.5",
+          "border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] dark:border-white/[0.06] dark:bg-white/[0.02]",
+        )}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted">
+              {question.mcqAnswerType === "multiple" ? "Selected:" : "Selected:"}
+            </span>
+            <span className="text-[11px] font-semibold text-[#18181B] dark:text-text">
+              {selectedLetters.length > 0 ? selectedLetters.join(", ") : "None"}
+            </span>
+          </div>
+          <div className="h-3 w-px bg-[rgba(15,23,42,0.1)] dark:bg-white/[0.1]" />
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted">
+              {question.mcqAnswerType === "multiple" ? "Correct:" : "Correct:"}
+            </span>
+            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+              {correctLetters.join(", ")}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Theory Answer Body (Open Ended, Fill in the Blanks, Comprehension) */
+/* ------------------------------------------------------------------ */
+
+function TheoryAnswerBody({
+  question,
+  theoryQuestions,
+  theoryActiveIndex,
+}: {
+  question: AssessmentQuestionResult;
+  theoryQuestions: AssessmentQuestionResult[];
+  theoryActiveIndex: number;
+}) {
+  const isFillBlanks = question.tab === "Fill in the Blanks";
+  const isOpenEnded = question.tab === "Open Ended" || question.tab === "Comprehension";
+  const [manualScore, setManualScore] = useState(String(question.score));
+  const [feedback, setFeedback] = useState(question.evaluatorNotes ?? "");
+
+  return (
+    <div className="grid h-full grid-cols-1 gap-0 lg:grid-cols-[42%_1fr]">
+      {/* Left — Question */}
+      <div className="flex flex-col overflow-y-auto border-r border-[rgba(15,23,42,0.06)] p-5 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Question {theoryActiveIndex + 1} of {theoryQuestions.length}
+          </span>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5">
+          <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold text-muted dark:bg-white/[0.06]">
+            {question.tab}
+          </span>
+          <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-muted dark:bg-white/[0.06]">
+            {question.difficulty}
+          </span>
+        </div>
+        <h3 className="mt-4 text-[16px] font-semibold leading-snug tracking-[-0.01em] text-[#18181B] dark:text-text">
+          {question.title}
+        </h3>
+        {question.problemStatement && (
+          <p className="mt-3 text-[13px] leading-relaxed text-[#52525B] dark:text-text-secondary">
+            {question.problemStatement}
+          </p>
+        )}
+      </div>
+
+      {/* Right — Answer + Scoring */}
+      <div className="flex flex-col overflow-y-auto p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Candidate Response
+          </span>
+          <span
+            className={cn(
+              "rounded-[5px] px-2 py-0.5 text-[10px] font-semibold",
+              STATUS_BADGE[question.status],
+            )}
+          >
+            {question.status}
+          </span>
+        </div>
+
+        {isFillBlanks ? (
+          <div className="mt-3 space-y-3">
+            <div className={cn(
+              "rounded-[10px] border px-4 py-3",
+              question.status === "Passed"
+                ? "border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/[0.08]"
+                : question.status === "Failed"
+                  ? "border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/[0.08]"
+                  : "border-[rgba(15,23,42,0.08)] bg-white dark:border-white/[0.08] dark:bg-surface",
+            )}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                Candidate answer
+              </p>
+              <p className="mt-2 text-[14px] font-medium text-[#18181B] dark:text-text">
+                {question.candidateAnswer || "—"}
+              </p>
+            </div>
+            <div className="rounded-[10px] border border-emerald-200/70 bg-emerald-50/60 px-4 py-3 dark:border-emerald-500/20 dark:bg-emerald-500/[0.05]">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                Correct answer
+              </p>
+              <p className="mt-2 text-[14px] font-medium text-[#18181B] dark:text-text">
+                {question.correctAnswer || "—"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <div className={cn(
+              "rounded-[10px] border px-4 py-4",
+              "border-[rgba(15,23,42,0.08)] bg-white dark:border-white/[0.08] dark:bg-surface",
+            )}>
+              <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#3F3F46] dark:text-text-secondary">
+                {question.candidateAnswer ?? question.submittedCode ?? "No response submitted"}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Score + Feedback for Open Ended / Comprehension */}
+        {isOpenEnded && (
+          <div className="mt-4 space-y-3">
+            <div className={cn(
+              "rounded-[10px] border px-4 py-3",
+              "border-[rgba(15,23,42,0.08)] bg-white dark:border-white/[0.08] dark:bg-surface",
+            )}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                Score
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  max={question.maxScore}
+                  value={manualScore}
+                  onChange={(e) => setManualScore(e.target.value)}
+                  className="h-9 w-20 rounded-[8px] border border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.02)] px-3 text-center text-[14px] font-semibold tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-accent/20 dark:border-white/[0.08] dark:bg-white/[0.04]"
+                />
+                <span className="text-[13px] text-muted">/ {question.maxScore}</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="ml-auto h-8 rounded-[8px] bg-accent px-3 text-[11px] font-medium text-white hover:bg-accent/90"
+                  onClick={() => toast.success("Score saved")}
+                >
+                  Save score
+                </Button>
+              </div>
+            </div>
+
+            <div className={cn(
+              "rounded-[10px] border px-4 py-3",
+              "border-[rgba(15,23,42,0.08)] bg-white dark:border-white/[0.08] dark:bg-surface",
+            )}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+                Comments & Feedback
+              </p>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Add evaluation notes, feedback for candidate, or internal comments..."
+                rows={3}
+                className="mt-2 w-full resize-none rounded-[8px] border border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.02)] px-3 py-2 text-[12px] leading-relaxed text-[#18181B] placeholder:text-[#A1A1AA] outline-none focus-visible:ring-2 focus-visible:ring-accent/20 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-text"
+              />
+              <div className="mt-2 flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 rounded-[8px] bg-accent px-3 text-[11px] font-medium text-white hover:bg-accent/90"
+                  onClick={() => toast.success("Feedback saved")}
+                >
+                  Save feedback
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Summary strip (non-open-ended) */}
+        {!isOpenEnded && (
+          <div className={cn(
+            "mt-4 flex items-center gap-4 rounded-[8px] border px-4 py-2.5",
+            "border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] dark:border-white/[0.06] dark:bg-white/[0.02]",
+          )}>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-muted">Score:</span>
+              <span className="text-[11px] font-semibold text-[#18181B] dark:text-text">
+                {question.score}/{question.maxScore}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Comprehension Answer Body                                          */
+/* ------------------------------------------------------------------ */
+
+function ComprehensionSubQuestionRow({
+  subQ,
+  index,
+}: {
+  subQ: ComprehensionSubQuestion;
+  index: number;
+}) {
+  const correctOption = subQ.options.find((o) => o.isCorrect);
+  const selectedOption = subQ.options.find((o) => o.isSelected);
+  const isCorrect = subQ.status === "Passed";
+  const isSkipped = subQ.status === "Skipped";
+
+  return (
+    <div className={cn(
+      "rounded-[10px] border px-4 py-3",
+      isCorrect
+        ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/[0.04]"
+        : isSkipped
+          ? "border-[rgba(15,23,42,0.08)] bg-white dark:border-white/[0.08] dark:bg-surface"
+          : "border-red-200 bg-red-50/50 dark:border-red-500/20 dark:bg-red-500/[0.04]",
+    )}>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[12px] font-medium leading-snug text-[#18181B] dark:text-text">
+          <span className="mr-1.5 text-[11px] font-bold text-muted">{index + 1}.</span>
+          {subQ.question}
+        </p>
+        <span className={cn(
+          "shrink-0 rounded-[5px] px-1.5 py-0.5 text-[9px] font-semibold",
+          isCorrect
+            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+            : isSkipped
+              ? "bg-black/[0.04] text-muted"
+              : "bg-red-500/10 text-red-700 dark:text-red-300",
+        )}>
+          {isCorrect ? "Correct" : isSkipped ? "Skipped" : "Wrong"}
+        </span>
+      </div>
+
+      <div className="mt-2.5 space-y-1.5">
+        {subQ.options.map((opt) => {
+          const isSelected = opt.isSelected;
+          const isRight = opt.isCorrect;
+          const showGreen = isRight;
+          const showRed = isSelected && !isRight;
+
+          return (
+            <div
+              key={opt.letter}
+              className={cn(
+                "flex items-center gap-2 rounded-[6px] px-2.5 py-1.5 text-[11px]",
+                showGreen
+                  ? "bg-emerald-100/80 dark:bg-emerald-500/[0.1]"
+                  : showRed
+                    ? "bg-red-100/80 dark:bg-red-500/[0.1]"
+                    : "bg-transparent",
+              )}
+            >
+              <span className={cn(
+                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                showGreen
+                  ? "bg-emerald-500 text-white"
+                  : showRed
+                    ? "bg-red-500 text-white"
+                    : "bg-[rgba(15,23,42,0.06)] text-muted dark:bg-white/[0.08]",
+              )}>
+                {showGreen ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : showRed ? <X className="h-2.5 w-2.5" strokeWidth={3} /> : opt.letter}
+              </span>
+              <span className={cn(
+                "leading-snug",
+                showGreen ? "font-medium text-emerald-800 dark:text-emerald-200" : showRed ? "font-medium text-red-800 dark:text-red-200" : "text-[#3F3F46] dark:text-text-secondary",
+              )}>
+                {opt.text}
+              </span>
+              {isSelected && !isRight && (
+                <span className="ml-auto text-[9px] font-semibold text-red-600 dark:text-red-300">Selected</span>
+              )}
+              {isRight && isSelected && (
+                <span className="ml-auto text-[9px] font-semibold text-emerald-600 dark:text-emerald-300">Selected</span>
+              )}
+              {isRight && !isSelected && (
+                <span className="ml-auto text-[9px] font-semibold text-emerald-600 dark:text-emerald-300">Correct</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ComprehensionAnswerBody({
+  question,
+  compQuestions,
+  compActiveIndex,
+}: {
+  question: AssessmentQuestionResult;
+  compQuestions: AssessmentQuestionResult[];
+  compActiveIndex: number;
+}) {
+  const passage = question.comprehensionPassage ?? "";
+  const subQuestions = question.comprehensionQuestions ?? [];
+  const correctCount = subQuestions.filter((q) => q.status === "Passed").length;
+
+  return (
+    <div className="grid h-full grid-cols-1 gap-0 lg:grid-cols-[45%_1fr]">
+      {/* Left — Passage */}
+      <div className="flex flex-col overflow-y-auto border-r border-[rgba(15,23,42,0.06)] p-5 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Question {compActiveIndex + 1} of {compQuestions.length}
+          </span>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5">
+          <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold text-muted dark:bg-white/[0.06]">
+            Comprehension
+          </span>
+          <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-muted dark:bg-white/[0.06]">
+            {question.difficulty}
+          </span>
+        </div>
+        <h3 className="mt-3 text-[15px] font-semibold leading-snug tracking-[-0.01em] text-[#18181B] dark:text-text">
+          {question.title}
+        </h3>
+        <div className="mt-4 rounded-[10px] border border-[rgba(15,23,42,0.06)] bg-white p-4 dark:border-white/[0.06] dark:bg-surface">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Reading Passage
+          </p>
+          <div className="mt-3 whitespace-pre-wrap text-[12.5px] leading-[1.75] text-[#3F3F46] dark:text-text-secondary">
+            {passage}
+          </div>
+        </div>
+      </div>
+
+      {/* Right — Sub-questions */}
+      <div className="flex flex-col overflow-y-auto p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            Passage Questions ({subQuestions.length})
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+              {correctCount}/{subQuestions.length} correct
+            </span>
+            <span
+              className={cn(
+                "rounded-[5px] px-2 py-0.5 text-[10px] font-semibold",
+                STATUS_BADGE[question.status],
+              )}
+            >
+              {question.status}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-3">
+          {subQuestions.map((subQ, i) => (
+            <ComprehensionSubQuestionRow key={subQ.id} subQ={subQ} index={i} />
+          ))}
+        </div>
+
+        {/* Summary strip */}
+        <div className={cn(
+          "mt-4 flex items-center gap-4 rounded-[8px] border px-4 py-2.5",
+          "border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] dark:border-white/[0.06] dark:bg-white/[0.02]",
+        )}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted">Score:</span>
+            <span className="text-[11px] font-semibold text-[#18181B] dark:text-text">
+              {question.score}/{question.maxScore}
+            </span>
+          </div>
+          <div className="h-3 w-px bg-[rgba(15,23,42,0.1)] dark:bg-white/[0.1]" />
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted">Correct:</span>
+            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+              {correctCount}
+            </span>
+          </div>
+          <div className="h-3 w-px bg-[rgba(15,23,42,0.1)] dark:bg-white/[0.1]" />
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted">Wrong:</span>
+            <span className="text-[11px] font-semibold text-red-700 dark:text-red-300">
+              {subQuestions.filter((q) => q.status === "Failed").length}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -398,11 +950,11 @@ function EvaluationPanel({ question }: { question: AssessmentQuestionResult }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Non-code answer body (MCQ, Open Ended, etc.)                       */
+/*  Non-code answer body (Open Ended, Fill in the Blanks, etc.)        */
 /* ------------------------------------------------------------------ */
 
 function NonCodeAnswerBody({ question }: { question: AssessmentQuestionResult }) {
-  if (question.tab === "MCQ" || question.tab === "Fill in the Blanks") {
+  if (question.tab === "Fill in the Blanks") {
     return (
       <div className="grid h-full grid-cols-1 gap-2 p-2 lg:grid-cols-[1fr_1fr_280px]">
         <div className={cn(dashboardPanelInteractive, "flex flex-col p-4")}>
@@ -554,6 +1106,19 @@ function isCodeQuestion(q: AssessmentQuestionResult) {
   );
 }
 
+function isMcqQuestion(q: AssessmentQuestionResult) {
+  return q.tab === "MCQ";
+}
+
+function isTheoryQuestion(q: AssessmentQuestionResult) {
+  return (
+    q.tab === "MCQ" ||
+    q.tab === "Open Ended" ||
+    q.tab === "Fill in the Blanks" ||
+    q.tab === "Comprehension"
+  );
+}
+
 export function ViewAnswerDialog({
   open,
   onOpenChange,
@@ -570,8 +1135,29 @@ export function ViewAnswerDialog({
   const question = questions[activeIndex];
   if (!question) return null;
 
-  const hasPrev = activeIndex > 0;
-  const hasNext = activeIndex < questions.length - 1;
+  const isMcq = isMcqQuestion(question);
+  const isTheory = isTheoryQuestion(question);
+
+  // When viewing a theory question, scope navigation to same-tab questions only
+  const scopedTab = isTheory ? question.tab : null;
+  const scopedIndices = scopedTab
+    ? questions.reduce<number[]>((acc, q, i) => (q.tab === scopedTab ? [...acc, i] : acc), [])
+    : [];
+  const scopedQuestions = scopedTab ? scopedIndices.map((i) => questions[i]) : [];
+  const scopedActiveIndex = scopedTab ? scopedIndices.indexOf(activeIndex) : 0;
+
+  const navQuestions = isTheory ? scopedQuestions : questions;
+  const navActiveIndex = isTheory ? scopedActiveIndex : activeIndex;
+  const hasPrev = navActiveIndex > 0;
+  const hasNext = navActiveIndex < navQuestions.length - 1;
+
+  function handleNav(navIdx: number) {
+    if (isTheory) {
+      onNavigate(scopedIndices[navIdx]);
+    } else {
+      onNavigate(navIdx);
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -592,20 +1178,20 @@ export function ViewAnswerDialog({
               <button
                 type="button"
                 disabled={!hasPrev}
-                onClick={() => onNavigate(activeIndex - 1)}
+                onClick={() => handleNav(navActiveIndex - 1)}
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] text-muted transition-colors hover:bg-[rgba(15,23,42,0.06)] disabled:opacity-30 dark:hover:bg-white/[0.06]"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
 
               <div className="flex items-center gap-1">
-                {questions.map((q, i) => (
+                {navQuestions.map((q, i) => (
                   <QuestionNavPill
                     key={q.id}
                     index={i}
                     question={q}
-                    active={i === activeIndex}
-                    onClick={() => onNavigate(i)}
+                    active={i === navActiveIndex}
+                    onClick={() => handleNav(i)}
                   />
                 ))}
               </div>
@@ -613,7 +1199,7 @@ export function ViewAnswerDialog({
               <button
                 type="button"
                 disabled={!hasNext}
-                onClick={() => onNavigate(activeIndex + 1)}
+                onClick={() => handleNav(navActiveIndex + 1)}
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] text-muted transition-colors hover:bg-[rgba(15,23,42,0.06)] disabled:opacity-30 dark:hover:bg-white/[0.06]"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -629,60 +1215,88 @@ export function ViewAnswerDialog({
               </DialogClose>
             </div>
 
-            {/* ── Question header ── */}
-            <div className="shrink-0 border-b border-[rgba(15,23,42,0.06)] px-4 py-2 dark:border-white/[0.06]">
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <DialogTitle className="flex items-baseline gap-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">
-                      Question {activeIndex + 1} of {questions.length}
-                    </span>
-                  </DialogTitle>
-                  <DialogDescription className="mt-0.5 truncate text-[14px] font-semibold tracking-[-0.02em] text-[#18181B] dark:text-text">
-                    {question.title}
-                  </DialogDescription>
-                  {question.problemStatement && (
-                    <p className="mt-0.5 line-clamp-1 text-[11px] leading-relaxed text-[#52525B] dark:text-text-secondary">
-                      {question.problemStatement}
-                    </p>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold text-muted dark:bg-white/[0.06]">
-                    {question.tab}
-                  </span>
-                  <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-muted dark:bg-white/[0.06]">
-                    {question.difficulty}
-                  </span>
-                  <span
-                    className={cn(
-                      "rounded-[5px] px-1.5 py-0.5 text-[10px] font-semibold",
-                      STATUS_BADGE[question.status],
+            {/* ── Question header (code questions only) ── */}
+            {!isTheory && (
+              <div className="shrink-0 border-b border-[rgba(15,23,42,0.06)] px-4 py-2 dark:border-white/[0.06]">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <DialogTitle className="flex items-baseline gap-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">
+                        Question {activeIndex + 1} of {questions.length}
+                      </span>
+                    </DialogTitle>
+                    <DialogDescription className="mt-0.5 truncate text-[14px] font-semibold tracking-[-0.02em] text-[#18181B] dark:text-text">
+                      {question.title}
+                    </DialogDescription>
+                    {question.problemStatement && (
+                      <p className="mt-0.5 line-clamp-1 text-[11px] leading-relaxed text-[#52525B] dark:text-text-secondary">
+                        {question.problemStatement}
+                      </p>
                     )}
-                  >
-                    {question.status}
-                  </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold text-muted dark:bg-white/[0.06]">
+                      {question.tab}
+                    </span>
+                    <span className="rounded-[5px] bg-[rgba(15,23,42,0.06)] px-1.5 py-0.5 text-[10px] font-semibold capitalize text-muted dark:bg-white/[0.06]">
+                      {question.difficulty}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-[5px] px-1.5 py-0.5 text-[10px] font-semibold",
+                        STATUS_BADGE[question.status],
+                      )}
+                    >
+                      {question.status}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* ── 3-column workspace ── */}
+            {/* ── Hidden accessible title for theory questions ── */}
+            {isTheory && (
+              <>
+                <DialogTitle className="sr-only">{question.title}</DialogTitle>
+                <DialogDescription className="sr-only">{question.tab} answer review</DialogDescription>
+              </>
+            )}
+
+            {/* ── Workspace body ── */}
             <div className="min-h-0 flex-1 overflow-hidden bg-[#F5F7FA] dark:bg-app-bg">
-              {isCodeQuestion(question) ? (
+              {isMcq ? (
+                <McqAnswerBody
+                  question={question}
+                  mcqQuestions={scopedQuestions}
+                  mcqActiveIndex={scopedActiveIndex}
+                />
+              ) : question.tab === "Comprehension" ? (
+                <ComprehensionAnswerBody
+                  question={question}
+                  compQuestions={scopedQuestions}
+                  compActiveIndex={scopedActiveIndex}
+                />
+              ) : isTheory ? (
+                <TheoryAnswerBody
+                  question={question}
+                  theoryQuestions={scopedQuestions}
+                  theoryActiveIndex={scopedActiveIndex}
+                />
+              ) : (
                 <div className="grid h-full grid-cols-1 gap-2 p-2 lg:grid-cols-[45%_minmax(0,1fr)_260px]">
                   <CodeEditorPanel question={question} />
                   <OutputTestPanel question={question} />
                   <EvaluationPanel question={question} />
                 </div>
-              ) : (
-                <NonCodeAnswerBody question={question} />
               )}
             </div>
 
-            {/* ── Bottom playback bar ── */}
-            <div className="shrink-0 border-t border-[rgba(15,23,42,0.06)] bg-white dark:border-white/[0.06] dark:bg-surface">
-              <PlaybackBar question={question} />
-            </div>
+            {/* ── Bottom playback bar (code questions only) ── */}
+            {!isTheory && (
+              <div className="shrink-0 border-t border-[rgba(15,23,42,0.06)] bg-white dark:border-white/[0.06] dark:bg-surface">
+                <PlaybackBar question={question} />
+              </div>
+            )}
           </DialogPanel>
         </div>
       </DialogPortal>

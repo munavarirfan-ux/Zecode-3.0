@@ -160,6 +160,7 @@ export type AssessmentReportTab =
   | "Coding"
   | "Debug Snippet"
   | "MCQ"
+  | "Comprehension"
   | "Database"
   | "Open Ended"
   | "Fill in the Blanks";
@@ -168,6 +169,7 @@ export const ASSESSMENT_REPORT_TABS: { id: AssessmentReportTab; label: string }[
   { id: "Coding", label: "Coding" },
   { id: "Debug Snippet", label: "Debug Snippet" },
   { id: "MCQ", label: "MCQ" },
+  { id: "Comprehension", label: "Comprehension" },
   { id: "Database", label: "Database" },
   { id: "Open Ended", label: "Open Ended" },
   { id: "Fill in the Blanks", label: "Fill in the Blanks" },
@@ -199,6 +201,20 @@ export interface AssessmentTestCaseResult {
   actual?: string;
 }
 
+export interface McqOptionResult {
+  letter: string;
+  text: string;
+  isCorrect: boolean;
+  isSelected: boolean;
+}
+
+export interface ComprehensionSubQuestion {
+  id: string;
+  question: string;
+  options: McqOptionResult[];
+  status: "Passed" | "Failed" | "Skipped";
+}
+
 export interface AssessmentQuestionResult {
   id: string;
   candidateId: string;
@@ -224,4 +240,8 @@ export interface AssessmentQuestionResult {
   candidateFixedSnippet?: string;
   expectedFix?: string;
   testCaseResults?: AssessmentTestCaseResult[];
+  mcqOptions?: McqOptionResult[];
+  mcqAnswerType?: "single" | "multiple";
+  comprehensionPassage?: string;
+  comprehensionQuestions?: ComprehensionSubQuestion[];
 }
