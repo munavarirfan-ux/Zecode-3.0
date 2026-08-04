@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { PanelLeftClose } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type {
@@ -16,6 +17,7 @@ interface SectionNavigatorProps {
   onSelectSection: (sectionId: string) => void;
   onSelectQuestion: (questionId: string) => void;
   onSubmitAssessment: () => void;
+  onCollapse?: () => void;
 }
 
 type PillState = "current" | "review" | "completed" | "unanswered";
@@ -59,14 +61,26 @@ export function SectionNavigator({
   onSelectSection,
   onSelectQuestion,
   onSubmitAssessment,
+  onCollapse,
 }: SectionNavigatorProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Table of contents header */}
-      <div className="px-4 pb-2 pt-4">
+      <div className="flex items-center justify-between px-4 pb-2 pt-4">
         <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
           Table of Contents
         </p>
+        {onCollapse && (
+          <button
+            type="button"
+            onClick={onCollapse}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-muted transition-colors hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
+            aria-label="Collapse table of contents"
+            title="Collapse"
+          >
+            <PanelLeftClose className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Sections list */}

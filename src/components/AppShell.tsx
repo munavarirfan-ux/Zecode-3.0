@@ -87,19 +87,16 @@ function ToolbarBrand() {
     <Link
       href={ROUTES.dashboard}
       aria-label={COMPANY_NAME}
-      className="flex min-w-0 max-w-[min(100%,220px)] shrink-0 items-center gap-2.5 rounded-[10px] outline-none transition-opacity duration-[180ms] ease-out hover:opacity-90 focus-visible:ring-2 focus-visible:ring-forest/20"
+      className="flex min-w-0 shrink items-center gap-2 rounded-[10px] px-1 py-1 outline-none transition-opacity duration-[180ms] ease-out hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/20 sm:gap-3"
     >
       <span
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-sm font-bold text-white shadow-[0_2px_8px_rgb(var(--accent-500-rgb)/0.35)]"
+        className="shrink-0 text-base font-medium tracking-tight text-[#6b8a99] dark:text-[#8bb0c0] sm:text-[18px]"
         aria-hidden
       >
-        Z
+        zessta
       </span>
-      <span className="min-w-0 flex flex-col leading-tight">
-        <span className="truncate text-sm font-bold tracking-tight text-text">{APP_NAME}</span>
-        <span className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-          {COMPANY_NAME}
-        </span>
+      <span className="hidden min-w-0 truncate text-[13px] font-normal text-[#52525B] dark:text-text-secondary md:inline">
+        {COMPANY_NAME}
       </span>
     </Link>
   );

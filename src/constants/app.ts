@@ -3,7 +3,7 @@ export const APP_NAME = "Ze[hub]";
 export const MODULE_HIRE = "ze[hire]";
 export const MODULE_CODE = "ze[code]";
 export const APP_TAGLINE = "Hiring operations platform";
-export const COMPANY_NAME = "Zessta Software Services";
+export const COMPANY_NAME = "Zessta Software Solutions";
 
 export const APP_DESCRIPTION =
   "Hiring operations, assessments, and interview intelligence for enterprise teams.";

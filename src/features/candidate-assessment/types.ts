@@ -15,6 +15,24 @@ export interface MCQOption {
   text: string;
 }
 
+export type FrontendFileLanguage = "html" | "css" | "javascript" | "json";
+
+export interface FrontendFile {
+  name: string;
+  language: FrontendFileLanguage;
+  content: string;
+}
+
+export type FrontendAssetKind = "image" | "svg" | "icon" | "font" | "zip";
+
+export interface FrontendAsset {
+  id: string;
+  name: string;
+  kind: FrontendAssetKind;
+  /** Data URI or path used for the thumbnail + download. */
+  src: string;
+}
+
 export interface AssessmentQuestion {
   id: string;
   type: QuestionType;
@@ -34,6 +52,15 @@ export interface AssessmentQuestion {
   bugDescription?: string;
   buggyCode?: string;
   schema?: string;
+  /** Frontend (HTML/CSS/JS) challenge — renders the live-preview IDE workspace. */
+  frontend?: boolean;
+  difficulty?: string;
+  estimatedMinutes?: number;
+  points?: number;
+  requirements?: string[];
+  assets?: FrontendAsset[];
+  referenceImage?: string;
+  files?: FrontendFile[];
 }
 
 export interface AssessmentSection {

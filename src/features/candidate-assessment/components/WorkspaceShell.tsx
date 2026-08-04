@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Clock } from "lucide-react";
+import React, { useState } from "react";
+import { Clock, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AssessmentData } from "@/features/candidate-assessment/types";
 import { SectionNavigator } from "./SectionNavigator";
@@ -35,6 +35,7 @@ export function WorkspaceShell({
   onSubmitAssessment,
   children,
 }: WorkspaceShellProps) {
+  const [tocCollapsed, setTocCollapsed] = useState(false);
   const timerClasses = cn(
     "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-semibold tabular-nums border transition-colors",
     timeRemaining <= 120
@@ -66,17 +67,38 @@ export function WorkspaceShell({
       {/* Body: sidebar + full-width workspace */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left sidebar */}
-        <aside className="hidden w-[260px] shrink-0 overflow-y-auto border-r border-[rgba(15,23,42,0.06)] bg-[#FAFAFA] md:block dark:border-white/[0.06] dark:bg-[#0C0C0F]">
-          <SectionNavigator
-            sections={assessment.sections}
-            currentSectionId={currentSectionId}
-            currentQuestionId={currentQuestionId}
-            markedForReview={markedForReview}
-            onSelectSection={onSelectSection}
-            onSelectQuestion={onSelectQuestion}
-            onSubmitAssessment={onSubmitAssessment}
-          />
-        </aside>
+        {tocCollapsed ? (
+          <aside className="hidden w-12 shrink-0 flex-col items-center gap-3 border-r border-[rgba(15,23,42,0.06)] bg-[#FAFAFA] py-4 md:flex dark:border-white/[0.06] dark:bg-[#0C0C0F]">
+            <button
+              type="button"
+              onClick={() => setTocCollapsed(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
+              aria-label="Expand table of contents"
+              title="Expand table of contents"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </button>
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"
+              style={{ writingMode: "vertical-rl" }}
+            >
+              Table of Contents
+            </span>
+          </aside>
+        ) : (
+          <aside className="hidden w-[260px] shrink-0 overflow-y-auto border-r border-[rgba(15,23,42,0.06)] bg-[#FAFAFA] md:block dark:border-white/[0.06] dark:bg-[#0C0C0F]">
+            <SectionNavigator
+              sections={assessment.sections}
+              currentSectionId={currentSectionId}
+              currentQuestionId={currentQuestionId}
+              markedForReview={markedForReview}
+              onSelectSection={onSelectSection}
+              onSelectQuestion={onSelectQuestion}
+              onSubmitAssessment={onSubmitAssessment}
+              onCollapse={() => setTocCollapsed(true)}
+            />
+          </aside>
+        )}
 
         {/* Main workspace — fills remaining space, no scroll */}
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-[#0E0E11]">

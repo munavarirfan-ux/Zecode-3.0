@@ -11,6 +11,7 @@ import { QuestionShell } from "./components/QuestionShell";
 import { SectionOverview } from "./components/SectionOverview";
 import { MCQAnswer } from "./components/MCQAnswer";
 import { CodingAnswer } from "./components/CodingAnswer";
+import { FrontendCodingAnswer } from "./components/FrontendCodingAnswer";
 import { OpenEndedAnswer } from "./components/OpenEndedAnswer";
 import { ComprehensionAnswer } from "./components/ComprehensionAnswer";
 import { DatabaseAnswer } from "./components/DatabaseAnswer";
@@ -169,7 +170,10 @@ export function CandidateAssessmentView({ initialScreen }: { initialScreen?: str
     if (!currentQuestion) return null;
     switch (currentQuestion.type) {
       case "mcq": return <MCQAnswer question={currentQuestion} />;
-      case "coding": return <CodingAnswer question={currentQuestion} />;
+      case "coding":
+        return currentQuestion.frontend
+          ? <FrontendCodingAnswer question={currentQuestion} />
+          : <CodingAnswer question={currentQuestion} />;
       case "open-ended": return <OpenEndedAnswer question={currentQuestion} />;
       case "comprehension": return <ComprehensionAnswer question={currentQuestion} />;
       case "database": return <DatabaseAnswer question={currentQuestion} />;

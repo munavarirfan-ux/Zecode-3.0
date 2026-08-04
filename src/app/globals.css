@@ -601,3 +601,57 @@
   width: 0;
   height: 0;
 }
+
+/* ── Candidate coding workspace: 3-column layout driven by the workspace's
+   own width (right of the Table of Contents), not the viewport. ── */
+.coding-workspace {
+  container-type: inline-size;
+  container-name: coding;
+}
+
+.coding-workspace-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+@container coding (min-width: 540px) {
+  .coding-workspace-grid {
+    display: grid;
+    grid-template-columns: 27fr 50fr 23fr;
+    gap: 0.75rem;
+    overflow: hidden;
+  }
+  .coding-workspace-grid > section {
+    min-height: 0;
+  }
+}
+
+/* ── Candidate frontend IDE workspace: 3-column layout driven by the
+   workspace's own width (right of the Table of Contents). ── */
+.fe-workspace {
+  container-type: inline-size;
+  container-name: fe;
+}
+
+.fe-workspace-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+@container fe (min-width: 540px) {
+  .fe-workspace-grid {
+    display: grid;
+    grid-template-columns: 28fr 40fr 32fr;
+    gap: 0.75rem;
+    overflow: hidden;
+  }
+  .fe-workspace-grid > section {
+    min-height: 0;
+  }
+}

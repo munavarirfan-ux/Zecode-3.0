@@ -141,15 +141,155 @@ const CODING_SECTION: AssessmentSection = {
       type: "coding",
       sectionId: "coding",
       number: 2,
-      title: "Reverse Linked List",
-      body: "Given the head of a singly linked list, reverse the list, and return the reversed list.\n\n**Constraints:**\n- The number of nodes in the list is in the range [0, 5000]\n- -5000 ≤ Node.val ≤ 5000\n\n**Examples:**\n```\nInput: 1 → 2 → 3 → 4 → 5\nOutput: 5 → 4 → 3 → 2 → 1\n```",
+      title: "Responsive Profile Card",
       status: "unanswered",
-      codeStarter: "function reverseList(head) {\n  // Your code here\n}",
-      language: "javascript",
-      testCases: [
-        { id: "tc1", input: "[1,2,3,4,5]", expectedOutput: "[5,4,3,2,1]", visible: true },
-        { id: "tc2", input: "[1,2]", expectedOutput: "[2,1]", visible: true },
-        { id: "tc3", input: "[]", expectedOutput: "[]", visible: false },
+      frontend: true,
+      difficulty: "Medium",
+      estimatedMinutes: 15,
+      points: 20,
+      body: [
+        "## Overview",
+        "Build a polished, responsive **profile card** component using HTML, CSS, and a small amount of JavaScript. The starter files render a basic card — your job is to finish the styling and interaction so it matches the reference design.",
+        "",
+        "## Constraints",
+        "- Use semantic HTML and keep the markup accessible.",
+        "- The card must be centered and adapt from mobile to desktop.",
+        "- Do not add external CSS frameworks.",
+        "",
+        "## Acceptance Criteria",
+        "- The `Follow` button toggles to `Following` on click.",
+        "- A visible hover state exists on the button.",
+        "- Layout uses Flexbox or Grid.",
+        "",
+        "## Hints",
+        "- `styles.css` already sets up the card surface — you mainly need the button.",
+        "- Use `:hover` and a short `transition` for a smooth effect.",
+      ].join("\n"),
+      requirements: [
+        "Responsive layout",
+        "Hover effects",
+        "Flexbox / Grid",
+        "Accessibility (alt text, labels)",
+        "Subtle animation",
+        "Mobile support",
+      ],
+      referenceImage: `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="560" viewBox="0 0 480 560"><rect width="480" height="560" fill="#f4f4f7"/><rect x="90" y="110" width="300" height="340" rx="20" fill="#ffffff"/><circle cx="240" cy="200" r="48" fill="#e9d5ff"/><circle cx="240" cy="200" r="48" fill="none" stroke="#7100bd" stroke-width="3"/><rect x="180" y="272" width="120" height="18" rx="6" fill="#18181b"/><rect x="196" y="302" width="88" height="12" rx="6" fill="#7100bd"/><rect x="150" y="336" width="180" height="9" rx="4" fill="#d4d4d8"/><rect x="164" y="352" width="152" height="9" rx="4" fill="#d4d4d8"/><rect x="160" y="388" width="160" height="40" rx="20" fill="#7100bd"/><rect x="205" y="402" width="70" height="12" rx="6" fill="#ffffff"/></svg>`,
+      assets: [
+        {
+          id: "a1",
+          name: "avatar.svg",
+          kind: "svg",
+          src: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><circle cx="32" cy="32" r="32" fill="#e9d5ff"/><circle cx="32" cy="26" r="12" fill="#7100bd"/><path d="M12 56c0-12 9-18 20-18s20 6 20 18z" fill="#7100bd"/></svg>`,
+        },
+        {
+          id: "a2",
+          name: "check-icon.svg",
+          kind: "icon",
+          src: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#ecfdf5"/><path d="M20 33l9 9 16-18" stroke="#10b981" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        },
+        {
+          id: "a3",
+          name: "brand-font.woff2",
+          kind: "font",
+          src: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#eff6ff"/><text x="32" y="42" font-size="30" font-family="serif" text-anchor="middle" fill="#2563eb">Aa</text></svg>`,
+        },
+        {
+          id: "a4",
+          name: "starter-kit.zip",
+          kind: "zip",
+          src: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#fef3c7"/><rect x="28" y="14" width="8" height="36" fill="#d97706"/><rect x="28" y="14" width="8" height="6" fill="#92400e"/><rect x="28" y="26" width="8" height="6" fill="#92400e"/><rect x="28" y="38" width="8" height="6" fill="#92400e"/></svg>`,
+        },
+      ],
+      files: [
+        {
+          name: "index.html",
+          language: "html",
+          content: `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Profile Card</title>
+  </head>
+  <body>
+    <main class="card">
+      <img
+        class="avatar"
+        src="https://i.pravatar.cc/120?img=13"
+        alt="Portrait of Ava Chen"
+      />
+      <h1 class="name">Ava Chen</h1>
+      <p class="role">Product Designer</p>
+      <p class="bio">Designing calm, accessible interfaces for teams that ship fast.</p>
+      <button class="follow" id="followBtn">Follow</button>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>`,
+        },
+        {
+          name: "styles.css",
+          language: "css",
+          content: `:root {
+  --brand: #7100bd;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f4f4f7;
+}
+.card {
+  background: #fff;
+  padding: 32px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  max-width: 320px;
+}
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--brand);
+}
+.name { margin: 16px 0 4px; font-size: 20px; color: #18181b; }
+.role { margin: 0; color: var(--brand); font-weight: 600; }
+.bio { color: #555; font-size: 14px; line-height: 1.5; }
+
+/* TODO: style the .follow button and add a hover state */
+.follow {
+}
+`,
+        },
+        {
+          name: "script.js",
+          language: "javascript",
+          content: `const btn = document.getElementById("followBtn");
+let following = false;
+
+btn.addEventListener("click", () => {
+  following = !following;
+  btn.textContent = following ? "Following" : "Follow";
+  console.log("Follow state:", following);
+});
+`,
+        },
+        {
+          name: "package.json",
+          language: "json",
+          content: `{
+  "name": "profile-card",
+  "version": "1.0.0",
+  "description": "Responsive profile card component challenge"
+}
+`,
+        },
       ],
     },
     {
