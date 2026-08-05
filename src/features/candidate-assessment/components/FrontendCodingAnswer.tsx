@@ -16,12 +16,10 @@ import {
   Smartphone,
   Sparkles,
   Tablet,
-  Trash2,
   Wand2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
   AssessmentQuestion,
   FrontendAsset,
@@ -33,8 +31,6 @@ interface FrontendCodingAnswerProps {
 }
 
 type DeviceMode = "desktop" | "tablet" | "mobile";
-type ConsoleEntry = { level: string; msg: string };
-type A11yFinding = { severity: "error" | "warning" | "pass"; text: string };
 
 const DEVICE_WIDTHS: Record<DeviceMode, string> = {
   desktop: "100%",
@@ -250,17 +246,50 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
   const [device, setDevice] = useState<DeviceMode>("desktop");
   const [zoom, setZoom] = useState(1);
-  const [previewTab, setPreviewTab] = useState<"preview" | "console" | "network" | "a11y">("preview");
-  const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
-  const [a11y, setA11y] = useState<A11yFinding[]>([]);
   const [lightbox, setLightbox] = useState(false);
   const [srcDoc, setSrcDoc] = useState("");
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
+
+  // Resizable preview width (px). null → use the default (24%).
+  const widthStorageKey = `fe-preview-width:${question.id}`;
+  const [previewWidth, setPreviewWidth] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = window.sessionStorage.getItem(`fe-preview-width:${question.id}`);
+    return saved ? Number(saved) : null;
+  });
+  const [dragging, setDragging] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const saveTimer = useRef<number | null>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
+
+  /* ── Draggable splitter between editor and preview ── */
+  function startResize(e: React.PointerEvent) {
+    e.preventDefault();
+    setDragging(true);
+    const onMove = (ev: PointerEvent) => {
+      const rect = workspaceRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const raw = rect.right - ev.clientX;
+      const max = rect.width * 0.4;
+      const min = Math.min(320, max);
+      const clamped = Math.max(min, Math.min(max, raw));
+      setPreviewWidth(clamped);
+    };
+    const onUp = () => {
+      setDragging(false);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      setPreviewWidth((w) => {
+        if (w != null) window.sessionStorage.setItem(widthStorageKey, String(Math.round(w)));
+        return w;
+      });
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
 
   const current = files.find((f) => f.name === activeFile) ?? files[0];
   const referenceSrc = question.referenceImage ? toSrc(question.referenceImage) : null;
@@ -276,19 +305,13 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
       .replace(/<link[^>]*href=["']styles\.css["'][^>]*>/gi, "")
       .replace(/<script[^>]*src=["']script\.js["'][^>]*><\/script>/gi, "");
 
-    const consoleHook = `<script>(function(){
-      var send=function(level,args){try{parent.postMessage({__feConsole:true,level:level,msg:Array.prototype.map.call(args,function(a){try{return typeof a==='object'?JSON.stringify(a):String(a);}catch(e){return String(a);}}).join(' ')},'*');}catch(e){}};
-      ['log','info','warn','error'].forEach(function(l){var o=console[l];console[l]=function(){send(l,arguments);o.apply(console,arguments);};});
-      window.addEventListener('error',function(e){send('error',[e.message]);});
-    })();</script>`;
-
     const styleTag = css ? `<style>${css}</style>` : "";
     const scriptTag = js ? `<script>${js}</script>` : "";
 
     if (doc.includes("</head>")) {
-      doc = doc.replace("</head>", `${consoleHook}${styleTag}</head>`);
+      doc = doc.replace("</head>", `${styleTag}</head>`);
     } else {
-      doc = `${consoleHook}${styleTag}${doc}`;
+      doc = `${styleTag}${doc}`;
     }
     if (doc.includes("</body>")) {
       doc = doc.replace("</body>", `${scriptTag}</body>`);
@@ -301,85 +324,11 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
   /* ── Debounced rebuild of the preview on edits ── */
   useEffect(() => {
     const t = window.setTimeout(() => {
-      setConsoleEntries([]);
       setSrcDoc(buildSrcDoc());
     }, 400);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files]);
-
-  /* ── Capture console messages from the iframe ── */
-  useEffect(() => {
-    function onMessage(e: MessageEvent) {
-      if (e.data && e.data.__feConsole) {
-        setConsoleEntries((prev) => [...prev, { level: e.data.level, msg: e.data.msg }]);
-      }
-    }
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, []);
-
-  /* ── Accessibility checks against the rendered document ── */
-  function runA11y() {
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc) return;
-    const findings: A11yFinding[] = [];
-
-    const imgs = Array.from(doc.querySelectorAll("img"));
-    const noAlt = imgs.filter((img) => !img.hasAttribute("alt"));
-    findings.push(
-      noAlt.length
-        ? { severity: "error", text: `${noAlt.length} image(s) missing alt text` }
-        : { severity: "pass", text: "All images have alt text" },
-    );
-
-    const html = doc.documentElement;
-    findings.push(
-      html.getAttribute("lang")
-        ? { severity: "pass", text: "Document has a lang attribute" }
-        : { severity: "warning", text: "<html> is missing a lang attribute" },
-    );
-
-    const headings = Array.from(doc.querySelectorAll("h1,h2,h3,h4,h5,h6"));
-    const h1s = headings.filter((h) => h.tagName === "H1");
-    findings.push(
-      h1s.length === 1
-        ? { severity: "pass", text: "Exactly one <h1> present" }
-        : { severity: "warning", text: `Found ${h1s.length} <h1> heading(s)` },
-    );
-
-    const buttons = Array.from(doc.querySelectorAll("button,a"));
-    const empty = buttons.filter((b) => !b.textContent?.trim() && !b.getAttribute("aria-label"));
-    findings.push(
-      empty.length
-        ? { severity: "error", text: `${empty.length} control(s) without accessible name` }
-        : { severity: "pass", text: "Buttons and links have accessible names" },
-    );
-
-    const inputs = Array.from(doc.querySelectorAll("input,select,textarea"));
-    const unlabeled = inputs.filter((el) => {
-      const id = el.getAttribute("id");
-      const hasLabel = id && doc.querySelector(`label[for="${id}"]`);
-      return !hasLabel && !el.getAttribute("aria-label");
-    });
-    if (inputs.length) {
-      findings.push(
-        unlabeled.length
-          ? { severity: "warning", text: `${unlabeled.length} form field(s) without a label` }
-          : { severity: "pass", text: "Form fields are labelled" },
-      );
-    }
-
-    setA11y(findings);
-  }
-
-  useEffect(() => {
-    if (previewTab === "a11y") {
-      const t = window.setTimeout(runA11y, 100);
-      return () => window.clearTimeout(t);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewTab, srcDoc]);
 
   /* ── Editing ── */
   function updateActiveFile(content: string) {
@@ -432,11 +381,19 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
   return (
     <div className="fe-workspace h-full">
       <div
+        ref={workspaceRef}
         className="fe-workspace-grid"
-        style={previewCollapsed ? { gridTemplateColumns: "28fr 72fr 44px" } : undefined}
+        style={{
+          "--fe-q": "24%",
+          "--fe-pv": previewCollapsed
+            ? "44px"
+            : previewWidth != null
+              ? `${previewWidth}px`
+              : "24%",
+        } as React.CSSProperties}
       >
         {/* ── Column 1 — Design brief ── */}
-        <section className="flex min-h-[280px] flex-col overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-[#FAFAFA] dark:border-white/[0.06] dark:bg-[#0C0C0F]">
+        <section className="fe-col-q flex min-h-[280px] flex-col overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-[#FAFAFA] dark:border-white/[0.06] dark:bg-[#0C0C0F]">
           <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-text">
               {question.title}
@@ -503,8 +460,8 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
           </div>
         </section>
 
-        {/* ── Column 2 — Code editor ── */}
-        <section className="flex min-h-[420px] flex-col overflow-hidden rounded-xl bg-[#1e1e1e]">
+        {/* ── Column 2 — Code editor (dominant workspace) ── */}
+        <section className="fe-col-editor flex min-h-[420px] flex-col overflow-hidden rounded-xl bg-[#1e1e1e]">
           {/* Editor header */}
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
             <select
@@ -595,9 +552,26 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
           </div>
         </section>
 
+        {/* Draggable splitter — resize the preview (only when expanded) */}
+        {!previewCollapsed && (
+          <div
+            className="fe-splitter"
+            data-dragging={dragging}
+            onPointerDown={startResize}
+            onDoubleClick={() => {
+              setPreviewWidth(null);
+              window.sessionStorage.removeItem(widthStorageKey);
+            }}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize preview panel"
+            title="Drag to resize · double-click to reset"
+          />
+        )}
+
         {/* ── Column 3 — Live preview ── */}
         {previewCollapsed ? (
-          <section className="flex min-h-[44px] flex-col items-center gap-3 overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-2 dark:border-white/[0.06] dark:bg-[#0C0C0F]">
+          <section className="fe-col-preview flex min-h-[44px] flex-col items-center gap-3 overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white py-2 dark:border-white/[0.06] dark:bg-[#0C0C0F]">
             <button
               type="button"
               onClick={() => setPreviewCollapsed(false)}
@@ -615,9 +589,9 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
             </span>
           </section>
         ) : (
-        <section className="flex min-h-[420px] flex-col overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white dark:border-white/[0.06] dark:bg-[#0C0C0F]">
-          {/* Browser chrome */}
-          <div className="flex shrink-0 items-center justify-between gap-1 border-b border-[rgba(15,23,42,0.06)] px-2 py-1.5 dark:border-white/[0.06]">
+        <section className="fe-col-preview flex min-h-[420px] flex-col overflow-hidden rounded-xl border border-[rgba(15,23,42,0.06)] bg-white dark:border-white/[0.06] dark:bg-[#0C0C0F]">
+          {/* Browser chrome — compact (secondary to the editor) */}
+          <div className="flex shrink-0 items-center justify-between gap-1 border-b border-[rgba(15,23,42,0.06)] px-2 py-1 dark:border-white/[0.06]">
             <div className="flex items-center gap-0.5">
               {([
                 ["desktop", Monitor],
@@ -629,14 +603,14 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
                   type="button"
                   onClick={() => setDevice(mode)}
                   className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-md transition-colors",
+                    "flex h-6 w-6 items-center justify-center rounded-md transition-colors",
                     device === mode
                       ? "bg-accent/10 text-accent"
                       : "text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]",
                   )}
                   aria-label={mode}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-3 w-3" />
                 </button>
               ))}
             </div>
@@ -644,155 +618,58 @@ export function FrontendCodingAnswer({ question }: FrontendCodingAnswerProps) {
               <button
                 type="button"
                 onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.1).toFixed(2)))}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
                 aria-label="Zoom out"
               >
-                <Minus className="h-3.5 w-3.5" />
+                <Minus className="h-3 w-3" />
               </button>
-              <span className="w-8 text-center text-[10px] tabular-nums text-muted">
+              <span className="w-7 text-center text-[10px] tabular-nums text-muted">
                 {Math.round(zoom * 100)}%
               </span>
               <button
                 type="button"
                 onClick={() => setZoom((z) => Math.min(2, +(z + 0.1).toFixed(2)))}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
                 aria-label="Zoom in"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-3 w-3" />
               </button>
               <button
                 type="button"
                 onClick={() => setSrcDoc(buildSrcDoc())}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
                 aria-label="Refresh preview"
               >
-                <RefreshCw className="h-3.5 w-3.5" />
+                <RefreshCw className="h-3 w-3" />
               </button>
               <button
                 type="button"
                 onClick={() => setPreviewCollapsed(true)}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-[rgba(15,23,42,0.05)] hover:text-text dark:hover:bg-white/[0.06]"
                 aria-label="Collapse preview"
                 title="Collapse preview"
               >
-                <PanelRightClose className="h-3.5 w-3.5" />
+                <PanelRightClose className="h-3 w-3" />
               </button>
             </div>
           </div>
 
-          {/* Tabs */}
-          <Tabs
-            value={previewTab}
-            onValueChange={(v) => setPreviewTab(v as typeof previewTab)}
-            className="flex min-h-0 flex-1 flex-col"
-          >
-            <TabsList size="compact" className="shrink-0 px-2">
-              <TabsTrigger value="preview" size="compact">Preview</TabsTrigger>
-              <TabsTrigger value="console" size="compact">
-                Console
-                {consoleEntries.length > 0 && (
-                  <span className="ml-1 text-[10px] text-muted">({consoleEntries.length})</span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="network" size="compact">Network</TabsTrigger>
-              <TabsTrigger value="a11y" size="compact">A11y</TabsTrigger>
-            </TabsList>
-
-            {/* Preview — force-mounted so the iframe stays alive for a11y/console checks */}
-            <TabsContent
-              value="preview"
-              forceMount
-              className="mt-0 min-h-0 flex-1 overflow-auto bg-[rgba(15,23,42,0.03)] p-2 data-[state=inactive]:hidden dark:bg-black/20"
+          {/* Live preview canvas */}
+          <div className="min-h-0 flex-1 overflow-auto bg-[rgba(15,23,42,0.03)] p-2 dark:bg-black/20">
+            <div
+              className="mx-auto h-full overflow-hidden rounded-lg border border-[rgba(15,23,42,0.08)] bg-white shadow-sm dark:border-white/[0.08]"
+              style={{ width: DEVICE_WIDTHS[device], maxWidth: "100%" }}
             >
-              <div
-                className="mx-auto h-full overflow-hidden rounded-lg border border-[rgba(15,23,42,0.08)] bg-white shadow-sm dark:border-white/[0.08]"
-                style={{ width: DEVICE_WIDTHS[device], maxWidth: "100%" }}
-              >
-                <iframe
-                  ref={iframeRef}
-                  title="Live preview"
-                  srcDoc={srcDoc}
-                  sandbox="allow-scripts allow-same-origin"
-                  className="h-full w-full origin-top border-0"
-                  style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
-                />
-              </div>
-            </TabsContent>
-
-            {/* Console */}
-            <TabsContent value="console" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="flex shrink-0 items-center justify-between px-3 pt-2">
-                <span className="text-[10px] font-medium uppercase tracking-wide text-muted">Console</span>
-                <button
-                  type="button"
-                  onClick={() => setConsoleEntries([])}
-                  className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted transition-colors hover:bg-[rgba(15,23,42,0.04)] hover:text-text dark:hover:bg-white/[0.04]"
-                >
-                  <Trash2 className="h-3 w-3" />
-                  Clear Console
-                </button>
-              </div>
-              <div className="m-2 mt-2 min-h-0 flex-1 overflow-auto rounded-lg bg-[#1a1a1a] p-2 font-mono text-[11px] leading-relaxed">
-                {consoleEntries.length === 0 ? (
-                  <span className="text-[#5a5a5a]">Console output will appear here.</span>
-                ) : (
-                  consoleEntries.map((entry, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        "border-b border-white/[0.04] py-0.5",
-                        entry.level === "error"
-                          ? "text-red-400"
-                          : entry.level === "warn"
-                            ? "text-amber-400"
-                            : "text-[#d4d4d4]",
-                      )}
-                    >
-                      <span className="mr-1.5 text-[#5a5a5a]">{entry.level}</span>
-                      {entry.msg}
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            {/* Network */}
-            <TabsContent value="network" className="mt-0 min-h-0 flex-1 overflow-auto p-3">
-              <p className="py-6 text-center text-[11px] text-muted">
-                No external network requests in this sandbox.
-              </p>
-            </TabsContent>
-
-            {/* Accessibility */}
-            <TabsContent value="a11y" className="mt-0 min-h-0 flex-1 overflow-auto p-3">
-              <div className="space-y-1.5">
-                {a11y.length === 0 ? (
-                  <p className="py-6 text-center text-[11px] text-muted">Running checks…</p>
-                ) : (
-                  a11y.map((f, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        "flex items-start gap-2 rounded-lg border px-2.5 py-2 text-[11px]",
-                        f.severity === "error"
-                          ? "border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400"
-                          : f.severity === "warning"
-                            ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-400",
-                      )}
-                    >
-                      {f.severity === "pass" ? (
-                        <Check className="mt-0.5 h-3 w-3 shrink-0" strokeWidth={3} />
-                      ) : (
-                        <span className="mt-0.5 h-3 w-3 shrink-0 text-center font-bold leading-none">!</span>
-                      )}
-                      <span>{f.text}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
+              <iframe
+                ref={iframeRef}
+                title="Live preview"
+                srcDoc={srcDoc}
+                sandbox="allow-scripts allow-same-origin"
+                className="h-full w-full origin-top border-0"
+                style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
+              />
+            </div>
+          </div>
         </section>
         )}
       </div>

@@ -4,6 +4,7 @@ import React from "react";
 import { PanelLeftClose } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { CameraPreview } from "./CameraPreview";
 import type {
   AssessmentSection,
   AssessmentQuestion,
@@ -14,6 +15,7 @@ interface SectionNavigatorProps {
   currentSectionId: string;
   currentQuestionId: string | null;
   markedForReview?: Set<string>;
+  candidateName?: string;
   onSelectSection: (sectionId: string) => void;
   onSelectQuestion: (questionId: string) => void;
   onSubmitAssessment: () => void;
@@ -58,6 +60,7 @@ export function SectionNavigator({
   currentSectionId,
   currentQuestionId,
   markedForReview,
+  candidateName,
   onSelectSection,
   onSelectQuestion,
   onSubmitAssessment,
@@ -164,8 +167,14 @@ export function SectionNavigator({
         })}
       </div>
 
-      {/* Bottom: legend + submit */}
+      {/* Bottom: camera + legend + submit */}
       <div className="border-t border-[rgba(15,23,42,0.06)] px-4 py-3 dark:border-white/[0.06]">
+        {candidateName && (
+          <div className="mb-3">
+            <CameraPreview candidateName={candidateName} docked />
+          </div>
+        )}
+
         <div className="mb-3 flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="h-[6px] w-[6px] rounded-full bg-emerald-500" />

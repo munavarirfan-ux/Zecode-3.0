@@ -15,6 +15,19 @@ export interface MCQOption {
   text: string;
 }
 
+export interface DbColumn {
+  name: string;
+  type: string;
+  pk?: boolean;
+  fk?: boolean;
+  nullable?: boolean;
+}
+
+export interface DbTable {
+  name: string;
+  columns: DbColumn[];
+}
+
 export type FrontendFileLanguage = "html" | "css" | "javascript" | "json";
 
 export interface FrontendFile {
@@ -61,6 +74,12 @@ export interface AssessmentQuestion {
   assets?: FrontendAsset[];
   referenceImage?: string;
   files?: FrontendFile[];
+  /** Database / SQL question extras. */
+  constraints?: string[];
+  erDiagram?: string;
+  dbTables?: DbTable[];
+  queryColumns?: string[];
+  queryRows?: (string | number)[][];
 }
 
 export interface AssessmentSection {

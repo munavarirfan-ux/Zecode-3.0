@@ -620,7 +620,7 @@
 @container coding (min-width: 540px) {
   .coding-workspace-grid {
     display: grid;
-    grid-template-columns: 27fr 50fr 23fr;
+    grid-template-columns: 22fr 58fr 20fr;
     gap: 0.75rem;
     overflow: hidden;
   }
@@ -644,14 +644,116 @@
   overflow-y: auto;
 }
 
+/* Vertical splitter between editor and preview (row mode only) */
+.fe-splitter {
+  display: none;
+}
+
 @container fe (min-width: 540px) {
   .fe-workspace-grid {
-    display: grid;
-    grid-template-columns: 28fr 40fr 32fr;
-    gap: 0.75rem;
+    flex-direction: row;
+    gap: 0;
     overflow: hidden;
   }
   .fe-workspace-grid > section {
+    min-height: 0;
+  }
+  /* Column sizing — editor is the dominant, flexible panel */
+  .fe-col-q {
+    flex: 0 0 var(--fe-q, 26%);
+  }
+  .fe-col-editor {
+    flex: 1 1 0;
+    min-width: 0;
+    margin-left: 0.75rem;
+  }
+  .fe-col-preview {
+    flex: 0 0 var(--fe-pv, 24%);
+  }
+  .fe-splitter {
+    display: flex;
+    position: relative;
+    flex: 0 0 12px;
+    align-items: center;
+    justify-content: center;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .fe-splitter::before {
+    content: "";
+    width: 2px;
+    height: 100%;
+    border-radius: 2px;
+    background: rgba(15, 23, 42, 0.1);
+    transition: background 150ms ease;
+  }
+  .fe-splitter:hover::before,
+  .fe-splitter[data-dragging="true"]::before {
+    background: rgb(var(--accent-rgb));
+  }
+}
+
+/* ── Assessment timer — premium floating pill ── */
+@keyframes ze-timer-flip {
+  0% {
+    transform: translateY(-55%);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.ze-timer-flip {
+  display: inline-block;
+  animation: ze-timer-flip 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes ze-timer-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.025);
+  }
+}
+.ze-timer-pulse {
+  animation: ze-timer-pulse 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ze-timer-flip,
+  .ze-timer-pulse {
+    animation: none;
+  }
+}
+
+/* ── Candidate SQL / Database workspace: 3-column layout ── */
+.db-workspace {
+  container-type: inline-size;
+  container-name: db;
+}
+
+.db-workspace-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+@container db (min-width: 620px) {
+  .db-workspace-grid {
+    display: grid;
+    grid-template-columns: 24fr 58fr 18fr;
+    gap: 0.75rem;
+    overflow: hidden;
+  }
+  .db-workspace-grid > section {
     min-height: 0;
   }
 }
