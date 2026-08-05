@@ -1,384 +1,561 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Play,
-  ArrowRight,
-  ClipboardList,
-  Monitor,
-  Code2,
-  ShieldAlert,
-  Navigation,
-  AlertTriangle,
-  CheckCircle2,
-  Wifi,
-  Camera,
-  Volume2,
-  Clock,
-  BarChart3,
-} from "lucide-react";
+import { useMemo, useState, type ComponentType } from "react";
+import { ArrowRight, BarChart3, Check, ClipboardList, Clock, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { AssessmentData } from "@/features/candidate-assessment/types";
+import type { AssessmentData, GuidelineSection } from "@/features/candidate-assessment/types";
+import {
+  ComplianceIllo,
+  EnvironmentIllo,
+  MonitoringIllo,
+  NavigationIllo,
+  OverviewIllo,
+  ReadyIllo,
+  SubmissionIllo,
+} from "./GuidelineIllustrations";
 
 interface GuidelinesScreenProps {
   assessment: AssessmentData;
   onStart: () => void;
 }
 
-const GUIDELINE_STYLES: Record<
-  string,
-  { icon: typeof ClipboardList; tintBg: string; tintText: string; tintBorder: string }
-> = {
+/* ── Per-guideline presentation (illustration, tone, copy) ── */
+type Illo = ComponentType<{ className?: string }>;
+
+interface StepConfig {
+  Illo: Illo;
+  /** short lead-in shown under the title */
+  description: string;
+  /** completes the sentence "I have read and understood …" */
+  confirm: string;
+  /** compact stepper label */
+  short: string;
+  /** soft illustration-cell background */
+  cell: string;
+}
+
+const STEP_CONFIG: Record<string, StepConfig> = {
   overview: {
-    icon: ClipboardList,
-    tintBg: "bg-violet-500/8 dark:bg-violet-400/10",
-    tintText: "text-violet-600 dark:text-violet-400",
-    tintBorder: "border-violet-500/10 dark:border-violet-400/10",
+    Illo: OverviewIllo,
+    description: "Understand how the assessment works before you begin.",
+    confirm: "the assessment overview",
+    short: "Assessment",
+    cell: "bg-gradient-to-br from-violet-50 to-white dark:from-violet-500/[0.06] dark:to-transparent",
   },
   environment: {
-    icon: Monitor,
-    tintBg: "bg-blue-500/8 dark:bg-blue-400/10",
-    tintText: "text-blue-600 dark:text-blue-400",
-    tintBorder: "border-blue-500/10 dark:border-blue-400/10",
+    Illo: EnvironmentIllo,
+    description: "Prepare your device and surroundings for a smooth session.",
+    confirm: "the environment requirements",
+    short: "Environment",
+    cell: "bg-gradient-to-br from-blue-50 to-white dark:from-blue-500/[0.06] dark:to-transparent",
   },
   "code-submission": {
-    icon: Code2,
-    tintBg: "bg-cyan-500/8 dark:bg-cyan-400/10",
-    tintText: "text-cyan-600 dark:text-cyan-400",
-    tintBorder: "border-cyan-500/10 dark:border-cyan-400/10",
+    Illo: SubmissionIllo,
+    description: "Write, test, and submit your code safely.",
+    confirm: "the code submission process",
+    short: "Submission",
+    cell: "bg-gradient-to-br from-cyan-50 to-white dark:from-cyan-500/[0.06] dark:to-transparent",
   },
   compliance: {
-    icon: ShieldAlert,
-    tintBg: "bg-amber-500/8 dark:bg-amber-400/10",
-    tintText: "text-amber-600 dark:text-amber-400",
-    tintBorder: "border-amber-500/10 dark:border-amber-400/10",
+    Illo: ComplianceIllo,
+    description: "Follow the rules and remain inside the assessment.",
+    confirm: "the compliance rules",
+    short: "Compliance",
+    cell: "bg-gradient-to-br from-amber-50 to-white dark:from-amber-500/[0.06] dark:to-transparent",
   },
   navigation: {
-    icon: Navigation,
-    tintBg: "bg-emerald-500/8 dark:bg-emerald-400/10",
-    tintText: "text-emerald-600 dark:text-emerald-400",
-    tintBorder: "border-emerald-500/10 dark:border-emerald-400/10",
+    Illo: NavigationIllo,
+    description: "Navigate between questions and track your progress.",
+    confirm: "how to navigate the exam",
+    short: "Navigation",
+    cell: "bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-500/[0.06] dark:to-transparent",
   },
 };
 
+/* Active monitoring is presented as its own step (content preserved from the
+   existing monitoring notice — meaning unchanged, presentation improved). */
+const MONITORING_STEP: GuidelineSection & { config: StepConfig } = {
+  id: "monitoring",
+  title: "Active monitoring",
+  items: [
+    "Your webcam feed is recorded throughout the assessment.",
+    "Screen activity is captured and reviewed.",
+    "Browser tab switches and leaving the frame are detected.",
+    "Any suspicious activity will be flagged for review.",
+  ],
+  config: {
+    Illo: MonitoringIllo,
+    description: "Your webcam, screen, and browser activity are monitored.",
+    confirm: "the monitoring policy",
+    short: "Monitoring",
+    cell: "bg-gradient-to-br from-amber-50/80 to-white dark:from-amber-500/[0.05] dark:to-transparent",
+  },
+};
+
+type Step = GuidelineSection & { config: StepConfig };
+
+/* ── Reusable checklist row ── */
+function CheckRow({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-2.5 text-[15px] leading-snug text-text-secondary">
+      <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-400">
+        <Check className="h-2.5 w-2.5" strokeWidth={3} />
+      </span>
+      <span>{children}</span>
+    </li>
+  );
+}
+
 export function GuidelinesScreen({ assessment, onStart }: GuidelinesScreenProps) {
+  /* Build the ordered step list: existing guidelines (order preserved) + monitoring. */
+  const steps = useMemo<Step[]>(() => {
+    const fromData = assessment.guidelines
+      .filter((g) => STEP_CONFIG[g.id])
+      .map((g) => ({ ...g, config: STEP_CONFIG[g.id] }));
+    return [...fromData, MONITORING_STEP];
+  }, [assessment.guidelines]);
+
+  const TOTAL = steps.length;
+  const FINAL = TOTAL; // virtual index for the final consent step
+
+  const [completed, setCompleted] = useState<Set<number>>(new Set());
+  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [activeStep, setActiveStep] = useState(0);
   const [consentIndependent, setConsentIndependent] = useState(false);
   const [consentMonitoring, setConsentMonitoring] = useState(false);
 
+  const completedCount = useMemo(() => {
+    let n = 0;
+    while (completed.has(n)) n += 1;
+    return n;
+  }, [completed]);
+
   const allConsented = consentIndependent && consentMonitoring;
 
+  function confirmAndContinue(i: number) {
+    setCompleted((prev) => new Set(prev).add(i));
+    setActiveStep(i + 1); // advance directly to the next step (or final consent)
+  }
+
+  const displayIndex = activeStep < TOTAL ? activeStep + 1 : TOTAL;
+
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAFAFB] dark:bg-[#0E0E11]">
-      {/* Header */}
-      <header className="sticky top-0 z-20 flex h-14 items-center border-b border-[rgba(15,23,42,0.06)] bg-white/80 backdrop-blur-md px-4 lg:px-6 dark:border-white/[0.06] dark:bg-[#0E0E11]/80">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-accent/10">
-            <span className="text-[10px] font-bold text-accent">Ze</span>
-          </div>
-          <span className="text-[15px] font-semibold text-text">Ze[code]</span>
-        </div>
-        <p className="ml-auto hidden text-sm font-medium text-text-secondary lg:block">
-          {assessment.title}
-        </p>
-      </header>
-
-      {/* Body */}
-      <div className="mx-auto flex w-full max-w-[1100px] flex-1 flex-col gap-6 px-4 py-8 pb-28 lg:grid lg:grid-cols-[300px_1fr] lg:gap-8 lg:px-6">
-        {/* Left column - Assessment summary (sticky) */}
-        <aside className="lg:sticky lg:top-[calc(3.5rem+2rem)] lg:self-start">
-          <div className="overflow-hidden rounded-[16px] border border-[rgba(15,23,42,0.06)] bg-white shadow-sm dark:border-white/[0.06] dark:bg-[#1a1a1f]">
-            {/* Summary header */}
-            <div className="border-b border-[rgba(15,23,42,0.05)] bg-gradient-to-br from-accent/[0.03] via-transparent to-transparent px-5 pb-4 pt-5 dark:border-white/[0.04]">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-accent/70">
-                Assessment Details
-              </span>
-              <h3 className="mt-1.5 text-[15px] font-semibold leading-tight text-text">
-                {assessment.title}
-              </h3>
-              <span className="mt-2 inline-block rounded-full bg-accent/10 px-2.5 py-0.5 text-[10px] font-semibold text-accent">
-                {assessment.role}
-              </span>
+    <TooltipProvider delayDuration={200}>
+      <div className="ze-guidelines-bg flex min-h-screen flex-col">
+        {/* Header */}
+        <header className="sticky top-0 z-20 flex h-14 items-center border-b border-[rgba(15,23,42,0.06)] bg-white/80 px-4 backdrop-blur-md lg:px-6 dark:border-white/[0.06] dark:bg-[#0E0E11]/80">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-accent/10">
+              <span className="text-[10px] font-bold text-accent">Ze</span>
             </div>
-
-            {/* Stats */}
-            <div className="px-5 py-4">
-              <dl className="space-y-3 text-[13px]">
-                <div className="flex items-center justify-between">
-                  <dt className="flex items-center gap-2 text-text-secondary">
-                    <Clock className="h-3.5 w-3.5" />
-                    Duration
-                  </dt>
-                  <dd className="font-semibold text-text">{assessment.duration} min</dd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <dt className="flex items-center gap-2 text-text-secondary">
-                    <ClipboardList className="h-3.5 w-3.5" />
-                    Questions
-                  </dt>
-                  <dd className="font-semibold text-text">{assessment.totalQuestions}</dd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <dt className="flex items-center gap-2 text-text-secondary">
-                    <BarChart3 className="h-3.5 w-3.5" />
-                    Sections
-                  </dt>
-                  <dd className="font-semibold text-text">{assessment.sections.length}</dd>
-                </div>
-              </dl>
-
-              {/* Skills */}
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {assessment.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-[6px] border border-accent/10 bg-accent/[0.05] px-2 py-0.5 text-[10px] font-medium text-accent dark:border-accent/20 dark:bg-accent/10"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <span className="text-[15px] font-semibold text-text">Ze[code]</span>
           </div>
-        </aside>
+          <p className="ml-auto hidden text-sm font-medium text-text-secondary lg:block">
+            {assessment.title}
+          </p>
+        </header>
 
-        {/* Right column */}
-        <main className="space-y-8">
-          {/* Page intro */}
-          <div>
+        {/* Body — vertically centered block; `my-auto` falls back to top
+            alignment + scrolling when the content is taller than the viewport. */}
+        <div className="flex min-h-[calc(100vh-3.5rem)] flex-col px-4 sm:px-6 md:px-10 lg:px-12">
+          <div className="mx-auto my-auto w-full max-w-[1440px] py-6 lg:py-8">
+          {/* Intro + meta */}
+          <div className="mb-2.5">
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">
-              Step 2 of 3
+              Guidelines
             </span>
-            <h1 className="mt-2 text-[clamp(1.5rem,3vw,1.875rem)] font-bold leading-tight tracking-[-0.02em] text-text">
+            <h1 className="mt-1 text-[clamp(1.5rem,2.2vw,1.875rem)] font-bold leading-tight tracking-[-0.02em] text-text">
               Prepare for your assessment
             </h1>
-            <p className="mt-2 max-w-[520px] text-[15px] leading-relaxed text-text-secondary">
-              Review the guidelines below carefully. Understanding these will help you navigate
-              the assessment smoothly and avoid common issues.
+            <p className="mt-1.5 max-w-[640px] text-[14px] leading-relaxed text-text-secondary">
+              Read each guideline and confirm you understand it. The next step appears once you
+              continue.
             </p>
 
-            {/* Progress pills */}
-            <div className="mt-4 flex items-center gap-2">
-              <div className="h-1.5 w-10 rounded-full bg-accent" />
-              <div className="h-1.5 w-10 rounded-full bg-accent" />
-              <div className="h-1.5 w-10 rounded-full bg-[rgba(15,23,42,0.08)] dark:bg-white/[0.08]" />
+            {/* compact assessment meta */}
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-text-secondary">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-muted" />
+                <span className="font-semibold text-text">{assessment.duration} min</span> duration
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ClipboardList className="h-3.5 w-3.5 text-muted" />
+                <span className="font-semibold text-text">{assessment.totalQuestions}</span> questions
+              </span>
+              <span className="flex items-center gap-1.5">
+                <BarChart3 className="h-3.5 w-3.5 text-muted" />
+                <span className="font-semibold text-text">{assessment.sections.length}</span> sections
+              </span>
             </div>
           </div>
 
-          {/* Guideline cards */}
-          <section className="space-y-3">
-            {assessment.guidelines.map((section) => {
-              const style = GUIDELINE_STYLES[section.id] || GUIDELINE_STYLES.overview;
-              const Icon = style.icon;
-              return (
-                <div
-                  key={section.id}
-                  className={cn(
-                    "rounded-[14px] border bg-white p-5 dark:bg-[#1a1a1f]",
-                    style.tintBorder,
-                  )}
-                >
-                  <div className="flex items-start gap-3.5">
-                    <div
-                      className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]",
-                        style.tintBg,
-                      )}
-                    >
-                      <Icon className={cn("h-4 w-4", style.tintText)} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-[14px] font-semibold text-text">
-                        {section.title}
-                      </h3>
-                      <ul className="mt-2.5 space-y-2">
-                        {section.items.map((item, idx) => (
-                          <li
-                            key={idx}
-                            className="flex items-start gap-2.5 text-[13px] leading-relaxed text-text-secondary"
-                          >
-                            <span
-                              className={cn(
-                                "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full",
-                                style.tintBg,
-                              )}
-                            />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </section>
-
-          {/* Monitoring warning callout */}
-          <div className="flex items-start gap-3.5 rounded-[14px] border border-amber-500/15 bg-amber-500/[0.04] p-5 dark:border-amber-400/15 dark:bg-amber-400/[0.06]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-amber-500/10 dark:bg-amber-400/15">
-              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <h3 className="text-[14px] font-semibold text-amber-800 dark:text-amber-300">
-                Active monitoring enabled
-              </h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-amber-700/80 dark:text-amber-300/70">
-                Your webcam, screen activity, and browser tabs will be monitored throughout
-                the assessment. Any suspicious activity such as switching tabs, opening
-                external tools, or leaving the frame will be flagged for review.
-              </p>
-            </div>
+          {/* Progress stepper */}
+          <div className="shrink-0">
+            <StepProgress
+              steps={steps}
+              completed={completed}
+              completedCount={completedCount}
+              activeStep={activeStep}
+              displayIndex={displayIndex}
+              total={TOTAL}
+              onJump={(i) => setActiveStep(i)}
+            />
           </div>
 
-          {/* Quick readiness check */}
-          <div className="rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white p-5 dark:border-white/[0.06] dark:bg-[#1a1a1f]">
-            <h3 className="text-[14px] font-semibold text-text">Quick readiness check</h3>
-            <p className="mt-1 text-[12px] text-text-secondary">
-              Make sure you have these ready before starting
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { icon: Wifi, label: "Stable internet" },
-                { icon: Camera, label: "Webcam ready" },
-                { icon: Volume2, label: "Quiet space" },
-                { icon: Clock, label: `${assessment.duration} min free` },
-              ].map(({ icon: ItemIcon, label }) => (
-                <div
-                  key={label}
-                  className="flex flex-col items-center gap-2 rounded-[10px] border border-[rgba(15,23,42,0.04)] bg-[rgba(15,23,42,0.015)] px-3 py-3.5 text-center dark:border-white/[0.04] dark:bg-white/[0.02]"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/8 dark:bg-emerald-400/10">
-                    <ItemIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <span className="text-[11px] font-medium text-text-secondary">{label}</span>
-                </div>
-              ))}
+          {/* Step flow — only the active step is rendered; the stepper is the
+              single source of navigation. `key` retriggers the fade transition. */}
+          <div className="mt-2">
+            <div key={activeStep} className="ze-step-in">
+              {activeStep === FINAL ? (
+                <FinalConsent
+                  consentIndependent={consentIndependent}
+                  consentMonitoring={consentMonitoring}
+                  onIndependent={setConsentIndependent}
+                  onMonitoring={setConsentMonitoring}
+                  allConsented={allConsented}
+                  onStart={onStart}
+                />
+              ) : (
+                <StepCard
+                  step={steps[activeStep]}
+                  index={activeStep}
+                  total={TOTAL}
+                  checked={!!checked[activeStep]}
+                  onCheck={(v) => setChecked((c) => ({ ...c, [activeStep]: v }))}
+                  onContinue={() => confirmAndContinue(activeStep)}
+                />
+              )}
             </div>
           </div>
+          </div>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+}
 
-          {/* Sections overview */}
-          <section>
-            <h2 className="text-[15px] font-semibold text-text">Sections breakdown</h2>
-            <p className="mt-1 text-[12px] text-text-secondary">
-              {assessment.sections.length} sections · {assessment.totalQuestions} questions total
-            </p>
-            <div className="mt-3 overflow-hidden rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white dark:border-white/[0.06] dark:bg-[#1a1a1f]">
-              {assessment.sections.map((section, idx) => (
-                <div
-                  key={section.id}
-                  className={cn(
-                    "flex items-center gap-4 px-5 py-3.5",
-                    idx !== assessment.sections.length - 1 &&
-                      "border-b border-[rgba(15,23,42,0.04)] dark:border-white/[0.04]",
-                  )}
-                >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] bg-accent/8 text-[11px] font-bold text-accent">
-                    {idx + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-text">{section.label}</p>
-                  </div>
-                  <span className="text-[12px] text-text-secondary">
-                    {section.questionCount} Qs
-                  </span>
-                  <span className="w-12 text-right text-[12px] font-medium text-text-secondary">
-                    {section.weightage}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
+/* ─────────────────────────── Progress stepper ─────────────────────────── */
+function StepProgress({
+  steps,
+  completed,
+  completedCount,
+  activeStep,
+  displayIndex,
+  total,
+  onJump,
+}: {
+  steps: Step[];
+  completed: Set<number>;
+  completedCount: number;
+  activeStep: number;
+  displayIndex: number;
+  total: number;
+  onJump: (i: number) => void;
+}) {
+  const currentTitle = activeStep < total ? steps[activeStep].title : "Final consent";
 
-          {/* Consent area */}
-          <section>
-            <div
+  return (
+    <div className="rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white px-5 py-2.5 dark:border-white/[0.06] dark:bg-[#1a1a1f] lg:px-10 lg:py-2.5">
+      {/* Desktop stepper */}
+      <ol className="hidden items-center sm:flex">
+        {steps.map((step, i) => {
+          const isDone = completed.has(i);
+          const isActive = activeStep === i;
+          const reachable = i <= completedCount;
+          const node = (
+            <button
+              type="button"
+              disabled={!reachable}
+              onClick={() => reachable && onJump(i)}
+              aria-current={isActive ? "step" : undefined}
               className={cn(
-                "rounded-[14px] border p-5 transition-colors duration-200",
-                allConsented
-                  ? "border-emerald-500/20 bg-emerald-500/[0.02] dark:border-emerald-400/20 dark:bg-emerald-400/[0.03]"
-                  : "border-[rgba(15,23,42,0.06)] bg-white dark:border-white/[0.06] dark:bg-[#1a1a1f]",
+                "flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-colors lg:h-8 lg:w-8 lg:text-[12px]",
+                isActive
+                  ? "bg-accent text-white ring-4 ring-accent/15"
+                  : isDone
+                    ? "bg-emerald-500 text-white"
+                    : "bg-[rgba(15,23,42,0.05)] text-muted dark:bg-white/[0.06]",
+                reachable ? "cursor-pointer" : "cursor-default",
               )}
             >
-              <div className="flex items-center gap-2">
-                <CheckCircle2
+              {isDone && !isActive ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
+            </button>
+          );
+          return (
+            <li key={step.id} className="flex flex-1 items-center last:flex-none">
+              <div className="flex flex-col items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>{node}</TooltipTrigger>
+                  <TooltipContent>{step.title}</TooltipContent>
+                </Tooltip>
+                <span
                   className={cn(
-                    "h-4 w-4 transition-colors",
-                    allConsented
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-muted",
+                    "text-[11px] font-medium lg:text-[12px]",
+                    isActive ? "text-text" : isDone ? "text-emerald-600 dark:text-emerald-400" : "text-muted",
                   )}
+                >
+                  {step.config.short}
+                </span>
+              </div>
+              {i < steps.length - 1 && (
+                <div
+                  className={cn(
+                    "mx-2.5 h-0.5 flex-1 rounded-full transition-colors lg:mx-4",
+                    i < completedCount ? "bg-emerald-500/70" : "bg-[rgba(15,23,42,0.08)] dark:bg-white/[0.08]",
+                  )}
+                  aria-hidden
                 />
-                <h3 className="text-[14px] font-semibold text-text">Consent & agreement</h3>
-              </div>
-              <p className="mt-1.5 text-[12px] text-text-secondary">
-                Please confirm the following before starting your assessment
-              </p>
+              )}
+            </li>
+          );
+        })}
+      </ol>
 
-              <div className="mt-4 space-y-3.5">
-                <label className="flex items-start gap-3 cursor-pointer rounded-[10px] border border-[rgba(15,23,42,0.04)] bg-[rgba(15,23,42,0.01)] p-3.5 transition-colors hover:bg-[rgba(15,23,42,0.02)] dark:border-white/[0.04] dark:bg-white/[0.01] dark:hover:bg-white/[0.03]">
-                  <Checkbox
-                    checked={consentIndependent}
-                    onCheckedChange={(checked) =>
-                      setConsentIndependent(checked === true)
-                    }
-                    className="mt-0.5"
-                  />
-                  <div>
-                    <span className="text-[13px] font-medium text-text">
-                      Independent work declaration
-                    </span>
-                    <p className="mt-0.5 text-[12px] leading-relaxed text-text-secondary">
-                      I confirm that I will complete this assessment independently without
-                      external assistance, notes, or unauthorized tools.
-                    </p>
-                  </div>
-                </label>
-
-                <label className="flex items-start gap-3 cursor-pointer rounded-[10px] border border-[rgba(15,23,42,0.04)] bg-[rgba(15,23,42,0.01)] p-3.5 transition-colors hover:bg-[rgba(15,23,42,0.02)] dark:border-white/[0.04] dark:bg-white/[0.01] dark:hover:bg-white/[0.03]">
-                  <Checkbox
-                    checked={consentMonitoring}
-                    onCheckedChange={(checked) =>
-                      setConsentMonitoring(checked === true)
-                    }
-                    className="mt-0.5"
-                  />
-                  <div>
-                    <span className="text-[13px] font-medium text-text">
-                      Monitoring consent
-                    </span>
-                    <p className="mt-0.5 text-[12px] leading-relaxed text-text-secondary">
-                      I agree to being monitored via webcam and screen recording throughout
-                      the duration of this assessment.
-                    </p>
-                  </div>
-                </label>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-
-      {/* Sticky bottom actions */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[rgba(15,23,42,0.06)] bg-white/80 backdrop-blur-md dark:border-white/[0.06] dark:bg-[#0E0E11]/80">
-        <div className="mx-auto flex max-w-[1100px] items-center justify-between px-4 py-3.5 lg:px-6">
-          <Button variant="outline" size="default" className="gap-2">
-            <Play className="h-3.5 w-3.5" />
-            Watch video
-          </Button>
-          <Button
-            variant="default"
-            size="lg"
-            disabled={!allConsented}
-            onClick={onStart}
-            className="gap-2 px-6 text-[14px] font-semibold shadow-sm"
-          >
-            Start assessment
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+      {/* Mobile: current step summary */}
+      <div className="sm:hidden">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+          Step {displayIndex} of {total}
+        </p>
+        <p className="text-[13px] font-semibold text-text">{currentTitle}</p>
+        <div className="mt-2 flex gap-1">
+          {steps.map((_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-1.5 flex-1 rounded-full",
+                completed.has(i)
+                  ? "bg-emerald-500"
+                  : activeStep === i
+                    ? "bg-accent"
+                    : "bg-[rgba(15,23,42,0.08)] dark:bg-white/[0.08]",
+              )}
+            />
+          ))}
         </div>
       </div>
     </div>
+  );
+}
+
+/* ─────────────────────────── Active step card ─────────────────────────── */
+function StepCard({
+  step,
+  index,
+  total,
+  checked,
+  onCheck,
+  onContinue,
+}: {
+  step: Step;
+  index: number;
+  total: number;
+  checked: boolean;
+  onCheck: (v: boolean) => void;
+  onContinue: () => void;
+}) {
+  const { Illo, description, confirm, cell } = step.config;
+  const checkboxId = `confirm-${step.id}`;
+
+  return (
+    <section
+      aria-current="step"
+      className="overflow-hidden rounded-[16px] border border-[rgba(15,23,42,0.08)] bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#1a1a1f]"
+    >
+      <div className="grid w-full md:grid-cols-[minmax(0,38%)_minmax(0,62%)]">
+        {/* Illustration */}
+        <div className={cn("flex items-center justify-center p-5 md:px-6 md:py-5", cell)}>
+          <Illo className="h-32 w-full max-w-[340px] object-contain md:h-auto md:max-h-[300px]" />
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-col">
+          <div className="flex-1 p-5 md:px-8 md:py-6">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.09em] text-accent">
+              Step {index + 1} of {total}
+            </span>
+            <h2 className="mt-1.5 text-[24px] font-bold leading-tight tracking-[-0.01em] text-text lg:text-[28px]">
+              {step.title}
+            </h2>
+            <p className="mt-3 max-w-[640px] text-[15px] leading-snug text-text-secondary lg:text-[16px]">
+              {description}
+            </p>
+
+            <ul className="mt-4 space-y-2.5">
+              {step.items.map((item, idx) => (
+                <CheckRow key={idx}>{item}</CheckRow>
+              ))}
+            </ul>
+          </div>
+
+          {/* Compact CTA footer */}
+          <div className="flex min-h-[64px] items-center border-t border-[rgba(15,23,42,0.07)] bg-white/90 px-5 py-3 md:px-8 dark:border-white/[0.07] dark:bg-[#1a1a1f]/90">
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label
+                htmlFor={checkboxId}
+                className="flex cursor-pointer items-center gap-3 text-[14px] font-medium text-text"
+              >
+                <Checkbox
+                  id={checkboxId}
+                  checked={checked}
+                  onCheckedChange={(c) => onCheck(c === true)}
+                  className="shrink-0"
+                />
+                I have read and understood {confirm}.
+              </label>
+
+              <div className="flex shrink-0 items-center justify-end gap-3">
+                {!checked && (
+                  <span
+                    id={`${checkboxId}-hint`}
+                    className="hidden whitespace-nowrap text-[12px] text-muted sm:block"
+                  >
+                    Confirm to continue
+                  </span>
+                )}
+                <Button
+                  variant="default"
+                  size="default"
+                  disabled={!checked}
+                  aria-describedby={!checked ? `${checkboxId}-hint` : undefined}
+                  onClick={onContinue}
+                  className="w-full gap-1.5 px-5 sm:w-auto"
+                >
+                  Continue
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────── Final consent step ─────────────────────────── */
+function FinalConsent({
+  consentIndependent,
+  consentMonitoring,
+  onIndependent,
+  onMonitoring,
+  allConsented,
+  onStart,
+}: {
+  consentIndependent: boolean;
+  consentMonitoring: boolean;
+  onIndependent: (v: boolean) => void;
+  onMonitoring: (v: boolean) => void;
+  allConsented: boolean;
+  onStart: () => void;
+}) {
+  const summary = [
+    "Device prepared",
+    "Rules understood",
+    "Monitoring accepted",
+    "Navigation understood",
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-[16px] border border-[rgba(15,23,42,0.08)] bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#1a1a1f]">
+      <div className="grid w-full md:grid-cols-[minmax(0,38%)_minmax(0,62%)]">
+        {/* Illustration */}
+        <div className="flex items-center justify-center bg-gradient-to-br from-accent/[0.06] to-white p-5 md:px-6 md:py-5 dark:from-accent/[0.08] dark:to-transparent">
+          <ReadyIllo className="h-32 w-full max-w-[340px] object-contain md:h-auto md:max-h-[300px]" />
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-col">
+          <div className="flex-1 p-5 md:px-8 md:py-6">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.09em] text-accent">
+              Final step
+            </span>
+            <h2 className="mt-1.5 text-[24px] font-bold leading-tight tracking-[-0.01em] text-text lg:text-[28px]">
+              You&apos;re ready to begin
+            </h2>
+            <p className="mt-1.5 max-w-[640px] text-[15px] leading-snug text-text-secondary lg:text-[16px]">
+              You&apos;ve reviewed every guideline. Confirm the declarations below to start.
+            </p>
+
+            {/* summary chips */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {summary.map((s) => (
+                <span
+                  key={s}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[12px] font-medium text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300"
+                >
+                  <Check className="h-3 w-3" strokeWidth={3} />
+                  {s}
+                </span>
+              ))}
+            </div>
+
+            <Separator className="my-4" />
+
+            {/* required consents */}
+            <div className="space-y-2">
+              <label
+                className={cn(
+                  "flex cursor-pointer items-start gap-3 rounded-[10px] border border-transparent p-2.5 transition-colors",
+                  consentIndependent
+                    ? "bg-emerald-500/[0.06] dark:bg-emerald-400/[0.08]"
+                    : "bg-[rgba(15,23,42,0.025)] hover:bg-[rgba(15,23,42,0.045)] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]",
+                )}
+              >
+                <Checkbox
+                  checked={consentIndependent}
+                  onCheckedChange={(c) => onIndependent(c === true)}
+                  className="mt-0.5"
+                />
+                <span className="text-[14px] font-medium text-text">
+                  I confirm that I will complete this assessment independently.
+                </span>
+              </label>
+
+              <label
+                className={cn(
+                  "flex cursor-pointer items-start gap-3 rounded-[10px] border border-transparent p-2.5 transition-colors",
+                  consentMonitoring
+                    ? "bg-emerald-500/[0.06] dark:bg-emerald-400/[0.08]"
+                    : "bg-[rgba(15,23,42,0.025)] hover:bg-[rgba(15,23,42,0.045)] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]",
+                )}
+              >
+                <Checkbox
+                  checked={consentMonitoring}
+                  onCheckedChange={(c) => onMonitoring(c === true)}
+                  className="mt-0.5"
+                />
+                <span className="text-[14px] font-medium text-text">
+                  I consent to webcam, screen, and browser activity monitoring.
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Compact CTA footer */}
+          <div className="flex min-h-[64px] items-center border-t border-[rgba(15,23,42,0.07)] bg-white/90 px-5 py-3 md:px-8 dark:border-white/[0.07] dark:bg-[#1a1a1f]/90">
+            <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button variant="outline" size="default" className="w-full gap-2 sm:w-auto">
+                <Play className="h-3.5 w-3.5" />
+                Watch overview video
+              </Button>
+              <Button
+                variant="default"
+                size="default"
+                disabled={!allConsented}
+                onClick={onStart}
+                className="w-full gap-2 px-5 text-[14px] font-semibold shadow-sm sm:w-auto"
+              >
+                Start assessment
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
