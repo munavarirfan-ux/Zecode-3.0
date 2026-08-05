@@ -201,7 +201,7 @@ export function CandidateReportOverview({
       <span className={overviewTexture} aria-hidden />
 
       <div className={cn(dashboardBentoGrid, "relative min-w-0 gap-2.5 lg:gap-3")}>
-        <BentoCell span={dashboardBentoSpan.hero}>
+        <BentoCell span="sm:col-span-6 lg:col-span-8">
           <OverviewCard title="Candidate summary" variant="primary">
             <p className="text-[13px] leading-relaxed text-[#52525B] dark:text-text-muted">
               {profileSummary(profile, candidate, job.title)}
@@ -230,7 +230,7 @@ export function CandidateReportOverview({
         </BentoCell>
 
         {!isInterviewer ? (
-          <BentoCell span={dashboardBentoSpan.side}>
+          <BentoCell span={cn(dashboardBentoSpan.side, "lg:row-span-2")}>
             <OverviewCard title="Application details" variant="utility" bodyClassName="space-y-0">
               <DetailRow label="Stage" value={getCandidateStage(candidate)} />
               <DetailRow label="Sub-stage" value={profile.application.substage || candidate.currentSubstage} />
@@ -253,6 +253,20 @@ export function CandidateReportOverview({
             </OverviewCard>
           </BentoCell>
         ) : null}
+
+        <BentoCell span="sm:col-span-6 lg:col-span-8">
+          <OverviewCard title="Social network & web links" variant="secondary">
+            {socialLinks.length === 0 ? (
+              <p className="text-[12px] text-[#A1A1AA]">No links provided.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {socialLinks.map((link) => (
+                  <SocialLinkChip key={link.id} link={link} />
+                ))}
+              </div>
+            )}
+          </OverviewCard>
+        </BentoCell>
 
         <BentoCell span={cn(dashboardBentoSpan.half, "lg:row-span-2")}>
           <OverviewCard title="Experience" variant="secondary">
@@ -282,19 +296,6 @@ export function CandidateReportOverview({
           </OverviewCard>
         </BentoCell>
 
-        <BentoCell span={dashboardBentoSpan.wide}>
-          <OverviewCard title="Social network & web links" variant="secondary">
-            {socialLinks.length === 0 ? (
-              <p className="text-[12px] text-[#A1A1AA]">No links provided.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {socialLinks.map((link) => (
-                  <SocialLinkChip key={link.id} link={link} />
-                ))}
-              </div>
-            )}
-          </OverviewCard>
-        </BentoCell>
       </div>
     </div>
   );
