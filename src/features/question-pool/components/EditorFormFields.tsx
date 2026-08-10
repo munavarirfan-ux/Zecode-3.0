@@ -103,6 +103,7 @@ export function renderStepContent(
           <h2 className="text-[14px] font-semibold text-text">Answer options</h2>
           <MCQOptionsEditor
             options={draft.mcqOptions}
+            answerType={draft.answerType}
             onChange={(mcqOptions) => onPatch({ mcqOptions })}
           />
         </div>

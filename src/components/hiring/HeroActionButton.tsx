@@ -55,7 +55,7 @@ type HeroActionButtonProps = React.ComponentProps<"button"> & {
 
 export const HeroActionButton = React.forwardRef<HTMLButtonElement, HeroActionButtonProps>(
   function HeroActionButton(
-    { icon: iconProp, children, tooltip, variant = "secondary", className, size, ...props },
+    { icon: iconProp, children, tooltip, variant = "secondary", className, ...props },
     ref,
   ) {
     const heroCollapsed = useHeroCollapseContext();

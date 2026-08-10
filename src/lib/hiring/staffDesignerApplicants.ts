@@ -437,7 +437,7 @@ export function buildStaffDesignerApplicants(
           interviewType: "Panel",
           durationMinutes: 45,
           platform: "ZeMeet",
-          result: "Lean Hire",
+          result: "Hire",
           hasNotes: true,
         },
       ],

@@ -46,6 +46,8 @@ const SCREENS = [
   { id: "login-signup", label: "Login / Sign Up", component: LoginSignupSkeleton },
 ] as const;
 
+type ScreenId = (typeof SCREENS)[number]["id"];
+
 type Viewport = "desktop" | "tablet" | "mobile";
 
 const VIEWPORTS: { id: Viewport; label: string; width: string }[] = [
@@ -55,7 +57,7 @@ const VIEWPORTS: { id: Viewport; label: string; width: string }[] = [
 ];
 
 export default function SkeletonLoadersPage() {
-  const [activeScreen, setActiveScreen] = useState(SCREENS[0].id);
+  const [activeScreen, setActiveScreen] = useState<ScreenId>(SCREENS[0].id);
   const [viewport, setViewport] = useState<Viewport>("desktop");
   const [animating, setAnimating] = useState(true);
 

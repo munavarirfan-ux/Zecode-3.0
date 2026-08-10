@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search, Users } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import type { ScheduledAssessmentCandidate } from "@/lib/hiring/assessments/scheduledAssessmentTypes";
 import { removeScheduledCandidate } from "@/lib/hiring/assessments/scheduledAssessmentsData";

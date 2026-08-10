@@ -21,7 +21,6 @@ import {
 import { getMalpracticeBreakdown, getSectionScores } from "@/lib/hiring/assessments/assessmentReportData";
 import {
   ASSESSMENT_REPORT_MAIN_TABS,
-  type AssessmentQuestionResult,
   type AssessmentReportMainTab,
   type AssessmentReportTab,
 } from "@/lib/hiring/assessments/types";
@@ -49,7 +48,7 @@ export function LiveAssessmentCandidateReportDialog({
 }) {
   const [mainTab, setMainTab] = useState<AssessmentReportMainTab>("overview");
   const [questionTab, setQuestionTab] = useState<AssessmentReportTab>("Coding");
-  const [answerQuestion, setAnswerQuestion] = useState<AssessmentQuestionResult | null>(null);
+  const [answerQuestionIndex, setAnswerQuestionIndex] = useState<number>(-1);
   const [lastUpdated, setLastUpdated] = useState(() => new Date());
   const [, setTick] = useState(0);
 
@@ -168,7 +167,7 @@ export function LiveAssessmentCandidateReportDialog({
                       questions={questions}
                       questionTab={questionTab}
                       onQuestionTabChange={setQuestionTab}
-                      onViewAnswer={setAnswerQuestion}
+                      onViewAnswer={(q) => setAnswerQuestionIndex(questions.indexOf(q))}
                     />
                   </TabsContent>
                 </div>
@@ -179,9 +178,11 @@ export function LiveAssessmentCandidateReportDialog({
       </Dialog>
 
       <ViewAnswerDialog
-        open={answerQuestion != null}
-        onOpenChange={(o) => !o && setAnswerQuestion(null)}
-        question={answerQuestion}
+        open={answerQuestionIndex >= 0}
+        onOpenChange={(o) => !o && setAnswerQuestionIndex(-1)}
+        questions={questions}
+        activeIndex={answerQuestionIndex}
+        onNavigate={setAnswerQuestionIndex}
       />
     </>
   );

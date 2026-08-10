@@ -71,7 +71,6 @@ export function InterviewCandidatesListView({
                     hiringTransition,
                     "hover:bg-[rgba(15,61,46,0.03)]",
                     getInterviewCardVisualClass(row.interviewStatus),
-                    row.interviewStatus === "Rejected" && "opacity-90",
                   )}
                 >
                   <td className="px-4 py-3 font-medium text-text">{row.candidate.name}</td>

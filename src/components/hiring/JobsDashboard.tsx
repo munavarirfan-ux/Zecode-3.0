@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getHiringOverviewStats } from "@/lib/hiring/mockData";
+import { getHiringOverviewStats, type HiringOverviewStats } from "@/lib/hiring/mockData";
 import { getJobsForRole } from "@/lib/hiring/jobsForWorkspace";
 import {
   applyJobsFilters,
@@ -30,13 +30,14 @@ import { PremiumEmptyState } from "@/components/onboarding/PremiumEmptyState";
 import { NewUserModuleEmptyState } from "@/components/onboarding/NewUserModuleEmptyState";
 import { EMPTY_STATE_PRESETS } from "@/lib/onboarding/emptyStatePresets";
 
-const EMPTY_STATS = {
+const EMPTY_STATS: HiringOverviewStats = {
   activeJobs: 0,
   candidatesInPipeline: 0,
   interviewsToday: 0,
   offersPending: 0,
   candidatesThisWeek: 0,
   insights: {
+    activeJobs: "No active jobs yet",
     candidates: "Add a job to begin",
     interviews: "No interviews yet",
     offers: "No offers yet",

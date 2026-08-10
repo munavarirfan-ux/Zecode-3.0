@@ -183,7 +183,7 @@ function RunTestPanel({ draft }: { draft: QuestionDraftFormValues }) {
                 <span className="text-slate-500">Output will appear here during live execution.</span>
               </>
             ) : (
-              <span className="text-slate-500">Click "Run Code" to see output</span>
+              <span className="text-slate-500">Click &quot;Run Code&quot; to see output</span>
             )}
           </div>
         ) : (

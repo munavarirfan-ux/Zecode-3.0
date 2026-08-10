@@ -255,10 +255,6 @@ export function JobWorkspace({ job }: { job: HiringJob }) {
               onCardClick={openKanbanReport}
               onOpenEmails={(c) => openKanbanReport(c, "emails")}
               onCandidateMoved={refreshCandidates}
-              onScheduleCandidate={(c) => {
-                setKanbanReportCandidate(c);
-                setKanbanReportOpen(true);
-              }}
             />
           </TabsContent>
 

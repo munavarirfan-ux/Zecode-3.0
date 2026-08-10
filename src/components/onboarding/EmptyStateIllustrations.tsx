@@ -345,7 +345,7 @@ export function EmptyStateIllustration({
                   <p>
                     <span className="text-violet-400/90">function</span> solve() {"{"}
                   </p>
-                  <p className="pl-2 text-white/40">// assessment in progress</p>
+                  <p className="pl-2 text-white/40">{"// assessment in progress"}</p>
                   <p className="pl-2">
                     return <span className="text-amber-400/80">result</span>;
                   </p>

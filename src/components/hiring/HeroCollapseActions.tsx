@@ -8,6 +8,12 @@ import { cn } from "@/lib/utils";
 import { hiringHeroCollapsedIconBtn } from "./hiringTokens";
 import { useHeroCollapseContext } from "./HeroCollapseContext";
 
+type HeroChildProps = {
+  children?: React.ReactNode;
+  className?: string;
+  "aria-label"?: string;
+};
+
 function extractButtonLabel(children: React.ReactNode): string | undefined {
   let label = "";
   React.Children.forEach(children, (child) => {
@@ -26,7 +32,7 @@ function extractButtonIcon(children: React.ReactNode): React.ReactNode | null {
       if (!icon) icon = child;
       return;
     }
-    if (isValidElement(child) && child.props?.children) {
+    if (isValidElement<HeroChildProps>(child) && child.props?.children) {
       const nested = extractButtonIcon(child.props.children);
       if (nested && !icon) icon = nested;
     }
@@ -34,7 +40,7 @@ function extractButtonIcon(children: React.ReactNode): React.ReactNode | null {
   return icon;
 }
 
-function compactButton(child: React.ReactElement) {
+function compactButton(child: React.ReactElement<HeroChildProps>) {
   const label = extractButtonLabel(child.props.children);
   const icon = extractButtonIcon(child.props.children);
   if (!icon) return child;
@@ -74,7 +80,7 @@ export function HeroCollapseActions({ children }: { children: React.ReactNode })
         if (typeName === "HeroActionButton") {
           return child;
         }
-        if (child.type === Button) return compactButton(child);
+        if (child.type === Button) return compactButton(child as React.ReactElement<HeroChildProps>);
         return child;
       })}
     </>

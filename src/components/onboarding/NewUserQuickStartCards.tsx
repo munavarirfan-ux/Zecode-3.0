@@ -116,7 +116,18 @@ export function NewUserQuickStartCards({ compact = false }: { compact?: boolean 
         )}
       >
         {ACTIONS.map((a) =>
-          "demo" in a && a.demo ? (
+          "href" in a ? (
+            <Link
+              key={a.label}
+              href={a.href}
+              className={cn(cardClass, "block", compact ? "p-3.5 sm:p-4" : "p-4")}
+              onClick={() => {
+                if (a.label === "Invite Team") markTeamInviteAcknowledged();
+              }}
+            >
+              <QuickStartCardBody action={a} compact={compact} />
+            </Link>
+          ) : (
             <button
               key={a.label}
               type="button"
@@ -128,17 +139,6 @@ export function NewUserQuickStartCards({ compact = false }: { compact?: boolean 
             >
               <QuickStartCardBody action={a} compact={compact} />
             </button>
-          ) : (
-            <Link
-              key={a.label}
-              href={a.href}
-              className={cn(cardClass, "block", compact ? "p-3.5 sm:p-4" : "p-4")}
-              onClick={() => {
-                if (a.label === "Invite Team") markTeamInviteAcknowledged();
-              }}
-            >
-              <QuickStartCardBody action={a} compact={compact} />
-            </Link>
           ),
         )}
       </div>

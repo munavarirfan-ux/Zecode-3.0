@@ -337,7 +337,6 @@ export function ZeMeetControlBar({
           codeChallengeEnabled={session.codeChallengeEnabled}
           codeChallengeLabel={codeChallengeLabel}
           codeChallengePressed={codeChallengePressed}
-          roomId={session.context.roomId}
           onClose={() => setMobileSheetOpen(false)}
           onToggleSidebar={toggleSidebar}
           onToggleIntel={toggleInterviewerIntel}

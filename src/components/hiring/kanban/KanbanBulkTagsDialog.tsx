@@ -63,7 +63,7 @@ export function KanbanBulkTagsDialog({
     let updated = 0;
     for (const candidate of candidates) {
       const profile = getCandidateEditProfile(candidate, job);
-      const merged = [...new Set([...profile.application.tags, ...tags])];
+      const merged = Array.from(new Set([...profile.application.tags, ...tags]));
       const result = saveCandidateTags(candidate.id, merged, candidate, job);
       if (result) updated += 1;
     }

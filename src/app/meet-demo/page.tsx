@@ -306,7 +306,7 @@ function LobbyScreen({
 
           <p className="text-center text-[11px] text-[#5f6368]">
             By joining you agree to{" "}
-            <span className="text-[#8ab4f8] cursor-pointer hover:underline">Google's terms</span>
+            <span className="text-[#8ab4f8] cursor-pointer hover:underline">Google&apos;s terms</span>
           </p>
         </div>
       </div>

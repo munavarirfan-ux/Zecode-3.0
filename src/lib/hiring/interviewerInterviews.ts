@@ -76,11 +76,12 @@ const SUPPLEMENTAL_INTERVIEW_OVERRIDES: Record<string, SupplementalInterviewOver
     feedbackStatus: "Pending",
     feedbackRequestedAt: "1 day",
     scheduledAt: "Mon · 16:00 CET",
-    result: "Lean Hire",
+    result: "Hire",
   },
   "mi-7": {
     status: "Completed",
-    feedbackStatus: "Overdue",
+    // Resolves to "Overdue" via mapFeedbackStatus (Completed + Pending + day-old request)
+    feedbackStatus: "Pending",
     feedbackRequestedAt: "3 days",
     scheduledAt: "Tue · 11:30 CET",
   },
@@ -119,7 +120,7 @@ function interviewerActorNames(role: PreviewRole, sessionName?: string | null): 
   const set = new Set<string>();
   set.add(resolveLoggedInInterviewerName(sessionName));
   if (role === "evaluator") set.add(getPreviewActorLabel(role));
-  return [...set];
+  return Array.from(set);
 }
 
 export function interviewerOnPanel(interviewers: string[], actorNames: string[]): boolean {
