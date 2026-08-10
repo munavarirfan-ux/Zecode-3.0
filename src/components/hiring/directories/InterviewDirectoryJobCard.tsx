@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clock,
   MessageSquare,
-  MessageSquare,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
