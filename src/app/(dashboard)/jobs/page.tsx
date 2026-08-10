@@ -5,6 +5,10 @@ import { LineArtEmptyState } from "@/components/empty-states/LineArtEmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+// Reads live, org-scoped data from the database per request — never prerender
+// at build time (there is no DB during the Vercel build; see deployment notes).
+export const dynamic = "force-dynamic";
+
 export default async function JobsPage() {
   const orgId = await getAppOrgId();
   const jobs = await prisma.job.findMany({

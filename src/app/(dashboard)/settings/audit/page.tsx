@@ -2,6 +2,10 @@ import { getAppOrgId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AuditLogPanel } from "@/features/settings/components/AuditLogPanel";
 
+// Reads live, org-scoped data from the database per request — never prerender
+// at build time (there is no DB during the Vercel build; see deployment notes).
+export const dynamic = "force-dynamic";
+
 export default async function AuditPage() {
   const orgId = await getAppOrgId();
   const events = await prisma.auditEvent.findMany({

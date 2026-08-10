@@ -5,6 +5,10 @@ import { getRoleFitForCandidate } from "@/lib/scoring-server";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Reads live, org-scoped data from the database per request — never prerender
+// at build time (there is no DB during the Vercel build; see deployment notes).
+export const dynamic = "force-dynamic";
+
 export default async function ApplicantsPage() {
   const orgId = await getAppOrgId();
   const session = await getServerSession(authOptions);

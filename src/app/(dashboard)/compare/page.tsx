@@ -4,6 +4,10 @@ import { getRoleFitForCandidate } from "@/lib/scoring-server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompareClient } from "./CompareClient";
 
+// Reads live, org-scoped data from the database per request — never prerender
+// at build time (there is no DB during the Vercel build; see deployment notes).
+export const dynamic = "force-dynamic";
+
 export default async function ComparePage() {
   const orgId = await getAppOrgId();
   const candidates = await prisma.candidate.findMany({
