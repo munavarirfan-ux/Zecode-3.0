@@ -77,11 +77,10 @@ import {
   dashboardSectionTitle,
 } from "@/components/dashboard/dashboardTokens";
 import {
+  hiringHeroFocusRing,
+  hiringHeroGradient,
   hiringHeroPrimaryBtn,
   hiringHeroSecondaryBtnSm,
-  hiringHeroReportStripRow,
-  hiringHeroReportStripShell,
-  hiringHeroStripActions,
   hiringHeroStripMetaLine,
   hiringHeroStripTitle,
   hiringTransition,
@@ -122,8 +121,7 @@ const reportMenuItem =
 const reportMenuContent =
   "z-[210] w-48 rounded-[12px] border border-[rgba(15,23,42,0.06)] bg-white p-1.5 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.14)] dark:bg-surface";
 
-/** Shared column width for hero, tabs, and body */
-const REPORT_COLUMN = "mx-auto w-full min-w-0 max-w-full";
+/** Horizontal padding for the right-side report content */
 const REPORT_PAD_X = "px-5 sm:px-6";
 
 const REPORT_TABS = [
@@ -143,22 +141,36 @@ const TABS_BY_SHELL: Record<CandidateReportShellMode, Array<(typeof REPORT_TABS)
   interview: ["overview", "profile", "feedback", "emails", "interviews", "timeline"],
 };
 
-/** Dashboard hero — contained card, aligned to report column */
+/** Full-height vertical candidate sidebar — purple gradient, fills left column */
+const reportSidebarShell = cn(
+  "relative isolate flex h-full w-full flex-col overflow-hidden",
+  "text-[rgb(var(--hero-fg-rgb))]",
+  hiringHeroGradient,
+  "border-b border-[rgb(var(--hero-border-rgb)/0.28)] lg:border-b-0 lg:border-r",
+  "px-5 pb-5 pt-5 sm:px-6 sm:pb-6",
+);
+
 const reportAvatar =
   "flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] border border-white/[0.16] bg-white/[0.1] text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:h-14 sm:w-14 sm:text-base";
 
-const heroPrimaryActionBtn = cn(hiringHeroPrimaryBtn, "h-9 gap-1.5 rounded-[11px] px-4 text-[13px]");
-
-const heroSecondaryActionBtn = hiringHeroSecondaryBtnSm;
-
-const heroKebabBtn = cn(
-  "h-9 w-9 rounded-[11px] border-0 p-0 text-white shadow-none backdrop-blur-sm",
-  hiringTransition,
-  "bg-white/[0.14] hover:bg-white/[0.2]",
+/** Sidebar action buttons stack full width */
+const heroPrimaryActionBtn = cn(
+  hiringHeroPrimaryBtn,
+  "h-9 w-full justify-center gap-1.5 rounded-[11px] px-4 text-[13px]",
 );
 
-const heroGlassMeta =
-  "inline-flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.08] px-3 py-1.5 text-[13px] font-medium text-white backdrop-blur-md [&_svg]:text-white";
+const heroSecondaryActionBtn = cn(hiringHeroSecondaryBtnSm, "w-full justify-center");
+
+const heroMoreBtn = cn(
+  "h-9 w-full justify-center gap-1.5 rounded-[11px] border border-white/[0.2] px-4 text-[13px] font-medium text-white",
+  hiringTransition,
+  hiringHeroFocusRing,
+  "bg-white/[0.14] shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:border-white/[0.28] hover:bg-white/[0.22]",
+);
+
+/** Vertical meta row inside the sidebar (email / phone / location / stage …) */
+const heroMetaRow =
+  "flex min-w-0 items-center gap-2.5 rounded-[11px] border border-white/[0.14] bg-white/[0.08] px-3 py-2 text-[13px] font-medium text-white backdrop-blur-md [&_svg]:text-white";
 
 function Panel({
   title,
@@ -189,7 +201,6 @@ function CandidateReportHero({
   job,
   profile,
   initials,
-  onClose,
   onMoveApplicant,
   onEditCandidate,
   onAddTags,
@@ -203,7 +214,6 @@ function CandidateReportHero({
   job: HiringJob;
   profile: CandidateEditProfile;
   initials: string;
-  onClose: () => void;
   onMoveApplicant: () => void;
   canMoveApplicant: boolean;
   onEditCandidate: () => void;
@@ -219,140 +229,124 @@ function CandidateReportHero({
   const location = candidate.location?.trim();
 
   return (
-    <header className={hiringHeroReportStripShell}>
+    <header className={reportSidebarShell}>
       <HiringHeroDecor />
 
-      <div className={cn(hiringHeroReportStripRow, "relative w-full")}>
-        <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        {/* Candidate profile — scrolls independently if the sidebar runs short */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pt-2">
           <div className={reportAvatar}>{initials}</div>
-          <div className="min-w-0 space-y-2">
-              <DialogTitle className={cn(hiringHeroStripTitle, "text-left")}>
-                {displayCandidateName(profile, candidate.name)}
-              </DialogTitle>
-              <p className={hiringHeroStripMetaLine}>{job.title}</p>
-              <DialogDescription asChild>
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <span className={heroGlassMeta}>
-                      <Mail className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                      {profile.email || candidate.email}
-                    </span>
-                    <span className={heroGlassMeta}>
-                      <Phone className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                      {profile.mobile || candidate.phone}
-                    </span>
-                    {location && location !== "—" ? (
-                      <span className={heroGlassMeta}>
-                        <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                        {location}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className={heroGlassMeta}>
-                      <Briefcase className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                      {stage}
-                    </span>
-                    <span className={heroGlassMeta}>
-                      <Tag className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                      {source}
-                    </span>
-                    <span className={heroGlassMeta}>
-                      <User className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                      {candidate.recruiterOwner}
-                    </span>
-                    <span className={heroGlassMeta}>
-                      <FileText className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                      Resume: {resumeStatus}
-                    </span>
-                  </div>
-                </div>
-              </DialogDescription>
-            </div>
-          </div>
+          <DialogTitle className={cn(hiringHeroStripTitle, "mt-4 text-left")}>
+            {displayCandidateName(profile, candidate.name)}
+          </DialogTitle>
+          <p className={cn(hiringHeroStripMetaLine, "mt-1")}>{job.title}</p>
 
-          <div className={hiringHeroStripActions}>
-            {canMoveApplicant ? (
-              <Button type="button" size="sm" className={heroSecondaryActionBtn} onClick={onMoveApplicant}>
-                <MoveRight className="h-4 w-4" strokeWidth={1.5} />
-                Move Applicant
-              </Button>
-            ) : null}
-            {canSchedule ? (
-              <Button type="button" size="sm" className={heroPrimaryActionBtn} onClick={onScheduleInterview}>
-                <Calendar className="h-4 w-4" strokeWidth={1.5} />
-                Schedule
-              </Button>
-            ) : null}
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" size="sm" className={heroKebabBtn} aria-label="More actions">
-                  <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className={reportMenuContent}>
-                <DropdownMenuItem className={reportMenuItem} onSelect={onEditCandidate}>
-                  <Pencil className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
-                  Edit Candidate
-                </DropdownMenuItem>
-                <DropdownMenuItem className={reportMenuItem} onSelect={onAddTags}>
-                  <Tag className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
-                  Add Tags
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="my-1" />
-                {stage !== "Screening" ? (
-                  <DropdownMenuItem
-                    className={reportMenuItem}
-                    onSelect={() => onMoveToStage("Screening", "Applied")}
-                  >
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
-                    Move to Screening
-                  </DropdownMenuItem>
-                ) : null}
-                {stage !== "Interviews" ? (
-                  <DropdownMenuItem
-                    className={reportMenuItem}
-                    onSelect={() => onMoveToStage("Interviews", "Technical Round 1")}
-                  >
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
-                    Move to Interviews
-                  </DropdownMenuItem>
-                ) : null}
-                {stage !== "Hired & Offers" ? (
-                  <DropdownMenuItem
-                    className={reportMenuItem}
-                    onSelect={() => onMoveToStage("Hired & Offers", "Offer Sent")}
-                  >
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
-                    Move to Hired & Offers
-                  </DropdownMenuItem>
-                ) : null}
-                <DropdownMenuSeparator className="my-1" />
-                <DropdownMenuItem
-                  className={cn(reportMenuItem, "text-red-600 focus:text-red-600 data-[highlighted]:text-red-600")}
-                  onSelect={onRejectApplicant}
-                >
-                  <UserX className="h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={1.5} />
-                  Reject Applicant
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DialogClose
-                  className={dialogCloseButtonLg}
-                  onClick={onClose}
-                  aria-label="Close report"
-                >
-                  <X className="h-5 w-5" strokeWidth={2.5} aria-hidden />
-                </DialogClose>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" sideOffset={8}>
-                Close report
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          <DialogDescription asChild>
+            <div className="mt-4 flex flex-col gap-2">
+              <span className={heroMetaRow}>
+                <Mail className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                <span className="min-w-0 break-words">{profile.email || candidate.email}</span>
+              </span>
+              <span className={heroMetaRow}>
+                <Phone className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                <span className="min-w-0 break-words">{profile.mobile || candidate.phone}</span>
+              </span>
+              {location && location !== "—" ? (
+                <span className={heroMetaRow}>
+                  <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                  <span className="min-w-0 break-words">{location}</span>
+                </span>
+              ) : null}
+              <span className={heroMetaRow}>
+                <Briefcase className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                <span className="min-w-0 break-words">{stage}</span>
+              </span>
+              <span className={heroMetaRow}>
+                <Tag className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                <span className="min-w-0 break-words">{source}</span>
+              </span>
+              <span className={heroMetaRow}>
+                <User className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                <span className="min-w-0 break-words">{candidate.recruiterOwner}</span>
+              </span>
+              <span className={heroMetaRow}>
+                <FileText className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                <span className="min-w-0 break-words">Resume: {resumeStatus}</span>
+              </span>
+            </div>
+          </DialogDescription>
         </div>
+
+        {/* Actions — anchored to the bottom of the sidebar */}
+        <div className="mt-auto flex shrink-0 flex-col gap-2 border-t border-white/[0.14] pt-4">
+          {canMoveApplicant ? (
+            <Button type="button" size="sm" className={heroSecondaryActionBtn} onClick={onMoveApplicant}>
+              <MoveRight className="h-4 w-4" strokeWidth={1.5} />
+              Move Applicant
+            </Button>
+          ) : null}
+          {canSchedule ? (
+            <Button type="button" size="sm" className={heroPrimaryActionBtn} onClick={onScheduleInterview}>
+              <Calendar className="h-4 w-4" strokeWidth={1.5} />
+              Schedule
+            </Button>
+          ) : null}
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" size="sm" className={heroMoreBtn} aria-label="More actions">
+                <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
+                More Options
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top" sideOffset={8} className={reportMenuContent}>
+              <DropdownMenuItem className={reportMenuItem} onSelect={onEditCandidate}>
+                <Pencil className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
+                Edit Candidate
+              </DropdownMenuItem>
+              <DropdownMenuItem className={reportMenuItem} onSelect={onAddTags}>
+                <Tag className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
+                Add Tags
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="my-1" />
+              {stage !== "Screening" ? (
+                <DropdownMenuItem
+                  className={reportMenuItem}
+                  onSelect={() => onMoveToStage("Screening", "Applied")}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
+                  Move to Screening
+                </DropdownMenuItem>
+              ) : null}
+              {stage !== "Interviews" ? (
+                <DropdownMenuItem
+                  className={reportMenuItem}
+                  onSelect={() => onMoveToStage("Interviews", "Technical Round 1")}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
+                  Move to Interviews
+                </DropdownMenuItem>
+              ) : null}
+              {stage !== "Hired & Offers" ? (
+                <DropdownMenuItem
+                  className={reportMenuItem}
+                  onSelect={() => onMoveToStage("Hired & Offers", "Offer Sent")}
+                >
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-55" strokeWidth={1.5} />
+                  Move to Hired & Offers
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuSeparator className="my-1" />
+              <DropdownMenuItem
+                className={cn(reportMenuItem, "text-red-600 focus:text-red-600 data-[highlighted]:text-red-600")}
+                onSelect={onRejectApplicant}
+              >
+                <UserX className="h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={1.5} />
+                Reject Applicant
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
     </header>
   );
 }
@@ -363,78 +357,55 @@ function InterviewerCandidateReportHero({
   profile,
   initials,
   ctx,
-  onClose,
 }: {
   candidate: HiringCandidate;
   job: HiringJob;
   profile: CandidateEditProfile;
   initials: string;
   ctx: InterviewerReportContext;
-  onClose: () => void;
 }) {
-  const hasNotes = ctx.isAssignedCompleted && ctx.sessionNoteBullets.length > 0;
-
   return (
-    <header
-      className={cn(
-        hiringHeroReportStripShell,
-        "!overflow-visible",
-        hasNotes && "pb-24 sm:pb-12 lg:pb-10",
-      )}
-    >
+    <header className={reportSidebarShell}>
       <HiringHeroDecor />
 
-      <div className={cn(hiringHeroReportStripRow, "relative w-full pr-12 lg:pr-14")}>
-        <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 pt-2">
           <div className={reportAvatar}>{initials}</div>
-          <div className="min-w-0 space-y-2">
-              <DialogTitle className={cn(hiringHeroStripTitle, "text-left")}>
-                {displayCandidateName(profile, candidate.name)}
-              </DialogTitle>
-              <p className={hiringHeroStripMetaLine}>{job.title}</p>
+          <DialogTitle className={cn(hiringHeroStripTitle, "mt-4 text-left")}>
+            {displayCandidateName(profile, candidate.name)}
+          </DialogTitle>
+          <p className={cn(hiringHeroStripMetaLine, "mt-1")}>{job.title}</p>
 
-              <div className="flex flex-wrap gap-2">
-                {ctx.assignedRound ? (
-                  <span className={heroGlassMeta}>{ctx.assignedRound}</span>
-                ) : null}
-                {ctx.scheduledLabel ? (
-                  <span className={heroGlassMeta}>{ctx.scheduledLabel}</span>
-                ) : null}
-                {ctx.isAssignedCompleted ? (
-                  <span className={heroGlassMeta}>
-                    <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                    Interview completed
-                  </span>
-                ) : null}
-              </div>
-            </div>
+          <div className="mt-4 flex flex-col gap-2">
+            {ctx.assignedRound ? (
+              <span className={heroMetaRow}>
+                <span className="min-w-0 break-words">{ctx.assignedRound}</span>
+              </span>
+            ) : null}
+            {ctx.scheduledLabel ? (
+              <span className={heroMetaRow}>
+                <span className="min-w-0 break-words">{ctx.scheduledLabel}</span>
+              </span>
+            ) : null}
+            {ctx.isAssignedCompleted ? (
+              <span className={heroMetaRow}>
+                <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                <span className="min-w-0 break-words">Interview completed</span>
+              </span>
+            ) : null}
           </div>
+
+          {ctx.isAssignedCompleted ? (
+            <div className="mt-5">
+              <InterviewerHeroInterviewNotes
+                bullets={ctx.sessionNoteBullets}
+                capturedRound={ctx.sessionNotesRound}
+                positionClassName="relative"
+              />
+            </div>
+          ) : null}
         </div>
-
-      {ctx.isAssignedCompleted ? (
-        <InterviewerHeroInterviewNotes
-          bullets={ctx.sessionNoteBullets}
-          capturedRound={ctx.sessionNotesRound}
-        />
-      ) : null}
-
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogClose
-            className={cn(
-              "absolute right-4 top-4 z-30 sm:right-5 sm:top-5",
-              dialogCloseButtonLg,
-            )}
-            onClick={onClose}
-            aria-label="Close report"
-          >
-            <X className="h-5 w-5" strokeWidth={2.5} aria-hidden />
-          </DialogClose>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" sideOffset={8}>
-          Close report
-        </TooltipContent>
-      </Tooltip>
+      </div>
     </header>
   );
 }
@@ -617,8 +588,9 @@ export function CandidateReportDialog({
           >
             <DialogPanel
               className={cn(
-                "relative flex h-[min(900px,calc(100dvh-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col overflow-hidden bg-white dark:bg-surface",
-                "w-[calc(100vw-2rem)] max-w-[1400px]",
+                "relative flex h-[95vh] overflow-hidden bg-white dark:bg-surface",
+                "flex-col lg:flex-row",
+                "w-[95vw] max-w-[1600px]",
                 "rounded-[16px] border border-[rgba(15,23,42,0.08)]",
                 "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_24px_80px_-24px_rgba(15,23,42,0.28)]",
                 "data-[state=open]:animate-radix-in data-[state=closed]:animate-radix-out",
@@ -628,9 +600,10 @@ export function CandidateReportDialog({
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
-                className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
+                className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row"
               >
-                <div className={cn("shrink-0", REPORT_COLUMN, REPORT_PAD_X, "pb-5 pt-5 sm:pb-6 sm:pt-6")}>
+                {/* Left — full-height candidate profile sidebar (~20%) */}
+                <div className="relative w-full shrink-0 lg:h-full lg:w-[20%] lg:min-w-[220px] lg:max-w-[300px]">
                   {isInterviewerMode && interviewerCtx ? (
                     <InterviewerCandidateReportHero
                       candidate={liveCandidate}
@@ -638,7 +611,6 @@ export function CandidateReportDialog({
                       profile={profile}
                       initials={initials}
                       ctx={interviewerCtx}
-                      onClose={() => onOpenChange(false)}
                     />
                   ) : (
                     <CandidateReportHero
@@ -646,7 +618,6 @@ export function CandidateReportDialog({
                       job={job}
                       profile={profile}
                       initials={initials}
-                      onClose={() => onOpenChange(false)}
                       onMoveApplicant={() => {
                         if (canDirectMove) setMoveOpen(true);
                         else if (canRequestTransfer) setTransferRequestOpen(true);
@@ -668,55 +639,70 @@ export function CandidateReportDialog({
                   )}
                 </div>
 
-                {selectedRole === "superAdmin" && pendingMoveRequest ? (
-                  <MoveToInterviewApprovalBanner
-                    request={pendingMoveRequest}
-                    reviewerName="Super Admin"
-                    onDecision={() => {
-                      setMtiVersion((n) => n + 1);
-                      const refreshed = getCandidateById(liveCandidate.id);
-                      if (refreshed) handleCandidateUpdated(refreshed);
-                    }}
-                  />
-                ) : null}
+                {/* Right — report content (~80%) */}
+                <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DialogClose
+                        className={cn("absolute right-4 top-3 z-30", dialogCloseButtonLg)}
+                        onClick={() => onOpenChange(false)}
+                        aria-label="Close report"
+                      >
+                        <X className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+                      </DialogClose>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" sideOffset={8}>
+                      Close report
+                    </TooltipContent>
+                  </Tooltip>
 
-                <div
-                  className={cn(
-                    REPORT_COLUMN,
-                    REPORT_PAD_X,
-                    "sticky top-0 z-10 shrink-0 space-y-3 border-b border-[rgba(15,23,42,0.06)] bg-white/95 py-2 backdrop-blur-md dark:border-white/[0.06] dark:bg-surface/95",
-                  )}
-                >
-                  {useShellModes && reportModes ? (
-                    <DirectoryViewSwitcher
-                      value={shellMode}
-                      onChange={(mode) => {
-                        setShellMode(mode);
-                        setActiveTab(shellModeToInitialTab(mode));
+                  {selectedRole === "superAdmin" && pendingMoveRequest ? (
+                    <MoveToInterviewApprovalBanner
+                      request={pendingMoveRequest}
+                      reviewerName="Super Admin"
+                      onDecision={() => {
+                        setMtiVersion((n) => n + 1);
+                        const refreshed = getCandidateById(liveCandidate.id);
+                        if (refreshed) handleCandidateUpdated(refreshed);
                       }}
-                      options={reportModes.shellModes.map((mode) => ({
-                        value: mode,
-                        label: SHELL_MODE_LABELS[mode],
-                      }))}
-                      className="w-full max-w-full sm:w-auto"
                     />
                   ) : null}
-                  <TabsList className="h-auto w-full justify-start gap-0 border-0 bg-transparent p-0">
-                    {visibleReportTabs.map(([id, label]) => (
-                      <TabsTrigger key={id} value={id} className="rounded-none">
-                        {label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </div>
 
-                <div
-                  className={cn(
-                    REPORT_COLUMN,
-                    REPORT_PAD_X,
-                    "relative min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 sm:py-5",
-                  )}
-                >
+                  <div
+                    className={cn(
+                      REPORT_PAD_X,
+                      "z-10 shrink-0 space-y-3 border-b border-[rgba(15,23,42,0.06)] bg-white/95 py-2.5 backdrop-blur-md dark:border-white/[0.06] dark:bg-surface/95",
+                    )}
+                  >
+                    {useShellModes && reportModes ? (
+                      <DirectoryViewSwitcher
+                        value={shellMode}
+                        onChange={(mode) => {
+                          setShellMode(mode);
+                          setActiveTab(shellModeToInitialTab(mode));
+                        }}
+                        options={reportModes.shellModes.map((mode) => ({
+                          value: mode,
+                          label: SHELL_MODE_LABELS[mode],
+                        }))}
+                        className="w-full max-w-full sm:w-auto"
+                      />
+                    ) : null}
+                    <TabsList className="h-auto w-full justify-start gap-0 border-0 bg-transparent p-0">
+                      {visibleReportTabs.map(([id, label]) => (
+                        <TabsTrigger key={id} value={id} className="rounded-none">
+                          {label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </div>
+
+                  <div
+                    className={cn(
+                      REPORT_PAD_X,
+                      "relative min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 sm:py-5",
+                    )}
+                  >
                   <TabsContent value="overview" className="mt-0 min-h-0 focus-visible:ring-0">
                     <CandidateReportOverview
                       candidate={liveCandidate}
@@ -765,6 +751,7 @@ export function CandidateReportDialog({
                   <TabsContent value="assessment" className="mt-0 min-h-0 focus-visible:ring-0">
                     <CandidateAssessmentReport candidate={liveCandidate} job={job} />
                   </TabsContent>
+                  </div>
                 </div>
               </Tabs>
             </DialogPanel>

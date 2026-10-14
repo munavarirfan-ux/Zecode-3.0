@@ -1,13 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { X } from "lucide-react";
 import {
   Dialog,
+  DialogClose,
+  dialogCloseButtonLg,
   DialogOverlay,
   DialogPanel,
   DialogPortal,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getQuestionResultsForCandidate } from "@/lib/hiring/assessments/assessmentCandidates";
 import {
@@ -29,7 +33,6 @@ import { AssessmentReportQuestions } from "./report/AssessmentReportQuestions";
 import { AssessmentReportSnapshots } from "./report/AssessmentReportSnapshots";
 import { ViewAnswerDialog } from "./ViewAnswerDialog";
 
-const REPORT_COLUMN = "w-full max-w-none";
 const REPORT_PAD_X = "px-5 sm:px-6";
 
 export function AssessmentCandidateReportDialog({
@@ -85,8 +88,9 @@ export function AssessmentCandidateReportDialog({
           >
             <DialogPanel
               className={cn(
-                "relative flex h-[92vh] flex-col overflow-hidden bg-white dark:bg-surface",
-                "w-[96vw] max-w-none",
+                "relative flex h-[95vh] overflow-hidden bg-white dark:bg-surface",
+                "flex-col lg:flex-row",
+                "w-[95vw] max-w-[1600px]",
                 "rounded-[16px] border border-[rgba(15,23,42,0.08)]",
                 "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_24px_80px_-24px_rgba(15,23,42,0.28)]",
                 "data-[state=open]:animate-radix-in data-[state=closed]:animate-radix-out",
@@ -96,58 +100,74 @@ export function AssessmentCandidateReportDialog({
               <Tabs
                 value={mainTab}
                 onValueChange={(v) => setMainTab(v as AssessmentReportMainTab)}
-                className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
+                className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row"
               >
-                <div className={cn("shrink-0", REPORT_COLUMN, "px-[14px] pb-5 pt-5 sm:pb-6 sm:pt-6")}>
+                {/* Left — full-height candidate profile sidebar (~20%) */}
+                <div className="relative w-full shrink-0 lg:h-full lg:w-[20%] lg:min-w-[220px] lg:max-w-[300px]">
                   <AssessmentReportHero
                     assessment={assessment}
                     candidate={candidate}
                     initials={initials}
-                    onClose={() => onOpenChange(false)}
                   />
                 </div>
 
-                <div
-                  className={cn(
-                    REPORT_COLUMN,
-                    REPORT_PAD_X,
-                    "sticky top-0 z-10 shrink-0 border-b border-[rgba(15,23,42,0.06)] bg-white/95 py-2 backdrop-blur-md dark:border-white/[0.06] dark:bg-surface/95",
-                  )}
-                >
-                  <TabsList className="h-auto w-full justify-start gap-0 border-0 bg-transparent p-0">
-                    {ASSESSMENT_REPORT_MAIN_TABS.map((t) => (
-                      <TabsTrigger key={t.id} value={t.id} className="rounded-none px-4 py-2 text-[13px]">
-                        {t.label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </div>
+                {/* Right — report content (~80%) */}
+                <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DialogClose
+                        className={cn("absolute right-4 top-3 z-30", dialogCloseButtonLg)}
+                        onClick={() => onOpenChange(false)}
+                        aria-label="Close report"
+                      >
+                        <X className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+                      </DialogClose>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" sideOffset={8}>
+                      Close report
+                    </TooltipContent>
+                  </Tooltip>
 
-                <div
-                  className={cn(
-                    REPORT_COLUMN,
-                    REPORT_PAD_X,
-                    "relative min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#F5F7FA] py-4 sm:py-5 dark:bg-app-bg",
-                  )}
-                >
-                  <TabsContent value="overview" className="mt-0 focus-visible:ring-0">
-                    <AssessmentReportOverview
-                      candidate={candidate}
-                      malpractice={malpractice}
-                      sectionalScores={sectionalScores}
-                    />
-                  </TabsContent>
-                  <TabsContent value="snapshots" className="mt-0 focus-visible:ring-0">
-                    <AssessmentReportSnapshots snapshots={snapshots} />
-                  </TabsContent>
-                  <TabsContent value="questions" className="mt-0 focus-visible:ring-0">
-                    <AssessmentReportQuestions
-                      questions={questions}
-                      questionTab={questionTab}
-                      onQuestionTabChange={setQuestionTab}
-                      onViewAnswer={(q) => setAnswerQuestionIndex(questions.indexOf(q))}
-                    />
-                  </TabsContent>
+                  <div
+                    className={cn(
+                      REPORT_PAD_X,
+                      "z-10 shrink-0 border-b border-[rgba(15,23,42,0.06)] bg-white/95 py-2 pr-16 backdrop-blur-md dark:border-white/[0.06] dark:bg-surface/95",
+                    )}
+                  >
+                    <TabsList className="h-auto w-full justify-start gap-0 border-0 bg-transparent p-0">
+                      {ASSESSMENT_REPORT_MAIN_TABS.map((t) => (
+                        <TabsTrigger key={t.id} value={t.id} className="rounded-none px-4 py-2 text-[13px]">
+                          {t.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </div>
+
+                  <div
+                    className={cn(
+                      REPORT_PAD_X,
+                      "relative min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#F5F7FA] py-4 sm:py-5 dark:bg-app-bg",
+                    )}
+                  >
+                    <TabsContent value="overview" className="mt-0 focus-visible:ring-0">
+                      <AssessmentReportOverview
+                        candidate={candidate}
+                        malpractice={malpractice}
+                        sectionalScores={sectionalScores}
+                      />
+                    </TabsContent>
+                    <TabsContent value="snapshots" className="mt-0 focus-visible:ring-0">
+                      <AssessmentReportSnapshots snapshots={snapshots} />
+                    </TabsContent>
+                    <TabsContent value="questions" className="mt-0 focus-visible:ring-0">
+                      <AssessmentReportQuestions
+                        questions={questions}
+                        questionTab={questionTab}
+                        onQuestionTabChange={setQuestionTab}
+                        onViewAnswer={(q) => setAnswerQuestionIndex(questions.indexOf(q))}
+                      />
+                    </TabsContent>
+                  </div>
                 </div>
               </Tabs>
             </DialogPanel>

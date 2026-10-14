@@ -13,7 +13,6 @@ import {
 } from "@/lib/hiring/candidateReportView";
 import { getCandidateStage, normalizeSource } from "@/lib/hiring/stages";
 import type { HiringCandidate, HiringJob } from "@/lib/hiring/types";
-import { dashboardBentoCell, dashboardBentoGrid, dashboardBentoSpan } from "@/components/dashboard/dashboardTokens";
 
 const overviewCanvas =
   "relative min-w-0 rounded-[14px] bg-[#FAFAFA] p-3 sm:p-4 dark:bg-[#0c0c0e]";
@@ -30,19 +29,19 @@ const sectionTitle =
 const valueText = "text-[13px] font-medium leading-snug text-[#3F3F46] dark:text-text-secondary";
 
 const primaryCard = cn(
-  "flex h-full min-h-0 flex-col overflow-hidden rounded-[12px]",
+  "flex min-h-0 flex-col overflow-hidden rounded-[12px]",
   "border border-white/80 bg-white/90 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_6px_20px_-8px_rgba(15,23,42,0.08)]",
   "backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.04]",
 );
 
 const secondaryCard = cn(
-  "flex h-full min-h-0 flex-col overflow-hidden rounded-[12px]",
+  "flex min-h-0 flex-col overflow-hidden rounded-[12px]",
   "border border-[rgba(15,23,42,0.05)] bg-white/75 shadow-[0_1px_2px_rgba(15,23,42,0.03),0_4px_14px_-6px_rgba(15,23,42,0.06)]",
   "backdrop-blur-sm dark:border-white/[0.06] dark:bg-white/[0.03]",
 );
 
 const utilityCard = cn(
-  "flex h-full min-h-0 flex-col overflow-hidden rounded-[12px]",
+  "flex min-h-0 flex-col overflow-hidden rounded-[12px]",
   "border border-[rgba(15,23,42,0.04)] bg-[#FCFCFD]/90 shadow-[0_1px_1px_rgba(15,23,42,0.02)]",
   "dark:border-white/[0.05] dark:bg-white/[0.02]",
 );
@@ -66,23 +65,11 @@ function OverviewCard({
       <header className="shrink-0 border-b border-[rgba(15,23,42,0.05)] px-3.5 py-2.5 dark:border-white/[0.05]">
         <h3 className={sectionTitle}>{title}</h3>
       </header>
-      <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-3.5 py-3", bodyClassName)}>
+      <div className={cn("px-3.5 py-3", bodyClassName)}>
         {children}
       </div>
     </section>
   );
-}
-
-function BentoCell({
-  span,
-  children,
-  className,
-}: {
-  span?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <div className={cn(dashboardBentoCell, span, className)}>{children}</div>;
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -200,102 +187,106 @@ export function CandidateReportOverview({
     <div className={overviewCanvas} role="region" aria-label="Candidate overview">
       <span className={overviewTexture} aria-hidden />
 
-      <div className={cn(dashboardBentoGrid, "relative min-w-0 gap-2.5 lg:gap-3")}>
-        <BentoCell span="sm:col-span-6 lg:col-span-8">
-          <OverviewCard title="Candidate summary" variant="primary">
-            <p className="text-[13px] leading-relaxed text-[#52525B] dark:text-text-muted">
-              {profileSummary(profile, candidate, job.title)}
-            </p>
-            <dl className="mt-3 grid gap-2.5 border-t border-[rgba(15,23,42,0.05)] pt-3 sm:grid-cols-2 dark:border-white/[0.05]">
-              <div>
-                <dt className={sectionLabel}>Current role</dt>
-                <dd className={cn("mt-1", valueText)}>{currentRoleLabel(profile.employers)}</dd>
-              </div>
-              <div>
-                <dt className={sectionLabel}>Total experience</dt>
-                <dd className={cn("mt-1", valueText)}>{computeTotalExperience(profile.employers)}</dd>
-              </div>
-            </dl>
-            {profile.skills.length > 0 ? (
-              <div className="mt-3 border-t border-[rgba(15,23,42,0.05)] pt-3 dark:border-white/[0.05]">
-                <p className={sectionLabel}>Key skills</p>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {profile.skills.map((skill) => (
-                    <SkillChip key={skill}>{skill}</SkillChip>
-                  ))}
+      <div className="relative min-w-0 space-y-2.5 lg:space-y-3">
+        {/* Candidate summary + Application details side by side */}
+        <div className="grid min-w-0 grid-cols-1 items-stretch gap-2.5 lg:grid-cols-12 lg:gap-3">
+          <div className={cn("min-w-0 [&>section]:h-full", isInterviewer ? "lg:col-span-12" : "lg:col-span-8")}>
+            <OverviewCard title="Candidate summary" variant="primary">
+              <p className="text-[13px] leading-relaxed text-[#52525B] dark:text-text-muted">
+                {profileSummary(profile, candidate, job.title)}
+              </p>
+              <dl className="mt-3 grid gap-2.5 border-t border-[rgba(15,23,42,0.05)] pt-3 sm:grid-cols-2 dark:border-white/[0.05]">
+                <div>
+                  <dt className={sectionLabel}>Current role</dt>
+                  <dd className={cn("mt-1", valueText)}>{currentRoleLabel(profile.employers)}</dd>
                 </div>
-              </div>
-            ) : null}
-          </OverviewCard>
-        </BentoCell>
-
-        {!isInterviewer ? (
-          <BentoCell span={cn(dashboardBentoSpan.side, "lg:row-span-2")}>
-            <OverviewCard title="Application details" variant="utility" bodyClassName="space-y-0">
-              <DetailRow label="Stage" value={getCandidateStage(candidate)} />
-              <DetailRow label="Sub-stage" value={profile.application.substage || candidate.currentSubstage} />
-              <DetailRow label="Source" value={normalizeSource(profile.application.source)} />
-              <DetailRow label="Source category" value={profile.application.sourceCategory} />
-              <DetailRow label="Added by" value={addedByLabel(candidate.addedBy)} />
-              <DetailRow label="Added date" value={candidate.appliedAt} />
-              {tags.length > 0 ? (
-                <div className="border-t border-[rgba(15,23,42,0.05)] pt-2.5 dark:border-white/[0.05]">
-                  <p className={sectionLabel}>Tags</p>
+                <div>
+                  <dt className={sectionLabel}>Total experience</dt>
+                  <dd className={cn("mt-1", valueText)}>{computeTotalExperience(profile.employers)}</dd>
+                </div>
+              </dl>
+              {profile.skills.length > 0 ? (
+                <div className="mt-3 border-t border-[rgba(15,23,42,0.05)] pt-3 dark:border-white/[0.05]">
+                  <p className={sectionLabel}>Key skills</p>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {tags.map((tag) => (
-                      <TagChip key={tag}>{tag}</TagChip>
+                    {profile.skills.map((skill) => (
+                      <SkillChip key={skill}>{skill}</SkillChip>
                     ))}
                   </div>
                 </div>
+              ) : null}
+            </OverviewCard>
+          </div>
+
+          {!isInterviewer ? (
+            <div className="min-w-0 lg:col-span-4 [&>section]:h-full">
+              <OverviewCard title="Application details" variant="utility" bodyClassName="space-y-0">
+                <DetailRow label="Stage" value={getCandidateStage(candidate)} />
+                <DetailRow label="Sub-stage" value={profile.application.substage || candidate.currentSubstage} />
+                <DetailRow label="Source" value={normalizeSource(profile.application.source)} />
+                <DetailRow label="Source category" value={profile.application.sourceCategory} />
+                <DetailRow label="Added by" value={addedByLabel(candidate.addedBy)} />
+                <DetailRow label="Added date" value={candidate.appliedAt} />
+                {tags.length > 0 ? (
+                  <div className="border-t border-[rgba(15,23,42,0.05)] pt-2.5 dark:border-white/[0.05]">
+                    <p className={sectionLabel}>Tags</p>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {tags.map((tag) => (
+                        <TagChip key={tag}>{tag}</TagChip>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <DetailRow label="Tags" value="—" />
+                )}
+              </OverviewCard>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Social network & web links — full width below the cards */}
+        <OverviewCard title="Social network & web links" variant="secondary">
+          {socialLinks.length === 0 ? (
+            <p className="text-[12px] text-[#A1A1AA]">No links provided.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {socialLinks.map((link) => (
+                <SocialLinkChip key={link.id} link={link} />
+              ))}
+            </div>
+          )}
+        </OverviewCard>
+
+        {/* Experience + Education — balanced two-column */}
+        <div className="grid min-w-0 grid-cols-1 items-stretch gap-2.5 lg:grid-cols-2 lg:gap-3">
+          <div className="min-w-0 [&>section]:h-full">
+            <OverviewCard title="Experience" variant="secondary">
+              {employers.length === 0 ? (
+                <p className="text-[12px] text-[#A1A1AA]">No work experience provided.</p>
               ) : (
-                <DetailRow label="Tags" value="—" />
+                <div>
+                  {employers.map((emp, i) => (
+                    <EmployerCard key={emp.id} employer={emp} isLast={i === employers.length - 1} />
+                  ))}
+                </div>
               )}
             </OverviewCard>
-          </BentoCell>
-        ) : null}
+          </div>
 
-        <BentoCell span="sm:col-span-6 lg:col-span-8">
-          <OverviewCard title="Social network & web links" variant="secondary">
-            {socialLinks.length === 0 ? (
-              <p className="text-[12px] text-[#A1A1AA]">No links provided.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {socialLinks.map((link) => (
-                  <SocialLinkChip key={link.id} link={link} />
-                ))}
-              </div>
-            )}
-          </OverviewCard>
-        </BentoCell>
-
-        <BentoCell span={cn(dashboardBentoSpan.half, "lg:row-span-2")}>
-          <OverviewCard title="Experience" variant="secondary">
-            {employers.length === 0 ? (
-              <p className="text-[12px] text-[#A1A1AA]">No work experience provided.</p>
-            ) : (
-              <div>
-                {employers.map((emp, i) => (
-                  <EmployerCard key={emp.id} employer={emp} isLast={i === employers.length - 1} />
-                ))}
-              </div>
-            )}
-          </OverviewCard>
-        </BentoCell>
-
-        <BentoCell span={cn(dashboardBentoSpan.half, "lg:row-span-2")}>
-          <OverviewCard title="Education" variant="secondary">
-            {education.length === 0 ? (
-              <p className="text-[12px] text-[#A1A1AA]">No education details provided.</p>
-            ) : (
-              <div className="space-y-2">
-                {education.map((entry) => (
-                  <EducationCard key={entry.id} entry={entry} />
-                ))}
-              </div>
-            )}
-          </OverviewCard>
-        </BentoCell>
-
+          <div className="min-w-0 [&>section]:h-full">
+            <OverviewCard title="Education" variant="secondary">
+              {education.length === 0 ? (
+                <p className="text-[12px] text-[#A1A1AA]">No education details provided.</p>
+              ) : (
+                <div className="space-y-2">
+                  {education.map((entry) => (
+                    <EducationCard key={entry.id} entry={entry} />
+                  ))}
+                </div>
+              )}
+            </OverviewCard>
+          </div>
+        </div>
       </div>
     </div>
   );
