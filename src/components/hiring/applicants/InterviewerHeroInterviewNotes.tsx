@@ -20,9 +20,11 @@ function bulletsToSessionNotes(bullets: string[]): ZeMeetNoteEntry[] {
 export function InterviewerHeroInterviewNotes({
   bullets,
   capturedRound: _capturedRound,
+  positionClassName = "absolute bottom-4 right-14 z-20 sm:bottom-5 sm:right-16 lg:right-20",
 }: {
   bullets: string[];
   capturedRound: string | null;
+  positionClassName?: string;
 }) {
   const notes = useMemo(() => bulletsToSessionNotes(bullets), [bullets]);
 
@@ -30,7 +32,7 @@ export function InterviewerHeroInterviewNotes({
     <HeroInterviewStickyNotes
       notes={notes}
       readOnly
-      positionClassName="absolute bottom-4 right-14 z-20 sm:bottom-5 sm:right-16 lg:right-20"
+      positionClassName={positionClassName}
     />
   );
 }
